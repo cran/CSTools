@@ -1,0 +1,55 @@
+Package: CSTools
+Title: Assessing Skill of Climate Forecasts on Seasonal-to-Decadal
+        Timescales
+Version: 1.0.0
+Authors@R: c(
+    person("BSC-CNS", role = c("cph")),
+    person("Louis-Philippe", "Caron", , "louis-philippe.caron@bsc.es", role = "aut", comment = c(ORCID = "0000-0001-5221-0147")),
+    person("Jost", "von Hardenberg", , "j.vonhardenberg@isac.cnr.it", role = "aut",  comment = c(ORCID = "0000-0002-5312-8070")),
+    person("Nuria", "Perez-Zanon", , "nuria.perez@bsc.es", role = c("aut", "cre")),
+    person("Llorenç", "LLedo", , "llledo@bsc.es", role = "aut"), 
+    person("Nicolau", "Manubens", , "nicolau.manubens@bsc.es", role = "aut"),
+    person("Niti", "Mishra", , "niti.mishra@bsc.es", role = "ctb"),
+    person("Veronica", "Torralba", , "veronica.torralba@bsc.es", role = "aut"),
+    person("Deborah", "Verfaillie", , "deborah.verfaillie@bsc.es", role = "aut"),
+    person("Lauriane", "Batte", , "lauriane.batte@meteo.fr", role = "ctb"),
+    person("Jesus", "Peña", , "jesus.pena@bsc.es", role = "ctb"),
+    person("Bert", "van Schaeybroeck", , "bertvs@meteo.be", role = "ctb"))
+Description: Exploits dynamical seasonal forecasts in order to provide
+    information relevant to stakeholders at the seasonal timescale. The package
+    contains process-based methods for forecast calibration, bias correction,
+    statistical and stochastic downscaling, optimal forecast combination and
+    multivariate verification, as well as basic and advanced tools to obtain
+    tailored products. 
+    Doblas-Reyes et al. (2005) <doi:10.1111/j.1600-0870.2005.00104.x>.
+    Mishra et al. (2018) <doi:10.1007/s00382-018-4404-z>.
+    Terzago et al. (2018) <doi:10.5194/nhess-18-2825-2018>.
+    Torralba et al. (2017) <doi:10.1175/JAMC-D-16-0204.1>.
+    D'Onofrio et al. (2014) <doi:10.1175/JHM-D-13-096.1>.
+Depends: R (>= 3.2.0), maps
+Imports: s2dverification, rainfarmr, multiApply, ncdf4, plyr, abind,
+        data.table, reshape2, ggplot2, graphics, grDevices, stats,
+        utils
+Suggests: zeallot, testthat, knitr, rmarkdown
+VignetteBuilder: knitr
+License: Apache License 2.0
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 5.0.0
+NeedsCompilation: no
+Packaged: 2019-04-17 13:33:36 UTC; nperez
+Author: BSC-CNS [cph],
+  Louis-Philippe Caron [aut] (<https://orcid.org/0000-0001-5221-0147>),
+  Jost von Hardenberg [aut] (<https://orcid.org/0000-0002-5312-8070>),
+  Nuria Perez-Zanon [aut, cre],
+  Llorenç LLedo [aut],
+  Nicolau Manubens [aut],
+  Niti Mishra [ctb],
+  Veronica Torralba [aut],
+  Deborah Verfaillie [aut],
+  Lauriane Batte [ctb],
+  Jesus Peña [ctb],
+  Bert van Schaeybroeck [ctb]
+Maintainer: Nuria Perez-Zanon <nuria.perez@bsc.es>
+Repository: CRAN
+Date/Publication: 2019-04-24 14:20:02 UTC
