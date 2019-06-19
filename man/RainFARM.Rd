@@ -90,7 +90,7 @@ lon_mat <- seq(10, 13.5, 0.5) # could also be a 2d matrix
 lat_mat <- seq(40, 43.5, 0.5)
 # Create a test array of weights
 ww <- array(1., dim = c(8 * nf, 8 * nf))
-# ... or create proper weights using an external fine-scale climatology file
+# or create proper weights using an external fine-scale climatology file
 #     Specify a weightsfn filename if you wish to save the weights
 \dontrun{
 ww <- CST_RFWeights("./worldclim.nc", nf, lon = lon_mat, lat = lat_mat, 

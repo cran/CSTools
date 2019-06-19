@@ -25,7 +25,7 @@ websites. The latter data will need to be converted to NetCDF format before bein
 The number of longitudes and latitudes is expected to be even and the same. If not
 the function will perform a subsetting to ensure this condition.}
 
-\item{varname}{Name of the variable to be read from \code{reffile}.}
+\item{varname}{Name of the variable to be read from \code{climfile}.}
 
 \item{fsmooth}{Logical to use smooth conservation (default) or large-scale box-average conservation.}
 }
@@ -55,6 +55,6 @@ Terzago, S., Palazzi, E., & von Hardenberg, J. (2018).
 Stochastic downscaling of precipitation in complex orography: 
 A simple method to reproduce a realistic fine-scale climatology.
 Natural Hazards and Earth System Sciences, 18(11),
-2825–2840. http://doi.org/10.5194/nhess-18-2825-2018 .
+2825-2840. http://doi.org/10.5194/nhess-18-2825-2018 .
 }
 

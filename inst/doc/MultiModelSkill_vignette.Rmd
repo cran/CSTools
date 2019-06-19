@@ -14,12 +14,10 @@ Multi-model Skill Assessment
 **reference**: Mishra, N., Prodhomme, C., & Guemas, V. (2018). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31. <https://link.springer.com/article/10.1007%2Fs00382-018-4404-z>
 
 
-A version of s2dverification under development should be loaded by running:
+The R package s2dverification should be loaded by running:
 
 
 ```r
-devtools::install_git('https://earth.bsc.es/gitlab/es/s2dverification', 
-                       branch = 'mostlikely')
 library(s2dverification)
 ```
 

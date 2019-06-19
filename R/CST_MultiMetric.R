@@ -12,7 +12,7 @@
 #'@return an object of class \code{s2dv_cube} containing the statistics of the selected metric in the element \code{$data} which is an array with two datset dimensions equal to the 'dataset' dimension in the \code{exp$data} and \code{obs$data} inputs. If \code{multimodel} is TRUE, the greatest first dimension correspons to the Multi-Model Mean. The third dimension contains the statistics selected. For metric \code{correlation}, the third dimension is of length four and they corresponds to the lower limit of the 95\% confidence interval, the statistics itselfs, the upper limit of the 95\% confidence interval and the 95\% significance level. For metric \code{rms}, the third dimension is length three and they corresponds to the lower limit of the 95\% confidence interval, the RMSE and the upper limit of the 95\% confidence interval. For metric \code{rmsss}, the third dimension is length two and they corresponds to the statistics itselfs and the p-value of the one-sided Fisher test with Ho: RMSSS = 0.
 #'@seealso \code{\link[s2dverification]{Corr}}, \code{\link[s2dverification]{RMS}}, \code{\link[s2dverification]{RMSSS}} and \code{\link{CST_Load}}
 #'@references 
-#'Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29–31.\url{http://link.springer.com/10.1007/s00382-018-4404-z}
+#'Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31.\url{http://link.springer.com/10.1007/s00382-018-4404-z}
 #' 
 #'@import s2dverification
 #'@import stats

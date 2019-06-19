@@ -7,7 +7,7 @@
 #' Stochastic downscaling of precipitation in complex orography: 
 #' A simple method to reproduce a realistic fine-scale climatology.
 #' Natural Hazards and Earth System Sciences, 18(11),
-#' 2825–2840. http://doi.org/10.5194/nhess-18-2825-2018 .
+#' 2825-2840. http://doi.org/10.5194/nhess-18-2825-2018 .
 #' @param climfile Filename of a fine-scale precipitation climatology.
 #' The file is expected to be in NetCDF format and should contain
 #' at least one precipitation field. If several fields at different times are provided,
@@ -22,7 +22,7 @@
 #' @param lat Vector of latitudes.
 #' The number of longitudes and latitudes is expected to be even and the same. If not
 #' the function will perform a subsetting to ensure this condition.
-#' @param varname Name of the variable to be read from \code{reffile}.
+#' @param varname Name of the variable to be read from \code{climfile}.
 #' @param fsmooth Logical to use smooth conservation (default) or large-scale box-average conservation.
 #' @return A matrix containing the weights with dimensions (lon, lat).
 #' @import ncdf4

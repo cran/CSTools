@@ -3,7 +3,7 @@
 #'@author Verónica Torralba, \email{veronica.torralba@bsc.es}
 #'@description This function applies a variance inflation technique described in Doblas-Reyes et al. (2005) in leave-one-out cross-validation. This bias adjustment method produces calibrated forecasts with equivalent mean and variance to that of the reference dataset, but at the same time preserve reliability. 
 #'
-#'@references Doblas-Reyes F.J, Hagedorn R, Palmer T.N. The rationale behind the success of multi-model ensembles in seasonal forecasting—II calibration and combination. Tellus A. 2005;57:234–252. doi:10.1111/j.1600-0870.2005.00104.x
+#'@references Doblas-Reyes F.J, Hagedorn R, Palmer T.N. The rationale behind the success of multi-model ensembles in seasonal forecasting-II calibration and combination. Tellus A. 2005;57:234-252. doi:10.1111/j.1600-0870.2005.00104.x
 #'
 #'@param exp an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the seasonal forecast experiment data in the element named \code{$data}.
 #'@param obs an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the observed data in the element named \code{$data}.

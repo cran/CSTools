@@ -8,7 +8,7 @@
 #' 's2dv_cube' as provided by `CST_Load`) as input.
 #' Adapted for climate downscaling and including orographic correction
 #' as described in Terzago et al. 2018.
-#' @references Terzago, S. et al. (2018). NHESS 18(11), 2825–2840.
+#' @references Terzago, S. et al. (2018). NHESS 18(11), 2825-2840.
 #' http://doi.org/10.5194/nhess-18-2825-2018 ;
 #' D'Onofrio et al. (2014), J of Hydrometeorology 15, 830-843; Rebora et. al. (2006), JHM 7, 724.
 #' @param data An object of the class 's2dv_cube' as returned by `CST_Load`, 
@@ -103,7 +103,7 @@ CST_RainFARM <- function(data, nf, weights = 1., slope = 0, kmin = 1,
 #' over which to average automatically determined spectral slopes.
 #' Adapted for climate downscaling and including orographic correction.
 #' References:
-#' Terzago, S. et al. (2018). NHESS 18(11), 2825–2840. http://doi.org/10.5194/nhess-18-2825-2018,
+#' Terzago, S. et al. (2018). NHESS 18(11), 2825-2840. http://doi.org/10.5194/nhess-18-2825-2018,
 #' D'Onofrio et al. (2014), J of Hydrometeorology 15, 830-843; Rebora et. al. (2006), JHM 7, 724.
 #' @param data Precipitation array to downscale.
 #' The input array is expected to have at least two dimensions named "lon" and "lat" by default
@@ -156,14 +156,14 @@ CST_RainFARM <- function(data, nf, weights = 1., slope = 0, kmin = 1,
 #' nf <- 8   # Choose a downscaling by factor 8
 #' nens <- 3 # Number of ensemble members
 #' # create a test array with dimension 8x8 and 20 timesteps
-#' # or provide your own read from a netcdf file
+#' # or provide your own read from a netcdf file
 #' pr <- rnorm(8 * 8 * 20)
 #' dim(pr) <- c(lon = 8, lat = 8, ftime = 20)
 #' lon_mat <- seq(10, 13.5, 0.5) # could also be a 2d matrix
 #' lat_mat <- seq(40, 43.5, 0.5)
 #' # Create a test array of weights
 #' ww <- array(1., dim = c(8 * nf, 8 * nf))
-#' # ... or create proper weights using an external fine-scale climatology file
+#' # or create proper weights using an external fine-scale climatology file
 #' #     Specify a weightsfn filename if you wish to save the weights
 #' \dontrun{
 #' ww <- CST_RFWeights("./worldclim.nc", nf, lon = lon_mat, lat = lat_mat, 
@@ -177,7 +177,7 @@ CST_RainFARM <- function(data, nf, weights = 1., slope = 0, kmin = 1,
 #' #List of 3
 #' # $ data: num [1:3, 1:20, 1:64, 1:64] 0.186 0.212 0.138 3.748 0.679 ...
 #' # $ lon : num [1:64] 9.78 9.84 9.91 9.97 10.03 ...
-#' # $ lat : num [1:64] 39.8 39.8 39.9 40 40 …
+#' # $ lat : num [1:64] 39.8 39.8 39.9 40 40 ...
 #' dim(res$data)
 #' #  lon         lat       ftime realization 
 #' #   64          64          20           2 
