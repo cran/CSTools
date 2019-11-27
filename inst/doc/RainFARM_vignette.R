@@ -18,6 +18,7 @@ knitr::opts_chunk$set(eval = FALSE)
 #  ilon <- which ( exp$lon %in% 5:12 )
 #  ilat <- which ( exp$lat %in% 40:47 )
 #  exp$data <- exp$data[ , , , , ilon, ilat, drop=FALSE]
+#  names(dim(exp$data)) <- names(dim(lonlat_prec$data))
 #  exp$lon <- exp$lon[ilon]
 #  exp$lat <- exp$lat[ilat]
 

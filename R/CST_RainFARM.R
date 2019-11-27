@@ -37,7 +37,8 @@
 #' If omitted one of c("ftime", "sdate", "time") is searched and the first one with more
 #' than one element is chosen.
 #' @param verbose Logical for verbose output (default: FALSE).
-#' @param drop_realization_dim Logical to remove the "realization" stochastic ensemble dimension (default: FALSE)
+#' @param drop_realization_dim Logical to remove the "realization" stochastic ensemble dimension, 
+#' needed for saving data through function CST_SaveData (default: FALSE)
 #' with the following behaviour if set to TRUE:
 #'
 #' 1) if \code{nens==1}: the dimension is dropped;
@@ -46,7 +47,8 @@
 #'    the "realization" and "member" dimensions are compacted (multiplied) and the resulting dimension is named "member";
 #'
 #' 3) if \code{nens>1} and a "member" dimension does not exist: the "realization" dimension is renamed to "member".
-#'
+#' @param nprocs The number of parallel processes to spawn for the use for parallel computation in multiple cores. (default: 1) 
+#' 
 #' @return CST_RainFARM() returns a downscaled CSTools object (i.e., of the 
 #' class 's2dv_cube').
 #' If \code{nens>1} an additional dimension named "realization" is added to the 
@@ -56,7 +58,7 @@
 #' @import multiApply
 #' @import rainfarmr
 #' @examples
-#' #Example using CST_RainFARM for a CSTools object
+#' #Example 1: using CST_RainFARM for a CSTools object
 #' nf <- 8   # Choose a downscaling by factor 8
 #' exp <- 1 : (2 * 3 * 4 * 8 * 8)
 #' dim(exp) <- c(dataset = 1, member = 2, sdate = 3, ftime = 4, lat = 8, lon = 8)
@@ -70,21 +72,22 @@
 #' res <- CST_RainFARM(data, nf, ww, nens=3)
 #' str(res)
 #' #List of 3
-#' # $ data: num [1:4, 1:64, 1:64, 1, 1:2, 1:3] 201 115 119 307 146 ...
+#' # $ data: num [1, 1:2, 1:3, 1:3, 1:4, 1:64, 1:64] 260 553 281 278 143 ...
 #' # $ lon : num [1:64] 9.78 9.84 9.91 9.97 10.03 ...
 #' # $ lat : num [1:64] 39.8 39.8 39.9 40 40 ...
 #' dim(res$data)
-#' # dataset  member   sdate   ftime     lat     lon    realization
-#' #       1       2       3       4      64      64     3
-#'@export
+#' # dataset      member realization       sdate       ftime         lat         lon 
+#' #       1           2           3           3           4          64          64
+#' 
+#' @export
 CST_RainFARM <- function(data, nf, weights = 1., slope = 0, kmin = 1,
                          nens = 1, fglob = FALSE, fsmooth = TRUE,
-                         time_dim = NULL, verbose = FALSE,
+                         nprocs = 1, time_dim = NULL, verbose = FALSE,
                          drop_realization_dim = FALSE) {
 
   res <- RainFARM(data$data, data$lon, data$lat,
                   nf, weights, nens, slope, kmin, fglob, fsmooth,
-                  time_dim, lon_dim = "lon", lat_dim = "lat",
+                  nprocs, time_dim, lon_dim = "lon", lat_dim = "lat",
                   drop_realization_dim, verbose)
 
   data$data <- res$data
@@ -135,7 +138,7 @@ CST_RainFARM <- function(data, nf, weights = 1., slope = 0, kmin = 1,
 #' @param lat_dim Name of lat dimension ("lat" by default).
 #' @param verbose logical for verbose output (default: FALSE).
 #' @param drop_realization_dim Logical to remove the "realization" stochastic ensemble dimension (default: FALSE)
-#  with the following behaviour if set to TRUE:
+#'  with the following behaviour if set to TRUE:
 #'
 #' 1) if \code{nens==1}: the dimension is dropped;
 #'
@@ -144,6 +147,7 @@ CST_RainFARM <- function(data, nf, weights = 1., slope = 0, kmin = 1,
 #'
 #' 3) if \code{nens>1} and a "member" dimension does not exist: the "realization" dimension is renamed to "member".
 #'
+#' @param nprocs The number of parallel processes to spawn for the use for parallel computation in multiple cores. (default: 1)
 #' @return RainFARM() returns a list containing the fine-scale longitudes, latitudes
 #' and the sequence of \code{nens} downscaled fields.
 #' If \code{nens>1} an additional dimension named "realization" is added to the output array
@@ -184,7 +188,7 @@ CST_RainFARM <- function(data, nf, weights = 1., slope = 0, kmin = 1,
 #'
 RainFARM <- function(data, lon, lat, nf, weights = 1., nens = 1,
                      slope = 0, kmin = 1, fglob = FALSE, fsmooth = TRUE,
-                     time_dim = NULL, lon_dim = "lon", lat_dim = "lat",
+                     nprocs = 1, time_dim = NULL, lon_dim = "lon", lat_dim = "lat",
                      drop_realization_dim = FALSE, verbose = FALSE) {
 
   # Ensure input  grid is square and with even dimensions
@@ -251,7 +255,8 @@ RainFARM <- function(data, lon, lat, nf, weights = 1., nens = 1,
   # Repeatedly apply .RainFARM
   result <- Apply(data, c(lon_dim, lat_dim, "rainfarm_samples"), .RainFARM,
                   weights, nf, nens, slope, kmin,
-                  fglob, fsmooth, verbose)$output1
+                  fglob, fsmooth, ncores = nprocs, verbose,
+                  split_factor = "greatest")$output1
   # result has dims: lon, lat, rainfarm_samples, realization, other dims
   # Expand back rainfarm_samples to compacted dims
   dim(result) <- c(dim(result)[1:2], cdim[-ind], dim(result)[-(1:3)])
@@ -259,11 +264,14 @@ RainFARM <- function(data, lon, lat, nf, weights = 1., nens = 1,
   # Reorder as it was in original data
   # + realization dim after member if it exists
   ienspos <- which(names(cdim0) == "member")
-  if ( length(ienspos) == 0) ienspos <- length(names(cdim0))
+  if (length(ienspos) == 0) ienspos <- length(names(cdim0))
   iorder <- sapply(c(names(cdim0)[1:ienspos], "realization",
                      names(cdim0)[-(1:ienspos)]),
                    grep, names(dim(result)))
+  ndim <- names(dim(result))
   result <- aperm(result, iorder)
+  # R < 3.2.3 compatibility fix
+  names(dim(result)) <- ndim[iorder]
 
   if (drop_realization_dim) {
     cdim <- dim(result)
@@ -295,7 +303,7 @@ RainFARM <- function(data, lon, lat, nf, weights = 1., nens = 1,
 #' @param kmin First wavenumber for spectral slope (default: \code{kmin=1}).
 #' @param nens Number of ensemble members to produce (default: \code{nens=1}).
 #' @param fglob Logical to conseve global precipitation over the domain (default: FALSE).
-#' @param fsmooth Logical to conserve precipitation with a smnoothing kernel (default: TRUE).
+#' @param fsmooth Logical to conserve precipitation with a smoothing kernel (default: TRUE).
 #' @param verbose Logical for verbose output (default: FALSE).
 #' @return .RainFARM returns a downscaled array with dimensions (lon, lat, time, realization)
 #' @noRd
@@ -324,15 +332,17 @@ RainFARM <- function(data, lon, lat, nf, weights = 1., nens = 1,
 # and array indexing. Derived from Stack Overflow issue
 # https://stackoverflow.com/questions/14500707/select-along-one-of-n-dimensions-in-array
 .subset <- function(field, dim_name, range, drop = FALSE) {
-
-  idim  <- which( names(dim(field)) %in% dim_name )
+  
+  ndim <- names(dim(field))
+  idim  <- which(ndim %in% dim_name )
   # Create list representing arguments supplied to [
   # bquote() creates an object corresponding to a missing argument
   indices <- rep(list(bquote()), length(dim(field)))
   indices[[idim]] <- range
-
   # do.call on the indices
-  field <- do.call("[",c(list(field), indices, list(drop = drop)))
-
+  field <- do.call("[", c(list(field), indices, list(drop = drop)))
+  # Needed for R <=3.2
+  names(dim(field)) <- ndim
+  
   return(field)
 }

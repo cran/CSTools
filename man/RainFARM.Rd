@@ -5,8 +5,9 @@
 \title{RainFARM stochastic precipitation downscaling (reduced version)}
 \usage{
 RainFARM(data, lon, lat, nf, weights = 1, nens = 1, slope = 0, kmin = 1,
-  fglob = FALSE, fsmooth = TRUE, time_dim = NULL, lon_dim = "lon",
-  lat_dim = "lat", drop_realization_dim = FALSE, verbose = FALSE)
+  fglob = FALSE, fsmooth = TRUE, nprocs = 1, time_dim = NULL,
+  lon_dim = "lon", lat_dim = "lat", drop_realization_dim = FALSE,
+  verbose = FALSE)
 }
 \arguments{
 \item{data}{Precipitation array to downscale.
@@ -39,6 +40,8 @@ meaning that the slope is determined automatically over the dimensions specified
 
 \item{fsmooth}{Logical to conserve precipitation with a smoothing kernel (default: TRUE)}
 
+\item{nprocs}{The number of parallel processes to spawn for the use for parallel computation in multiple cores. (default: 1)}
+
 \item{time_dim}{String or character array with name(s) of time dimension(s)
 (e.g. "ftime", "sdate", "time" ...) over which to compute spectral slopes.
 If a character array of dimension names is provided, the spectral slopes
@@ -51,6 +54,7 @@ is searched and the first one with more than one element is chosen.}
 \item{lat_dim}{Name of lat dimension ("lat" by default).}
 
 \item{drop_realization_dim}{Logical to remove the "realization" stochastic ensemble dimension (default: FALSE)
+ with the following behaviour if set to TRUE:
 
 1) if \code{nens==1}: the dimension is dropped;
 

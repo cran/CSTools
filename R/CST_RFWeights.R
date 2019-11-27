@@ -27,6 +27,8 @@
 #' @return A matrix containing the weights with dimensions (lon, lat).
 #' @import ncdf4
 #' @import rainfarmr
+#' @importFrom utils tail
+#' @importFrom utils head
 #' @examples
 #' # Create weights to be used with the CST_RainFARM() or RainFARM() functions
 #' # using an external fine-scale climatology file.
@@ -54,31 +56,63 @@ CST_RFWeights <- function(climfile, nf, lon, lat, varname = "", fsmooth=TRUE) {
     warning(paste0("lon: [", lon[1], ", ", lon[length(lon)], "] ",
                  " lat: [", lat[1], ", ", lat[length(lat)], "]"))
   }
-  
-  ncin <- nc_open(climfile) 
-  latin <- ncvar_get(ncin, grep("lat", attributes(ncin$dim)$names, value = TRUE))
-  lonin <- ncvar_get(ncin, grep("lon", attributes(ncin$dim)$names, value = TRUE))
-  if ( varname == "") {
+
+  ncin <- nc_open(climfile)
+  latin <- ncvar_get(ncin, grep("lat", attributes(ncin$dim)$names,
+                                value = TRUE))
+  lonin <- ncvar_get(ncin, grep("lon", attributes(ncin$dim)$names,
+                                value = TRUE))
+  if (varname == "") {
     varname <- grep("bnds", attributes(ncin$var)$names,
                     invert = TRUE, value = TRUE)[1]
   }
   zclim <- ncvar_get(ncin, varname)
 
-# Check if lon and lat need to be reversed
-  if ( lat[1] > lat[2] ) {
-    lat <- rev(lat) 
-    frev = TRUE
+  # Check if lon and lat need to be reversed
+  if (lat[1] > lat[2]) {
+    lat <- rev(lat)
+    frev <- TRUE
   } else {
-    frev = FALSE
+    frev <- FALSE
   }
-  if ( latin[1] > latin[2] ) {
+  if (latin[1] > latin[2]) {
     latin <- rev(latin)
-    zclim = zclim[,seq(dim(zclim)[2],1)]
+    zclim <- zclim[, seq(dim(zclim)[2], 1)]
+  }
+  # If lon is not monotonic make it so
+  if (lon[1] > tail(lon, 1)) {
+    lon <- (lon - 360) * (lon > tail(lon, 1)) + lon * (lon <= tail(lon, 1))
+  }
+  # Is the reference climatology global in the zonal direction ?
+  # Test if the the first and the last longitude are close
+  dx <- abs((tail(lonin, 1) %% 360) - (lonin[1] %% 360))
+  # Shortest distance on a torus
+  if (dx > 180) {
+        dx <- 360 - dx
+  }
+  # If this distance is smaller than twice the grid spacing we are global
+  if (dx <= (lonin[2] - lonin[1]) * 2) {
+    # Is the target area not fully inside the reference climatology area ?
+    if (lon[1] < lonin[1]) {
+      # Shift lonin to the west by 180 degrees
+      nn <- length(lonin)
+      zclim0 <- zclim
+      zclim[1:(nn / 2), ] <- zclim0[(nn / 2 + 1):nn, ]
+      zclim[(nn / 2 + 1):nn, ] <- zclim0[1:(nn / 2), ]
+      lonin <- lonin - 180
+    } else if (tail(lon, 1) > tail(lonin, 1)) {
+      # Shift lonin to the east by 180 degrees
+      nn <- length(lonin)
+      zclim0 <- zclim
+      zclim[1:(nn / 2), ] <- zclim0[(nn / 2 + 1):nn, ]
+      zclim[(nn / 2 + 1):nn, ] <- zclim0[1:(nn / 2), ]
+      lonin <- lonin + 180
+    }
   }
   ww <- rfweights(zclim, lonin, latin, lon, lat, nf, fsmooth = fsmooth)
-  if ( frev ) {
-    ww = ww[,seq(dim(ww)[2],1)]
+  if (frev) {
+    ww <- ww[, seq(dim(ww)[2], 1)]
   }
-  attributes(dim(ww))$names <- c("lon","lat")
+  attributes(dim(ww))$names <- c("lon", "lat")
   return(ww)
 }

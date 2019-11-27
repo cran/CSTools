@@ -54,6 +54,7 @@ There are 6 ensemble members available in the data set, 3 starting dates and 31 
 ilon <- which ( exp$lon %in% 5:12 )
 ilat <- which ( exp$lat %in% 40:47 )
 exp$data <- exp$data[ , , , , ilon, ilat, drop=FALSE]
+names(dim(exp$data)) <- names(dim(lonlat_prec$data))
 exp$lon <- exp$lon[ilon]
 exp$lat <- exp$lat[ilat]
 ```

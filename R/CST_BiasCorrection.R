@@ -31,7 +31,7 @@
 #'str(a)
 #'@export
 CST_BiasCorrection <- function(exp, obs) {
-  if (!inherits(exp, 's2dv_cube') || !inherits(exp, 's2dv_cube')) {
+  if (!inherits(exp, 's2dv_cube') || !inherits(obs, 's2dv_cube')) {
     stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube', ",
          "as output by CSTools::CST_Load.")
   }

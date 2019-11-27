@@ -2,36 +2,59 @@
 % Please edit documentation in R/CST_Calibration.R
 \name{CST_Calibration}
 \alias{CST_Calibration}
-\title{Forecast Calibration based on the ensemble inflation}
+\title{Forecast Calibration}
 \usage{
-CST_Calibration(exp, obs)
+CST_Calibration(exp, obs, cal.method = "mse_min",
+  eval.method = "leave-one-out", multi.model = F)
 }
 \arguments{
 \item{exp}{an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the seasonal forecast experiment data in the element named \code{$data}.}
 
 \item{obs}{an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the observed data in the element named \code{$data}.}
+
+\item{cal.method}{is the calibration method used, can be either \code{bias}, \code{evmos}, \code{mse_min} or \code{crps_min}. Default value is \code{mse_min}.}
+
+\item{eval.method}{is the sampling method used, can be either \code{in-sample} or \code{leave-one-out}. Default value is the \code{leave-one-out} cross validation.}
+
+\item{multi.model}{is a boolean that is used only for the \code{mse_min} method. If multi-model ensembles or ensembles of different sizes are used, it must be set to \code{TRUE}. By default it is \code{FALSE}. Differences between the two approaches are generally small but may become large when using small ensemble sizes. Using multi.model when the calibration method is \code{bias}, \code{evmos} or \code{crps_min} will not affect the result.}
 }
 \value{
 an object of class \code{s2dv_cube} containing the calibrated forecasts in the element \code{$data} with the same dimensions of the experimental data.
 }
 \description{
-This function applies a variance inflation technique described in Doblas-Reyes et al. (2005) in leave-one-out cross-validation. This bias adjustment method produces calibrated forecasts with equivalent mean and variance to that of the reference dataset, but at the same time preserve reliability.
-}
-\examples{
-# Example
-# Load data using CST_Load or use the sample data provided:
-library(zeallot)
-c(exp, obs) \%<-\% areave_data
-exp_calibrated <- CST_Calibration(exp = exp, obs = obs)
-str(exp_calibrated)
+Four types of member-by-member bias correction can be performed. The \code{bias} method corrects the bias only, the \code{evmos} method applies a variance inflation technique to ensure the correction of the bias and the correspondence of variance between forecast and observation (Van Schaeybroeck and Vannitsem, 2011). The ensemble calibration methods \code{"mse_min"} and \code{"crps_min"} correct the bias, the overall forecast variance and the ensemble spread as described in Doblas-Reyes et al. (2005) and Van Schaeybroeck and Vannitsem (2015), respectively. While the \code{"mse_min"} method minimizes a constrained mean-squared error using three parameters, the \code{"crps_min"} method features four parameters and minimizes the Continuous Ranked Probability Score (CRPS).
+
+Both in-sample or our out-of-sample (leave-one-out cross validation) calibration are possible.
 }
 \author{
 Verónica Torralba, \email{veronica.torralba@bsc.es}
+
+Bert Van Schaeybroeck, \email{bertvs@meteo.be}
 }
 \references{
 Doblas-Reyes F.J, Hagedorn R, Palmer T.N. The rationale behind the success of multi-model ensembles in seasonal forecasting-II calibration and combination. Tellus A. 2005;57:234-252. doi:10.1111/j.1600-0870.2005.00104.x
+
+Van Schaeybroeck, B., & Vannitsem, S. (2011). Post-processing through linear regression. Nonlinear Processes in Geophysics, 18(2), 147. doi:10.5194/npg-18-147-2011
+
+Van Schaeybroeck, B., & Vannitsem, S. (2015). Ensemble post-processing using member-by-member approaches: theoretical aspects. Quarterly Journal of the Royal Meteorological Society, 141(688), 807-818.  doi:10.1002/qj.2397
 }
 \seealso{
 \code{\link{CST_Load}}
+
+# Example
+# Creation of sample s2dverification objects. These are not complete
+# s2dverification objects though. The Load function returns complete objects.
+mod1 <- 1 : (1 * 3 * 4 * 5 * 6 * 7)
+dim(mod1) <- c(dataset = 1, member = 3, sdate = 4, ftime = 5, lat = 6, lon = 7)
+obs1 <- 1 : (1 * 1 * 4 * 5 * 6 * 7)
+dim(obs1) <- c(dataset = 1, member = 1, sdate = 4, ftime = 5, lat = 6, lon = 7)
+lon <- seq(0, 30, 5)
+lat <- seq(0, 25, 5)
+exp <- list(data = mod1, lat = lat, lon = lon)
+obs <- list(data = obs1, lat = lat, lon = lon)
+attr(exp, 'class') <- 's2dv_cube'
+attr(obs, 'class') <- 's2dv_cube'
+a <- CST_Calibration(exp = exp, obs = obs, cal.method = "mse_min", eval.method = "in-sample")
+str(a)
 }
 \encoding{UTF-8}

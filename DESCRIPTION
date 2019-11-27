@@ -1,36 +1,50 @@
 Package: CSTools
 Title: Assessing Skill of Climate Forecasts on Seasonal-to-Decadal
         Timescales
-Version: 1.0.1
+Version: 2.0.0
 Authors@R: c(
-    person("BSC-CNS", role = c("cph")),
-    person("Louis-Philippe", "Caron", , "louis-philippe.caron@bsc.es", role = "aut", comment = c(ORCID = "0000-0001-5221-0147")),
-    person("Jost", "von Hardenberg", , "j.vonhardenberg@isac.cnr.it", role = "aut",  comment = c(ORCID = "0000-0002-5312-8070")),
     person("Nuria", "Perez-Zanon", , "nuria.perez@bsc.es", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-8568-3071")),
+    person("Louis-Philippe", "Caron", , "louis-philippe.caron@bsc.es", role = "aut", comment = c(ORCID = "0000-0001-5221-0147")),
+    person("Carmen", "Alvarez-Castro", , "carmen.alvarez-castro@cmcc.it", role = "aut"),
+    person("Jost", "von Hardenberg", , email = c("j.vonhardenberg@isac.cnr.it", "jost.hardenberg@polito.it"), role = "aut",  comment = c(ORCID = "0000-0002-5312-8070")),
     person("Llorenç", "LLedo", , "llledo@bsc.es", role = "aut"), 
     person("Nicolau", "Manubens", , "nicolau.manubens@bsc.es", role = "aut"),
-    person("Niti", "Mishra", , "niti.mishra@bsc.es", role = "ctb"),
+    person("Eroteida", "Sanchez-Garcia", , "esanchezg@aemet.es", role = "aut"),
+    person("Bert", "van Schaeybroeck", , "bertvs@meteo.be", role = "aut"),
     person("Veronica", "Torralba", , "veronica.torralba@bsc.es", role = "aut"),
     person("Deborah", "Verfaillie", , "deborah.verfaillie@bsc.es", role = "aut"),
     person("Lauriane", "Batte", , "lauriane.batte@meteo.fr", role = "ctb"),
+    person("Filippo", "Cali Quaglia", , "filippo.caliquaglia@gmail.com", role = "ctb"),
+    person("Susanna", "Corti", , "s.corti@isac.cnr.it", role = "ctb"),
+    person("Paolo", "Davini", , "p.davini@isac.cnr.it", role = "ctb"),
+    person("Federico", "Fabiano", , "f.fabiano@isac.cnr.it", role = "ctb"),
+    person("Ignazio", "Giuntoli", , "i.giuntoli@isac.cnr.it", role = "ctb"),
+    person("Raul", "Marcos", , "raul.marcos@bsc.es", role = "ctb"),
+    person("Niti", "Mishra", , "niti.mishra@bsc.es", role = "ctb"),
     person("Jesus", "Peña", , "jesus.pena@bsc.es", role = "ctb"),
-    person("Bert", "van Schaeybroeck", , "bertvs@meteo.be", role = "ctb"))
+    person("Silvia", "Terzago", , "s.terzago@isac.cnr.it", role = "ctb"),
+    person("Danila", "Volpi", , "d.volpi@isac.cnr.it", role = "ctb"),
+    person("BSC-CNS", role = c("cph")))
 Description: Exploits dynamical seasonal forecasts in order to provide
     information relevant to stakeholders at the seasonal timescale. The package
     contains process-based methods for forecast calibration, bias correction,
     statistical and stochastic downscaling, optimal forecast combination and
     multivariate verification, as well as basic and advanced tools to obtain
-    tailored products. This package was developed in the context of the 
-    ERA4CS project MEDSCOPE.
+    tailored products. This package was developed in the context of the
+    ERA4CS project MEDSCOPE and the H2020 S2S4E project.
     Doblas-Reyes et al. (2005) <doi:10.1111/j.1600-0870.2005.00104.x>.
     Mishra et al. (2018) <doi:10.1007/s00382-018-4404-z>.
+    Sanchez-Garcia et al. (2019) <doi:10.5194/asr-16-165-2019>.
+    Straus et al. (2007) <doi:10.1175/JCLI4070.1>.
     Terzago et al. (2018) <doi:10.5194/nhess-18-2825-2018>.
     Torralba et al. (2017) <doi:10.1175/JAMC-D-16-0204.1>.
     D'Onofrio et al. (2014) <doi:10.1175/JHM-D-13-096.1>.
+    Van Schaeybroeck et al. (2019) <doi:10.1016/B978-0-12-812372-0.00010-8>.
+    Yiou et al. (2013) <doi:10.1007/s00382-012-1626-3>.
 Depends: R (>= 3.2.0), maps
-Imports: s2dverification, rainfarmr, multiApply, ncdf4, plyr, abind,
-        data.table, reshape2, ggplot2, graphics, grDevices, stats,
-        utils
+Imports: s2dverification, rainfarmr, multiApply, qmap, ClimProjDiags,
+        ncdf4, plyr, abind, data.table, reshape2, ggplot2, graphics,
+        grDevices, stats, utils, verification
 Suggests: zeallot, testthat, knitr, rmarkdown
 VignetteBuilder: knitr
 License: Apache License 2.0
@@ -38,19 +52,29 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 5.0.0
 NeedsCompilation: no
-Packaged: 2019-06-19 12:42:04 UTC; nperez
-Author: BSC-CNS [cph],
+Packaged: 2019-11-27 17:21:51 UTC; nperez
+Author: Nuria Perez-Zanon [aut, cre] (<https://orcid.org/0000-0001-8568-3071>),
   Louis-Philippe Caron [aut] (<https://orcid.org/0000-0001-5221-0147>),
+  Carmen Alvarez-Castro [aut],
   Jost von Hardenberg [aut] (<https://orcid.org/0000-0002-5312-8070>),
-  Nuria Perez-Zanon [aut, cre] (<https://orcid.org/0000-0001-8568-3071>),
   Llorenç LLedo [aut],
   Nicolau Manubens [aut],
-  Niti Mishra [ctb],
+  Eroteida Sanchez-Garcia [aut],
+  Bert van Schaeybroeck [aut],
   Veronica Torralba [aut],
   Deborah Verfaillie [aut],
   Lauriane Batte [ctb],
+  Filippo Cali Quaglia [ctb],
+  Susanna Corti [ctb],
+  Paolo Davini [ctb],
+  Federico Fabiano [ctb],
+  Ignazio Giuntoli [ctb],
+  Raul Marcos [ctb],
+  Niti Mishra [ctb],
   Jesus Peña [ctb],
-  Bert van Schaeybroeck [ctb]
+  Silvia Terzago [ctb],
+  Danila Volpi [ctb],
+  BSC-CNS [cph]
 Maintainer: Nuria Perez-Zanon <nuria.perez@bsc.es>
 Repository: CRAN
-Date/Publication: 2019-06-19 13:40:16 UTC
+Date/Publication: 2019-11-27 23:10:10 UTC

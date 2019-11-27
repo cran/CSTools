@@ -5,8 +5,8 @@
 \title{RainFARM stochastic precipitation downscaling of a CSTools object}
 \usage{
 CST_RainFARM(data, nf, weights = 1, slope = 0, kmin = 1, nens = 1,
-  fglob = FALSE, fsmooth = TRUE, time_dim = NULL, verbose = FALSE,
-  drop_realization_dim = FALSE)
+  fglob = FALSE, fsmooth = TRUE, nprocs = 1, time_dim = NULL,
+  verbose = FALSE, drop_realization_dim = FALSE)
 }
 \arguments{
 \item{data}{An object of the class 's2dv_cube' as returned by `CST_Load`, 
@@ -36,6 +36,8 @@ meaning that the slope is determined automatically over the dimensions specified
 
 \item{fsmooth}{Logical to conserve precipitation with a smoothing kernel (default: TRUE).}
 
+\item{nprocs}{The number of parallel processes to spawn for the use for parallel computation in multiple cores. (default: 1)}
+
 \item{time_dim}{String or character array with name(s) of dimension(s)
 (e.g. "ftime", "sdate", "member" ...) over which to compute spectral slopes.
 If a character array of dimension names is provided, the spectral slopes
@@ -45,7 +47,8 @@ than one element is chosen.}
 
 \item{verbose}{Logical for verbose output (default: FALSE).}
 
-\item{drop_realization_dim}{Logical to remove the "realization" stochastic ensemble dimension (default: FALSE)
+\item{drop_realization_dim}{Logical to remove the "realization" stochastic ensemble dimension, 
+needed for saving data through function CST_SaveData (default: FALSE)
 with the following behaviour if set to TRUE:
 
 1) if \code{nens==1}: the dimension is dropped;
@@ -71,7 +74,7 @@ Adapted for climate downscaling and including orographic correction
 as described in Terzago et al. 2018.
 }
 \examples{
-#Example using CST_RainFARM for a CSTools object
+#Example 1: using CST_RainFARM for a CSTools object
 nf <- 8   # Choose a downscaling by factor 8
 exp <- 1 : (2 * 3 * 4 * 8 * 8)
 dim(exp) <- c(dataset = 1, member = 2, sdate = 3, ftime = 4, lat = 8, lon = 8)
@@ -85,12 +88,13 @@ ww <- array(1., dim = c(8 * nf, 8 * nf))
 res <- CST_RainFARM(data, nf, ww, nens=3)
 str(res)
 #List of 3
-# $ data: num [1:4, 1:64, 1:64, 1, 1:2, 1:3] 201 115 119 307 146 ...
+# $ data: num [1, 1:2, 1:3, 1:3, 1:4, 1:64, 1:64] 260 553 281 278 143 ...
 # $ lon : num [1:64] 9.78 9.84 9.91 9.97 10.03 ...
 # $ lat : num [1:64] 39.8 39.8 39.9 40 40 ...
 dim(res$data)
-# dataset  member   sdate   ftime     lat     lon    realization
-#       1       2       3       4      64      64     3
+# dataset      member realization       sdate       ftime         lat         lon 
+#       1           2           3           3           4          64          64
+
 }
 \author{
 Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}
