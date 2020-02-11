@@ -4,9 +4,19 @@
 \alias{Analogs}
 \title{Analogs based on large scale fields.}
 \usage{
-Analogs(expL, obsL, time_obsL, expVar = NULL, obsVar = NULL,
-  criteria = "Large_dist", lonVar = NULL, latVar = NULL, region = NULL,
-  nAnalogs = NULL, return_list = FALSE)
+Analogs(
+  expL,
+  obsL,
+  time_obsL,
+  expVar = NULL,
+  obsVar = NULL,
+  criteria = "Large_dist",
+  lonVar = NULL,
+  latVar = NULL,
+  region = NULL,
+  nAnalogs = NULL,
+  return_list = FALSE
+)
 }
 \arguments{
 \item{expL}{an array of N named dimensions containing the experimental field
@@ -378,15 +388,14 @@ str(Local_scalecor)
 Local_scalecor$AnalogsInfo
 
 }
-\author{
-M. Carmen Alvarez-Castro, \email{carmen.alvarez-castro@cmcc.it}
-
-Nuria Perez-Zanon \email{nuria.perez@bsc.es}
-}
 \references{
 Yiou, P., T. Salameh, P. Drobinski, L. Menut, R. Vautard,
 and M. Vrac, 2013 : Ensemble reconstruction of the atmospheric column 
 from surface pressure using analogues.  Clim. Dyn., 41, 1419-1437. 
 \email{pascal.yiou@lsce.ipsl.fr}
 }
+\author{
+M. Carmen Alvarez-Castro, \email{carmen.alvarez-castro@cmcc.it}
 
+Nuria Perez-Zanon \email{nuria.perez@bsc.es}
+}

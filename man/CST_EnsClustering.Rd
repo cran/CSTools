@@ -4,10 +4,18 @@
 \alias{CST_EnsClustering}
 \title{Ensemble clustering}
 \usage{
-CST_EnsClustering(exp, time_moment = "mean", numclus = NULL,
-  lon_lim = NULL, lat_lim = NULL, variance_explained = 80,
-  numpcs = NULL, time_percentile = 90, cluster_dim = "member",
-  verbose = F)
+CST_EnsClustering(
+  exp,
+  time_moment = "mean",
+  numclus = NULL,
+  lon_lim = NULL,
+  lat_lim = NULL,
+  variance_explained = 80,
+  numpcs = NULL,
+  time_percentile = 90,
+  cluster_dim = "member",
+  verbose = F
+)
 }
 \arguments{
 \item{exp}{An object of the class 's2dv_cube', containing the variables to be analysed.
@@ -125,4 +133,3 @@ Paolo Davini - ISAC-CNR, \email{p.davini@isac.cnr.it}
 
 Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}
 }
-

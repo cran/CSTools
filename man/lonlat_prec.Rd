@@ -29,4 +29,3 @@ lonlat_prec <- CST_Load('prlr', exp = list(infile), obs = NULL,
 Jost von Hardenberg \email{j.vonhardenberg@isac.cnr.it}
 }
 \keyword{data}
-

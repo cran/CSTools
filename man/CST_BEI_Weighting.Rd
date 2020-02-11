@@ -4,8 +4,13 @@
 \alias{CST_BEI_Weighting}
 \title{Weighting SFSs of a CSTools object.}
 \usage{
-CST_BEI_Weighting(var_exp, aweights, type = "ensembleMean",
-  time_dim_name = "time")
+CST_BEI_Weighting(
+  var_exp,
+  aweights,
+  terciles = NULL,
+  type = "ensembleMean",
+  time_dim_name = "time"
+)
 }
 \arguments{
 \item{var_exp}{An object of the class 's2dv_cube' containing the variable
@@ -17,6 +22,11 @@ at least a temporal dimension and a dimension named 'member'.}
 (time, member), when 'time' is the temporal dimension as default. 
 When 'aweights' parameter has any other dimensions (as e.g. 'lat') and 
 'var_exp' parameter has also the same dimension, they must be equals.}
+
+\item{terciles}{A numeric array with at least one dimension 'tercil' equal to 
+2, the first element is the lower tercil for a hindcast period, and the second  
+element is the upper tercile. By default is NULL, the terciles are computed  
+from var_exp data.}
 
 \item{type}{A character string indicating the type of output. 
 If 'type' =  'probs', the function returns, in the element data from 
@@ -63,12 +73,11 @@ dim(res_CST$data)
 # time     lat     lon   dataset
 #    2       3       2         2
 }
-\author{
-Eroteida Sanchez-Garcia - AEMET, \email{esanchezg@aemet.es}
-}
 \references{
 Regionally improved seasonal forecast of precipitation through
 Best estimation of winter NAO, Sanchez-Garcia, E. et al.,
 Adv. Sci. Res., 16, 165174, 2019, https://doi.org/10.5194/asr-16-165-2019
 }
-
+\author{
+Eroteida Sanchez-Garcia - AEMET, \email{esanchezg@aemet.es}
+}

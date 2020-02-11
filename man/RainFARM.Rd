@@ -4,10 +4,24 @@
 \alias{RainFARM}
 \title{RainFARM stochastic precipitation downscaling (reduced version)}
 \usage{
-RainFARM(data, lon, lat, nf, weights = 1, nens = 1, slope = 0, kmin = 1,
-  fglob = FALSE, fsmooth = TRUE, nprocs = 1, time_dim = NULL,
-  lon_dim = "lon", lat_dim = "lat", drop_realization_dim = FALSE,
-  verbose = FALSE)
+RainFARM(
+  data,
+  lon,
+  lat,
+  nf,
+  weights = 1,
+  nens = 1,
+  slope = 0,
+  kmin = 1,
+  fglob = FALSE,
+  fsmooth = TRUE,
+  nprocs = 1,
+  time_dim = NULL,
+  lon_dim = "lon",
+  lat_dim = "lat",
+  drop_realization_dim = FALSE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{data}{Precipitation array to downscale.
@@ -117,4 +131,3 @@ dim(res$data)
 \author{
 Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}
 }
-

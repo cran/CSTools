@@ -47,9 +47,6 @@ nf <- 8
 ww <- CST_RFWeights("./worldclim.nc", nf, lon, lat, fsmooth = TRUE)
 }
 }
-\author{
-Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}
-}
 \references{
 Terzago, S., Palazzi, E., & von Hardenberg, J. (2018).
 Stochastic downscaling of precipitation in complex orography: 
@@ -57,4 +54,6 @@ A simple method to reproduce a realistic fine-scale climatology.
 Natural Hazards and Earth System Sciences, 18(11),
 2825-2840. http://doi.org/10.5194/nhess-18-2825-2018 .
 }
-
+\author{
+Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}
+}

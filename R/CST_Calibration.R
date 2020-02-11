@@ -2,27 +2,24 @@
 #'
 #'@author Verónica Torralba, \email{veronica.torralba@bsc.es} 
 #'@author Bert Van Schaeybroeck, \email{bertvs@meteo.be}
-#'@description Four types of member-by-member bias correction can be performed. The \code{bias} method corrects the bias only, the \code{evmos} method applies a variance inflation technique to ensure the correction of the bias and the correspondence of variance between forecast and observation (Van Schaeybroeck and Vannitsem, 2011). The ensemble calibration methods \code{"mse_min"} and \code{"crps_min"} correct the bias, the overall forecast variance and the ensemble spread as described in Doblas-Reyes et al. (2005) and Van Schaeybroeck and Vannitsem (2015), respectively. While the \code{"mse_min"} method minimizes a constrained mean-squared error using three parameters, the \code{"crps_min"} method features four parameters and minimizes the Continuous Ranked Probability Score (CRPS). 
-#'@description Both in-sample or our out-of-sample (leave-one-out cross validation) calibration are possible.
-#'@references Doblas-Reyes F.J, Hagedorn R, Palmer T.N. The rationale behind the success of multi-model ensembles in seasonal forecasting-II calibration and combination. Tellus A. 2005;57:234-252. doi:10.1111/j.1600-0870.2005.00104.x
-#'@references Van Schaeybroeck, B., & Vannitsem, S. (2011). Post-processing through linear regression. Nonlinear Processes in Geophysics, 18(2), 147. doi:10.5194/npg-18-147-2011
-#'@references Van Schaeybroeck, B., & Vannitsem, S. (2015). Ensemble post-processing using member-by-member approaches: theoretical aspects. Quarterly Journal of the Royal Meteorological Society, 141(688), 807-818.  doi:10.1002/qj.2397
+#'@description Equivalent to function \code{Calibration} but for objects of class \code{s2dv_cube}.
 #'
 #'@param exp an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the seasonal forecast experiment data in the element named \code{$data}.
 #'@param obs an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the observed data in the element named \code{$data}.
 #'@param cal.method is the calibration method used, can be either \code{bias}, \code{evmos}, \code{mse_min} or \code{crps_min}. Default value is \code{mse_min}.
 #'@param eval.method is the sampling method used, can be either \code{in-sample} or \code{leave-one-out}. Default value is the \code{leave-one-out} cross validation.
 #'@param multi.model is a boolean that is used only for the \code{mse_min} method. If multi-model ensembles or ensembles of different sizes are used, it must be set to \code{TRUE}. By default it is \code{FALSE}. Differences between the two approaches are generally small but may become large when using small ensemble sizes. Using multi.model when the calibration method is \code{bias}, \code{evmos} or \code{crps_min} will not affect the result.
-#'@return an object of class \code{s2dv_cube} containing the calibrated forecasts in the element \code{$data} with the same dimensions of the experimental data.
+#'@param na.fill is a boolean that indicates what happens in case calibration is not possible or will yield unreliable results. This happens when three or less forecasts-observation pairs are available to perform the training phase of the calibration. By default \code{na.fill} is set to true such that NA values will be returned. If \code{na.fill} is set to false, the uncorrected data will be returned. 
+#'@param ncores is an integer that indicates the number of cores for parallel computations using multiApply function. The default value is one.
+#'@return an object of class \code{s2dv_cube} containing the calibrated forecasts in the element \code{$data} with the same dimensions as the one in the exp object.
 #'
 #'@import s2dverification
 #'@import abind
 #'
 #'@seealso \code{\link{CST_Load}}
 #'
-#'# Example
-#'# Creation of sample s2dverification objects. These are not complete
-#'# s2dverification objects though. The Load function returns complete objects.
+#'@examples
+#'# Example 1:
 #'mod1 <- 1 : (1 * 3 * 4 * 5 * 6 * 7)
 #'dim(mod1) <- c(dataset = 1, member = 3, sdate = 4, ftime = 5, lat = 6, lon = 7)
 #'obs1 <- 1 : (1 * 1 * 4 * 5 * 6 * 7)
@@ -37,8 +34,12 @@
 #'str(a)
 #'@export
 
-
-CST_Calibration <- function(exp, obs, cal.method = "mse_min", eval.method = "leave-one-out",  multi.model = F) {
+CST_Calibration <- function(exp, obs, 
+  cal.method = "mse_min", 
+  eval.method = "leave-one-out",  
+  multi.model = F, 
+  na.fill = T,
+  ncores = 1) {
   if (!inherits(exp, "s2dv_cube") || !inherits(obs, "s2dv_cube")) {
     stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube', ",
          "as output by CSTools::CST_Load.")
@@ -52,9 +53,12 @@ CST_Calibration <- function(exp, obs, cal.method = "mse_min", eval.method = "lea
   if(!missing(multi.model) & !(cal.method == "mse_min")){
 	  warning(paste0("The multi.model parameter is ignored when using the calibration method ", cal.method))
   }
-  exp$data <- .calibration.wrap(exp = exp$data, obs = obs$data,
-    cal.method = cal.method, eval.method = eval.method,  
-    multi.model =  multi.model)
+  exp$data <- Calibration(exp = exp$data, obs = obs$data,
+    cal.method = cal.method, 
+    eval.method = eval.method,  
+    multi.model =  multi.model, 
+    na.fill = na.fill,
+    ncores = ncores)
   
   exp$Datasets <- c(exp$Datasets, obs$Datasets)
   exp$source_files <- c(exp$source_files, obs$source_files)
@@ -62,7 +66,39 @@ CST_Calibration <- function(exp, obs, cal.method = "mse_min", eval.method = "lea
   
 }
 
-.calibration.wrap <- function(exp, obs, cal.method, eval.method, multi.model) {
+
+
+#'Forecast Calibration 
+#'
+#'@author Verónica Torralba, \email{veronica.torralba@bsc.es} 
+#'@author Bert Van Schaeybroeck, \email{bertvs@meteo.be}
+#'@description Four types of member-by-member bias correction can be performed. The \code{bias} method corrects the bias only, the \code{evmos} method applies a variance inflation technique to ensure the correction of the bias and the correspondence of variance between forecast and observation (Van Schaeybroeck and Vannitsem, 2011). The ensemble calibration methods \code{"mse_min"} and \code{"crps_min"} correct the bias, the overall forecast variance and the ensemble spread as described in Doblas-Reyes et al. (2005) and Van Schaeybroeck and Vannitsem (2015), respectively. While the \code{"mse_min"} method minimizes a constrained mean-squared error using three parameters, the \code{"crps_min"} method features four parameters and minimizes the Continuous Ranked Probability Score (CRPS). 
+#'@description Both in-sample or our out-of-sample (leave-one-out cross validation) calibration are possible.
+#'@references Doblas-Reyes F.J, Hagedorn R, Palmer T.N. The rationale behind the success of multi-model ensembles in seasonal forecasting-II calibration and combination. Tellus A. 2005;57:234-252. doi:10.1111/j.1600-0870.2005.00104.x
+#'@references Van Schaeybroeck, B., & Vannitsem, S. (2011). Post-processing through linear regression. Nonlinear Processes in Geophysics, 18(2), 147. doi:10.5194/npg-18-147-2011
+#'@references Van Schaeybroeck, B., & Vannitsem, S. (2015). Ensemble post-processing using member-by-member approaches: theoretical aspects. Quarterly Journal of the Royal Meteorological Society, 141(688), 807-818.  doi:10.1002/qj.2397
+#'
+#'@param exp an array containing the seasonal forecast experiment data.
+#'@param obs an array containing the observed data.
+#'@param cal.method is the calibration method used, can be either \code{bias}, \code{evmos}, \code{mse_min} or \code{crps_min}. Default value is \code{mse_min}.
+#'@param eval.method is the sampling method used, can be either \code{in-sample} or \code{leave-one-out}. Default value is the \code{leave-one-out} cross validation.
+#'@param multi.model is a boolean that is used only for the \code{mse_min} method. If multi-model ensembles or ensembles of different sizes are used, it must be set to \code{TRUE}. By default it is \code{FALSE}. Differences between the two approaches are generally small but may become large when using small ensemble sizes. Using multi.model when the calibration method is \code{bias}, \code{evmos} or \code{crps_min} will not affect the result.
+#'@param na.fill is a boolean that indicates what happens in case calibration is not possible or will yield unreliable results. This happens when three or less forecasts-observation pairs are available to perform the training phase of the calibration. By default \code{na.fill} is set to true such that NA values will be returned. If \code{na.fill} is set to false, the uncorrected data will be returned. 
+#'@param ncores is an integer that indicates the number of cores for parallel computations using multiApply function. The default value is one.
+#'@return an array containing the calibrated forecasts with the same dimensions as the \code{exp} array.
+#'
+#'@import s2dverification
+#'@import abind
+#'
+#'@seealso \code{\link{CST_Load}}
+#'
+
+Calibration <- function(exp, obs,
+  cal.method = "mse_min", 
+  eval.method = "leave-one-out",  
+  multi.model = F, 
+  na.fill = T,
+  ncores = 1) {
 	
   dim.exp <- dim(exp)
   amt.dims.exp <- length(dim.exp)
@@ -93,14 +129,30 @@ CST_Calibration <- function(exp, obs, cal.method = "mse_min", eval.method = "lea
   if (dim(obs)['member']!=1){
     stop("Parameter 'obs' must have a member dimension with length=1")
   }
-  
-  obs <- Subset(obs, along = "member", indices = 1, drop = "selected")
     
-  calibrated <- Apply(data = list(mod = exp, obs = obs),
+  obs <- Subset(obs, along = "member", indices = 1, drop = "selected")
+
+  data.set.sufficiently.large.out <- 
+    Apply(data = list(exp = exp, obs = obs),
+      target_dims = list(exp = target.dim.names.exp, obs = target.dim.names.obs),
+      ncores = ncores,
+      fun = .data.set.sufficiently.large)$output1
+    
+  if(!all(data.set.sufficiently.large.out)){		
+	if(na.fill){
+      warning("Some forecast data could not be corrected due to data lack and is replaced with NA values")
+	} else {
+      warning("Some forecast data could not be corrected due to data lack and is replaced with uncorrected values")
+	 }
+  }
+    
+  calibrated <- Apply(data = list(exp = exp, obs = obs),
     cal.method = cal.method,
     eval.method = eval.method,
     multi.model = multi.model,
-    target_dims = list(mod = target.dim.names.exp, obs = target.dim.names.obs),
+    na.fill = na.fill,
+    target_dims = list(exp = target.dim.names.exp, obs = target.dim.names.obs),
+    ncores = ncores,
     fun = .cal)$output1
 
   dexes <- match(names(dim(exp)), names(dim(calibrated)))
@@ -109,6 +161,13 @@ CST_Calibration <- function(exp, obs, cal.method = "mse_min", eval.method = "lea
   
 
   return(calibrated)
+}
+
+
+.data.set.sufficiently.large <- function(exp, obs){
+  amt.min.samples <- 3
+  amt.good.pts <- sum(!is.na(obs) & !apply(exp, c(2), function(x) all(is.na(x))))
+  return(amt.good.pts > amt.min.samples)
 }
 
 .make.eval.train.dexes <- function(eval.method, amt.points){ 
@@ -122,14 +181,23 @@ CST_Calibration <- function(exp, obs, cal.method = "mse_min", eval.method = "lea
   return(dexes.lst)
 }
 
-.cal <- function(mod, obs, cal.method, eval.method, multi.model) {
+.cal <- function(exp, obs, cal.method, eval.method, multi.model, na.fill) {
 
-  var.obs <- as.vector(obs)
-  var.fc <- mod
-  dims.fc <- dim(var.fc)
+  obs <- as.vector(obs)
+  dims.fc <- dim(exp)
   amt.mbr <- dims.fc[1]
   amt.sdate <- dims.fc[2]
-  var.cor.fc <- NA * var.fc
+  var.cor.fc <- NA * exp
+  names(dim(var.cor.fc)) <- c("member", "sdate")
+  
+  if(!.data.set.sufficiently.large(exp = exp, obs = obs)){
+	if(na.fill){
+ 	  return(var.cor.fc)
+	} else {
+ 	  var.cor.fc[] <- exp[]
+	  return(var.cor.fc)
+	}
+  }
   
   eval.train.dexeses <- .make.eval.train.dexes(eval.method, amt.points = amt.sdate)
   amt.resamples <- length(eval.train.dexeses)
@@ -138,9 +206,9 @@ CST_Calibration <- function(exp, obs, cal.method = "mse_min", eval.method = "lea
     eval.dexes <- eval.train.dexeses[[i.sample]]$eval.dexes
     train.dexes <- eval.train.dexeses[[i.sample]]$train.dexes
     
-    fc.ev <- var.fc[ , eval.dexes, drop = FALSE]
-    fc.tr <- var.fc[ , train.dexes]
-    obs.tr <- var.obs[train.dexes , drop = FALSE] 
+    fc.ev <- exp[ , eval.dexes, drop = FALSE]
+    fc.tr <- exp[ , train.dexes]
+    obs.tr <- obs[train.dexes , drop = FALSE] 
     
     if(cal.method == "bias"){
 	  var.cor.fc[ , eval.dexes] <- fc.ev + mean(obs.tr, na.rm = TRUE) - mean(fc.tr, na.rm = TRUE)
@@ -165,8 +233,11 @@ CST_Calibration <- function(exp, obs, cal.method = "mse_min", eval.method = "lea
       init.par <- c(.calc.mse.min.par(quant.obs.fc.tr), 0.001)
       init.par[3] <- sqrt(init.par[3])
       #calculate regression parameters on training dataset
-      optim.tmp <- optim(par = init.par, fn = .calc.crps.opt, 
-        quant.obs.fc = quant.obs.fc.tr, method = "Nelder-Mead")
+      optim.tmp <- optim(par = init.par, 
+        fn = .calc.crps.opt, 
+        gr = .calc.crps.grad.opt, 
+        quant.obs.fc = quant.obs.fc.tr, 
+        method = "BFGS")
       
       mbm.par <- optim.tmp$par
 	  #correct evaluation subset
@@ -175,7 +246,6 @@ CST_Calibration <- function(exp, obs, cal.method = "mse_min", eval.method = "lea
 	  stop("unknown calibration method: ",cal.method)
     }
   }
-  names(dim(var.cor.fc)) <- c("member", "sdate")
   return(var.cor.fc) 
 }
 
@@ -292,6 +362,23 @@ CST_Calibration <- function(exp, obs, cal.method = "mse_min", eval.method = "lea
         mean(abs((par[3])^2 * spr.abs + par[4]) / 2., na.rm = TRUE)
     )
   )
+}
+
+.calc.crps.grad.opt <- function(par, quant.obs.fc){
+  sgn1 <- with(quant.obs.fc,sign(obs.per.ens - 
+    (par[1] + par[2] * fc.ens.av.per.ens +
+    ((par[3])^2 + par[4] / spr.abs.per.ens) * fc.dev)))
+  sgn2 <- with(quant.obs.fc, sign((par[3])^2 + par[4] / spr.abs.per.ens))
+  sgn3 <- with(quant.obs.fc,sign((par[3])^2 * spr.abs + par[4]))
+  deriv.par1 <- mean(sgn1, na.rm = TRUE)
+  deriv.par2 <- with(quant.obs.fc, mean(sgn1 * fc.dev, na.rm = TRUE))
+  deriv.par3 <- with(quant.obs.fc, 
+    mean(2* par[3] * sgn1 * sgn2 * fc.ens.av.per.ens, na.rm = TRUE) -
+    mean(spr.abs * sgn3, na.rm = TRUE) / 2.)
+  deriv.par4 <- with(quant.obs.fc,
+    mean(sgn1 * sgn2 * fc.ens.av.per.ens / spr.abs.per.ens, na.rm = TRUE) -
+    mean(sgn3, na.rm = TRUE) / 2.)
+  return(c(deriv.par1, deriv.par2, deriv.par3, deriv.par4))
 }
 
 #Below are the core or elementary functions to correct the evaluation set based on the regression parameters

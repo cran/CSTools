@@ -4,8 +4,15 @@
 \alias{CST_Analogs}
 \title{Downscaling using Analogs based on large scale fields.}
 \usage{
-CST_Analogs(expL, obsL, time_obsL, expVar = NULL, obsVar = NULL,
-  region = NULL, criteria = "Large_dist")
+CST_Analogs(
+  expL,
+  obsL,
+  time_obsL,
+  expVar = NULL,
+  obsVar = NULL,
+  region = NULL,
+  criteria = "Large_dist"
+)
 }
 \arguments{
 \item{expL}{an 's2dv_cube' object containing the experimental field on the 
@@ -82,11 +89,6 @@ adapted version of the method of Yiou et al 2013.
 res <- CST_Analogs(expL = lonlat_data$exp, obsL = lonlat_data$obs)
 
 }
-\author{
-M. Carmen Alvarez-Castro, \email{carmen.alvarez-castro@cmcc.it}
-
-Nuria Perez-Zanon \email{nuria.perez@bsc.es}
-}
 \references{
 Yiou, P., T. Salameh, P. Drobinski, L. Menut, R. Vautard,
 and M. Vrac, 2013 : Ensemble reconstruction of the atmospheric column 
@@ -97,4 +99,8 @@ from surface pressure using analogues.  Clim. Dyn., 41, 1419-1437.
 code{\link{CST_Load}}, \code{\link[s2dverification]{Load}} and 
 \code{\link[s2dverification]{CDORemap}}
 }
+\author{
+M. Carmen Alvarez-Castro, \email{carmen.alvarez-castro@cmcc.it}
 
+Nuria Perez-Zanon \email{nuria.perez@bsc.es}
+}

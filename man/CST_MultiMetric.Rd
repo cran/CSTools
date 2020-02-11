@@ -37,15 +37,14 @@ c(ano_exp, ano_obs) \%<-\% CST_Anomaly(exp = exp, obs = obs, cross = TRUE, memb 
 a <- CST_MultiMetric(exp = ano_exp, obs = ano_obs)
 str(a)
 }
-\author{
-Mishra Niti, \email{niti.mishra@bsc.es}
-
-Perez-Zanon Nuria, \email{nuria.perez@bsc.es}
-}
 \references{
 Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31.\url{http://link.springer.com/10.1007/s00382-018-4404-z}
 }
 \seealso{
 \code{\link[s2dverification]{Corr}}, \code{\link[s2dverification]{RMS}}, \code{\link[s2dverification]{RMSSS}} and \code{\link{CST_Load}}
 }
+\author{
+Mishra Niti, \email{niti.mishra@bsc.es}
 
+Perez-Zanon Nuria, \email{nuria.perez@bsc.es}
+}

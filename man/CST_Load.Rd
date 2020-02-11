@@ -47,4 +47,3 @@ obs <- CSTools::lonlat_data$obs
 \author{
 Nicolau Manubens, \email{nicolau.manubens@bsc.es}
 }
-

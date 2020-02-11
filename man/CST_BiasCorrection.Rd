@@ -35,10 +35,9 @@ attr(obs, 'class') <- 's2dv_cube'
 a <- CST_BiasCorrection(exp = exp, obs = obs)
 str(a)
 }
-\author{
-Verónica Torralba, \email{veronica.torralba@bsc.es}
-}
 \references{
 Torralba, V., F.J. Doblas-Reyes, D. MacLeod, I. Christel and M. Davis (2017). Seasonal climate prediction: a new source of information for the management of wind energy resources. Journal of Applied Meteorology and Climatology, 56, 1231-1247, doi:10.1175/JAMC-D-16-0204.1. (CLIM4ENERGY, EUPORIAS, NEWA, RESILIENCE, SPECS)
 }
-\encoding{UTF-8}
+\author{
+Verónica Torralba, \email{veronica.torralba@bsc.es}
+}

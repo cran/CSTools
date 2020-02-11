@@ -4,8 +4,14 @@
 \alias{CST_MultiEOF}
 \title{EOF analysis of multiple variables}
 \usage{
-CST_MultiEOF(datalist, neof_max = 40, neof_composed = 5, minvar = 0.6,
-  lon_lim = NULL, lat_lim = NULL)
+CST_MultiEOF(
+  datalist,
+  neof_max = 40,
+  neof_composed = 5,
+  minvar = 0.6,
+  lon_lim = NULL,
+  lat_lim = NULL
+)
 }
 \arguments{
 \item{datalist}{A list of objects of the class 's2dv_cube', containing the variables to be analysed.
@@ -69,4 +75,3 @@ Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}
 
 Paolo Davini - ISAC-CNR, \email{p.davini@isac.cnr.it}
 }
-

@@ -56,10 +56,9 @@ weight <- c(1, 2)
 a <- CST_MultivarRMSE(exp = ano_exp, obs = ano_obs, weight = weight)
 str(a)
 }
-\author{
-Deborah Verfaillie, \email{deborah.verfaillie@bsc.es}
-}
 \seealso{
 \code{\link[s2dverification]{RMS}} and \code{\link{CST_Load}}
 }
-
+\author{
+Deborah Verfaillie, \email{deborah.verfaillie@bsc.es}
+}

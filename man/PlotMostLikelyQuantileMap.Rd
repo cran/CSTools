@@ -4,8 +4,15 @@
 \alias{PlotMostLikelyQuantileMap}
 \title{Plot Maps of Most Likely Quantiles}
 \usage{
-PlotMostLikelyQuantileMap(probs, lon, lat, cat_dim = "bin",
-  bar_titles = NULL, col_unknown_cat = "white", ...)
+PlotMostLikelyQuantileMap(
+  probs,
+  lon,
+  lat,
+  cat_dim = "bin",
+  bar_titles = NULL,
+  col_unknown_cat = "white",
+  ...
+)
 }
 \arguments{
 \item{probs}{a list of bi-dimensional arrays with the named dimensions 'latitude' (or 'lat') and 'longitude' (or 'lon'), with equal size and in the same order, or a single tri-dimensional array with an additional dimension (e.g. 'bin') for the different categories. The arrays must contain probability values between 0 and 1, and the probabilities for all categories of a grid cell should not exceed 1 when added.}
@@ -110,10 +117,9 @@ PlotMostLikelyQuantileMap(bins, lons, lats,
                          brks = 20, width = 10, height = 8)
 
 }
-\author{
-Veronica Torralba, \email{veronica.torralba@bsc.es}, Nicolau Manubens, \email{nicolau.manubens@bsc.es}
-}
 \seealso{
 \code{PlotCombinedMap} and \code{PlotEquiMap}
 }
-
+\author{
+Veronica Torralba, \email{veronica.torralba@bsc.es}, Nicolau Manubens, \email{nicolau.manubens@bsc.es}
+}

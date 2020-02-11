@@ -4,9 +4,16 @@
 \alias{BEI_PDFBest}
 \title{Computing the Best Index PDFs combining Index PDFs from two SFSs}
 \usage{
-BEI_PDFBest(index_obs, index_hind1, index_hind2, index_fcst1 = NULL,
-  index_fcst2 = NULL, method_BC = "none", time_dim_name = "time",
-  na.rm = FALSE)
+BEI_PDFBest(
+  index_obs,
+  index_hind1,
+  index_hind2,
+  index_fcst1 = NULL,
+  index_fcst2 = NULL,
+  method_BC = "none",
+  time_dim_name = "time",
+  na.rm = FALSE
+)
 }
 \arguments{
 \item{index_obs}{Index (e.g. NAO index) array from an observational database
@@ -113,12 +120,11 @@ dim(res)
 # time statistic    season
 #    1         2         2 
 }
-\author{
-Eroteida Sanchez-Garcia - AEMET, \email{esanchezg@aemet.es}
-}
 \references{
 Regionally improved seasonal forecast of precipitation through 
 Best estimation of winter NAO, Sanchez-Garcia, E. et al.,
 Adv. Sci. Res., 16, 165174, 2019, https://doi.org/10.5194/asr-16-165-2019
 }
-
+\author{
+Eroteida Sanchez-Garcia - AEMET, \email{esanchezg@aemet.es}
+}

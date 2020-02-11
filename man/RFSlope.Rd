@@ -4,8 +4,7 @@
 \alias{RFSlope}
 \title{RainFARM spectral slopes from an array (reduced version)}
 \usage{
-RFSlope(data, kmin = 1, time_dim = NULL, lon_dim = "lon",
-  lat_dim = "lat")
+RFSlope(data, kmin = 1, time_dim = NULL, lon_dim = "lon", lat_dim = "lat")
 }
 \arguments{
 \item{data}{Array containing the spatial precipitation fields to downscale.
@@ -60,4 +59,3 @@ slopes
 \author{
 Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}
 }
-

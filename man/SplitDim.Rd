@@ -35,4 +35,3 @@ new_data <- SplitDim(data, indices = time, freq = 'year')
 \author{
 Nuria Perez-Zanon, \email{nuria.perez@bsc.es}
 }
-

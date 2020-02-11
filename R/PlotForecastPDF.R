@@ -1,12 +1,12 @@
 #'Plot one or multiple ensemble forecast pdfs for the same event
 #'
 #'@author Llorenç Lledó \email{llledo@bsc.es}
-#'@description This function plots the probability distribution function of several ensemble forecasts for the same event, either initialized at different moments or by different models. Probabilities for tercile categories are computed, plotted in colors and annotated. An asterisk marks the tercile with higher probabilities. Probabilities for extreme categories (above P90 and below P10) can also be included as hatched areas. Individual ensemble members can be plotted as jittered points. The observed value is optionally shown as a diamond.
+#'@description This function plots the probability distribution function of several ensemble forecasts. Separate panels are used to plot forecasts valid or initialized at different times or by different models or even at different locations. Probabilities for tercile categories are computed, plotted in colors and annotated. An asterisk marks the tercile with higher probabilities. Probabilities for extreme categories (above P90 and below P10) can also be included as hatched areas. Individual ensemble members can be plotted as jittered points. The observed value is optionally shown as a diamond.
 #'
-#'@param fcst a dataframe or array containing all the ensember members for each frecast. If \code{'fcst'} is an array, it should have two labelled dimensions, and one of them should be \code{'members'}. If \code{'fcsts'} is a data.frame, each column shoul be a separate forecast, with the rows beeing the different ensemble members.
-#'@param tercile.limits an array with P33 and P66 values that define the tercile categories.
-#'@param extreme.limits (optional) an array with P10 and P90 values that define the extreme categories. (Default: extreme categories are not shown).
-#'@param obs (optional) a number with the observed value. (Default: observation is not shown).
+#'@param fcst a dataframe or array containing all the ensember members for each forecast. If \code{'fcst'} is an array, it should have two labelled dimensions, and one of them should be \code{'members'}. If \code{'fcsts'} is a data.frame, each column shoul be a separate forecast, with the rows beeing the different ensemble members.
+#'@param tercile.limits an array or vector with P33 and P66 values that define the tercile categories for each panel. Use an array of dimensions (nforecasts,2) to  define different terciles for each forecast panel, or a vector with two elements to reuse the same tercile limits for all forecast panels.
+#'@param extreme.limits (optional) an array or vector with P10 and P90 values that define the extreme categories for each panel. Use an array of (nforecasts,2) to define different extreme limits for each forecast panel, or a vector with two elements to reuse the same tercile limits for all forecast panels. (Default: extreme categories are not shown).
+#'@param obs (optional) A vector providing the observed values for each forecast panel or a single value that will be reused for all forecast panels. (Default: observation is not shown).
 #'@param plotfile (optional) a filename (pdf, png...) where the plot will be saved. (Default: the plot is not saved).
 #'@param title a string with the plot title.
 #'@param var.name a string with the variable name and units.
@@ -23,6 +23,7 @@
 #'@importFrom reshape2 melt
 #'@importFrom plyr .
 #'@importFrom plyr dlply
+#'@import s2dverification
 #'
 #'@examples
 #'fcsts <- data.frame(fcst1 = rnorm(10), fcst2 = rnorm(10, 0.5, 1.2), 
@@ -37,7 +38,8 @@
 PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = NULL, 
     plotfile = NULL, title = "Set a title", var.name = "Varname (units)", fcst.names = NULL, 
     add.ensmemb = c("above", "below", "no"), color.set = c("ggplot", "s2s4e", "hydro")) {
-    value <- init <- extremes <- x <- ymin <- ymax <- tercile <- y <- xend <- yend <- yjitter <- MLT <- NULL
+    value <- init <- extremes <- x <- ymin <- ymax <- tercile <- NULL
+    y <- xend <- yend <- yjitter <- MLT <- lab.pos <- NULL
     ggColorHue <- function(n) {
       hues <- seq(15, 375, length = n + 1)
       hcl(h = hues, l = 65, c = 100)[1:n]
@@ -71,20 +73,6 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     # Check input arguments
     #------------------------
     add.ensmemb <- match.arg(add.ensmemb)
-    if (length(tercile.limits) != 2) {
-        stop("Parameter 'tercile.limits' should be an array with two limits for delimiting tercile categories")
-    }
-    if (tercile.limits[1] >= tercile.limits[2]) {
-        stop("The provided tercile limits are in the wrong order")
-    }
-    if (!is.null(extreme.limits)) {
-        if (length(extreme.limits) != 2) {
-            stop("Parameter 'extreme.limits' should be an array with two limits for delimiting extreme categories")
-        }
-        if (extreme.limits[1] >= tercile.limits[1] | extreme.limits[2] <= tercile.limits[2]) {
-            stop("The provided extreme limits are not consistent with tercile limits")
-        }
-    }
     #------------------------
     # Check fcst type and convert to data.frame if needed
     #------------------------
@@ -102,6 +90,74 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
         fcst.df <- fcst
     } else {
         stop("Parameter 'fcst' should be an array or a data.frame")
+    }
+    npanels <- ncol(fcst.df)
+    #------------------------
+    # Check observations
+    #------------------------
+    if (!is.null(obs)) {
+        if (!is.vector(obs)){
+            stop("Observations should be a vector")
+        } else if (!length(obs) %in% c(1, npanels)) {
+            stop("The number of observations should equal one or the number of forecasts")
+        }
+    }
+    #------------------------
+    # Check tercile limits
+    #------------------------
+    if (is.vector(tercile.limits)) {
+        if (length(tercile.limits) != 2) {
+            stop("Provide two tercile limits")
+        } 
+        tercile.limits <- InsertDim(tercile.limits, 1, npanels)
+    } else if (is.array(tercile.limits)) {
+        if (length(dim(tercile.limits)) == 2) {
+            if (dim(tercile.limits)[2] != 2) {
+                stop("Provide two tercile limits for each panel")
+            }
+            if (dim(tercile.limits)[1] != npanels) {
+                stop("The number of tercile limits does not match the number of forecasts provided")
+            }
+        } else {
+            stop("Tercile limits should have two dimensions")
+        } 
+    } else {
+        stop("Tercile limits should be a vector of length two or an array of dimension (nfcsts,2)")
+    }
+    # check consistency of tercile limits
+    if (any(tercile.limits[, 1] >= tercile.limits[, 2])) {
+        stop("Inconsistent tercile limits")
+    }
+    #------------------------
+    # Check extreme limits
+    #------------------------
+    if (!is.null(extreme.limits)) {
+        if (is.vector(extreme.limits)) {
+            if (length(extreme.limits) != 2) {
+                stop("Provide two extreme limits")
+            } 
+            extreme.limits <- InsertDim(extreme.limits, 1, npanels)
+        } else if (is.array(extreme.limits)) {
+            if (length(dim(extreme.limits)) == 2) {
+                if (dim(extreme.limits)[2] != 2) {
+                    stop("Provide two extreme limits for each panel")
+                }
+                if (dim(extreme.limits)[1] != npanels) {
+                    stop("The number of extreme limits does not match the number of forecasts provided")
+                }
+            } else {
+                stop("extreme limits should have two dimensions")
+            }
+        } else {
+            stop("Extreme limits should be a vector of length two or an array of dimensions (nfcsts,2)")
+        }
+        # Check that extreme limits are consistent with tercile limits 
+        if (any(extreme.limits[, 1] >= tercile.limits[, 1])) {
+            stop("Inconsistent lower extreme limits")
+        }
+        if (any(extreme.limits[, 2] <= tercile.limits[, 2])) {
+            stop("Inconsistent higher extreme limits")
+        }
     }
     #------------------------
     # Set proper fcst names
@@ -132,8 +188,8 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     } else {
         stop("Cannot find PANELS in ggp object")
     }
-    tmp.df$tercile <- factor(ifelse(tmp.df$x < tercile.limits[1], "Below normal", 
-        ifelse(tmp.df$x < tercile.limits[2], "Normal", "Above normal")), levels = c("Below normal", 
+    tmp.df$tercile <- factor(ifelse(tmp.df$x < tercile.limits[tmp.df$PANEL, 1], "Below normal", 
+        ifelse(tmp.df$x < tercile.limits[tmp.df$PANEL, 2], "Normal", "Above normal")), levels = c("Below normal", 
         "Normal", "Above normal"))
     #------------------------
     # Get the height and width of a panel
@@ -145,8 +201,8 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     # Compute hatch coordinates for extremes
     #------------------------
     if (!is.null(extreme.limits)) {
-        tmp.df$extremes <- factor(ifelse(tmp.df$x < extreme.limits[1], "Below P10", 
-            ifelse(tmp.df$x < extreme.limits[2], "Normal", "Above P90")), levels = c("Below P10", 
+        tmp.df$extremes <- factor(ifelse(tmp.df$x < extreme.limits[tmp.df$PANEL, 1], "Below P10", 
+            ifelse(tmp.df$x < extreme.limits[tmp.df$PANEL, 2], "Normal", "Above P90")), levels = c("Below P10", 
             "Normal", "Above P90"))
         hatch.ls <- dlply(tmp.df, .(init, extremes), function(x) {
             # close the polygon
@@ -254,7 +310,7 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     pct <- merge(pct, tot, by = "init")
     pct$pct <- round(100 * pct$pct/pct$tot, 0)
     pct$MLT <- pct[, .(MLT = pct == max(pct)), by = init]$MLT
-    lab.pos <- c(tercile.limits[1], mean(tercile.limits), tercile.limits[2])
+    pct$lab.pos <- as.vector(apply(tercile.limits, 1, function(x) {c(min(x), mean(x), max(x))}))
     #------------------------
     # Compute probability for extremes
     #------------------------
@@ -264,7 +320,7 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
         tot2 <- pct2[, .(tot = sum(pct)), by = init]
         pct2 <- merge(pct2, tot2, by = "init")
         pct2$pct <- round(100 * pct2$pct/pct2$tot, 0)
-        lab.pos2 <- c(extreme.limits[1], NA, extreme.limits[2])
+        pct2$lab.pos <-  as.vector(apply(extreme.limits, 1, function(x) {c(x[1], NA, x[2])}))
         pct2 <- merge(pct2, max.df, by = c("init", "extremes"))
         # include potentially missing groups
         pct2 <- pct2[CJ(levels(pct2$init), factor(c("Below P10", "Normal", "Above P90"), 
@@ -280,16 +336,16 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
         labpos <- 0
         vjust <- -0.5
     }
-    plot <- plot + geom_text(data = pct, aes(x = lab.pos[as.integer(tercile)], y = labpos, 
+    plot <- plot + geom_text(data = pct, aes(x = lab.pos, y = labpos, 
         label = paste0(pct, "%"), hjust = as.integer(tercile) * 1.5 - 2.5), vjust = vjust, 
-        angle = -90, size = 3.2) + geom_text(data = pct[MLT == T, ], aes(x = lab.pos[as.integer(tercile)], 
+        angle = -90, size = 3.2) + geom_text(data = pct[MLT == T, ], aes(x = lab.pos, 
         y = labpos, label = "*", hjust = as.integer(tercile) * 3.5 - 5), vjust = 0.1, 
         angle = -90, size = 7, color = "black")
     #------------------------
     # Add probability labels for extremes
     #------------------------
     if (!is.null(extreme.limits)) {
-        plot <- plot + geom_text(data = pct2[extremes != "Normal", ], aes(x = lab.pos2[as.integer(extremes)], 
+        plot <- plot + geom_text(data = pct2[extremes != "Normal", ], aes(x = lab.pos, 
             y = 0.9 * y, label = paste0(pct, "%"), hjust = as.integer(extremes) * 
                 1.5 - 2.5), vjust = -0.5, angle = -90, size = 3.2, color = rep(colorLab, 
             dim(fcst.df)[2]))

@@ -4,11 +4,27 @@
 \alias{PlotCombinedMap}
 \title{Plot Multiple Lon-Lat Variables In a Single Map According to a Decision Function}
 \usage{
-PlotCombinedMap(maps, lon, lat, map_select_fun, display_range,
-  map_dim = "map", brks = NULL, cols = NULL, col_unknown_map = "white",
-  mask = NULL, col_mask = "grey", bar_titles = NULL, legend_scale = 1,
-  fileout = NULL, width = 8, height = 5, size_units = "in", res = 100,
-  ...)
+PlotCombinedMap(
+  maps,
+  lon,
+  lat,
+  map_select_fun,
+  display_range,
+  map_dim = "map",
+  brks = NULL,
+  cols = NULL,
+  col_unknown_map = "white",
+  mask = NULL,
+  col_mask = "grey",
+  bar_titles = NULL,
+  legend_scale = 1,
+  fileout = NULL,
+  width = 8,
+  height = 5,
+  size_units = "in",
+  res = 100,
+  ...
+)
 }
 \arguments{
 \item{maps}{List of matrices to plot, each with (longitude, latitude) dimensions, or 3-dimensional array with the dimensions (longitude, latitude, map). Dimension names are required.}
@@ -67,12 +83,11 @@ PlotCombinedMap(list(a, b, c), lons, lats,
                bar_titles = paste('\% of belonging to', c('a', 'b', 'c')), 
                brks = 20, width = 10, height = 8)
 }
+\seealso{
+\code{PlotCombinedMap} and \code{PlotEquiMap}
+}
 \author{
 Nicolau Manubens, \email{nicolau.manubens@bsc.es}
 
 Veronica Torralba, \email{veronica.torralba@bsc.es}
 }
-\seealso{
-\code{PlotCombinedMap} and \code{PlotEquiMap}
-}
-

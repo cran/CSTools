@@ -1,3 +1,14 @@
+### CSTools 3.0.0
+**Submission date to CRAN: 10-02-2020**
+
+- New features:
+    + CST_MergeDims and MergeDims
+    + Version working with R 3.4.2
+    + PlotForecastPDF handles independent terciles, extremes and observations for each panel
+- Fixes
+    + CST_Calibration handles missing values
+    + BEI functions handle missing values
+    
 ### CSTools 2.0.0 
 **Submission date to CRAN: 25-11-2019**
 

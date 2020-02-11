@@ -4,9 +4,16 @@
 \alias{CST_QuantileMapping}
 \title{Quantiles Mapping for seasonal or decadal forecast data}
 \usage{
-CST_QuantileMapping(exp, obs, exp_cor = NULL, sample_dims = c("sdate",
-  "ftime", "member"), sample_length = NULL, method = "QUANT",
-  ncores = NULL, ...)
+CST_QuantileMapping(
+  exp,
+  obs,
+  exp_cor = NULL,
+  sample_dims = c("sdate", "ftime", "member"),
+  sample_length = NULL,
+  method = "QUANT",
+  ncores = NULL,
+  ...
+)
 }
 \arguments{
 \item{exp}{an object of class \code{s2dv_cube}}
@@ -77,10 +84,9 @@ res <- CST_QuantileMapping(exp = exp, obs = obs, sample_dims = 'time',
                           method = 'DIST')
 }
 }
-\author{
-Nuria Perez-Zanon, \email{nuria.perez@bsc.es}
-}
 \seealso{
 \code{\link[qmap]{fitQmap}} and \code{\link[qmap]{doQmap}}
 }
-
+\author{
+Nuria Perez-Zanon, \email{nuria.perez@bsc.es}
+}

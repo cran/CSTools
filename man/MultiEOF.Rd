@@ -4,9 +4,19 @@
 \alias{MultiEOF}
 \title{EOF analysis of multiple variables starting from an array (reduced version)}
 \usage{
-MultiEOF(data, lon, lat, time, lon_dim = "lon", lat_dim = "lat",
-  neof_max = 40, neof_composed = 5, minvar = 0.6, lon_lim = NULL,
-  lat_lim = NULL)
+MultiEOF(
+  data,
+  lon,
+  lat,
+  time,
+  lon_dim = "lon",
+  lat_dim = "lat",
+  neof_max = 40,
+  neof_composed = 5,
+  minvar = 0.6,
+  lon_lim = NULL,
+  lat_lim = NULL
+)
 }
 \arguments{
 \item{data}{A multidimensional array with dimension \code{"var"},
@@ -46,4 +56,3 @@ Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}
 
 Paolo Davini - ISAC-CNR, \email{p.davini@isac.cnr.it}
 }
-

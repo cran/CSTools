@@ -43,4 +43,3 @@ dim(new_data$data)
 \author{
 Nuria Perez-Zanon, \email{nuria.perez@bsc.es}
 }
-

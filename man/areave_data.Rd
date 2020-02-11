@@ -41,4 +41,3 @@ areave_data <-
 Nicolau Manubens \email{nicolau.manubens@bsc.es}
 }
 \keyword{data}
-

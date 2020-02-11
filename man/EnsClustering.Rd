@@ -4,10 +4,20 @@
 \alias{EnsClustering}
 \title{Ensemble clustering}
 \usage{
-EnsClustering(data, lat, lon, time_moment = "mean", numclus = NULL,
-  lon_lim = NULL, lat_lim = NULL, variance_explained = 80,
-  numpcs = NULL, time_percentile = 90, cluster_dim = "member",
-  verbose = T)
+EnsClustering(
+  data,
+  lat,
+  lon,
+  time_moment = "mean",
+  numclus = NULL,
+  lon_lim = NULL,
+  lat_lim = NULL,
+  variance_explained = 80,
+  numpcs = NULL,
+  time_percentile = 90,
+  cluster_dim = "member",
+  verbose = T
+)
 }
 \arguments{
 \item{data}{A matrix of dimensions 'dataset member sdate ftime lat lon' containing the variables to be analysed.}
@@ -67,4 +77,3 @@ Paolo Davini - ISAC-CNR, \email{p.davini@isac.cnr.it}
 
 Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}
 }
-

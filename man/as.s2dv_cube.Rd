@@ -40,12 +40,11 @@ data <- as.s2dv_cube(data)
 class(data)
 }
 }
+\seealso{
+\code{\link{s2dv_cube}}, \code{\link[s2dverification]{Load}}, \code{\link[startR]{Start}} and \code{\link{CST_Load}}
+}
 \author{
 Perez-Zanon Nuria, \email{nuria.perez@bsc.es}
 
 Nicolau Manubens, \email{nicolau.manubens@bsc.es}
 }
-\seealso{
-\code{\link{s2dv_cube}}, \code{\link[s2dverification]{Load}}, \code{\link[startR]{Start}} and \code{\link{CST_Load}}
-}
-

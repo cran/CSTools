@@ -44,12 +44,11 @@ dim(res)
 #    10         3         5      1
 
 }
-\author{
-Eroteida Sanchez-Garcia - AEMET, \email{esanchezg@aemet.es}
-}
 \references{
 Regionally improved seasonal forecast of precipitation through Best
 estimation of winter NAO, Sanchez-Garcia, E. et al.,
 Adv. Sci. Res., 16, 165174, 2019, https://doi.org/10.5194/asr-16-165-2019
 }
-
+\author{
+Eroteida Sanchez-Garcia - AEMET, \email{esanchezg@aemet.es}
+}

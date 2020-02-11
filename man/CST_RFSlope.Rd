@@ -50,4 +50,3 @@ slopes
 \author{
 Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}
 }
-

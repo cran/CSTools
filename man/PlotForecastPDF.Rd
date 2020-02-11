@@ -4,19 +4,27 @@
 \alias{PlotForecastPDF}
 \title{Plot one or multiple ensemble forecast pdfs for the same event}
 \usage{
-PlotForecastPDF(fcst, tercile.limits, extreme.limits = NULL, obs = NULL,
-  plotfile = NULL, title = "Set a title", var.name = "Varname (units)",
-  fcst.names = NULL, add.ensmemb = c("above", "below", "no"),
-  color.set = c("ggplot", "s2s4e", "hydro"))
+PlotForecastPDF(
+  fcst,
+  tercile.limits,
+  extreme.limits = NULL,
+  obs = NULL,
+  plotfile = NULL,
+  title = "Set a title",
+  var.name = "Varname (units)",
+  fcst.names = NULL,
+  add.ensmemb = c("above", "below", "no"),
+  color.set = c("ggplot", "s2s4e", "hydro")
+)
 }
 \arguments{
-\item{fcst}{a dataframe or array containing all the ensember members for each frecast. If \code{'fcst'} is an array, it should have two labelled dimensions, and one of them should be \code{'members'}. If \code{'fcsts'} is a data.frame, each column shoul be a separate forecast, with the rows beeing the different ensemble members.}
+\item{fcst}{a dataframe or array containing all the ensember members for each forecast. If \code{'fcst'} is an array, it should have two labelled dimensions, and one of them should be \code{'members'}. If \code{'fcsts'} is a data.frame, each column shoul be a separate forecast, with the rows beeing the different ensemble members.}
 
-\item{tercile.limits}{an array with P33 and P66 values that define the tercile categories.}
+\item{tercile.limits}{an array or vector with P33 and P66 values that define the tercile categories for each panel. Use an array of dimensions (nforecasts,2) to  define different terciles for each forecast panel, or a vector with two elements to reuse the same tercile limits for all forecast panels.}
 
-\item{extreme.limits}{(optional) an array with P10 and P90 values that define the extreme categories. (Default: extreme categories are not shown).}
+\item{extreme.limits}{(optional) an array or vector with P10 and P90 values that define the extreme categories for each panel. Use an array of (nforecasts,2) to define different extreme limits for each forecast panel, or a vector with two elements to reuse the same tercile limits for all forecast panels. (Default: extreme categories are not shown).}
 
-\item{obs}{(optional) a number with the observed value. (Default: observation is not shown).}
+\item{obs}{(optional) A vector providing the observed values for each forecast panel or a single value that will be reused for all forecast panels. (Default: observation is not shown).}
 
 \item{plotfile}{(optional) a filename (pdf, png...) where the plot will be saved. (Default: the plot is not saved).}
 
@@ -34,7 +42,7 @@ PlotForecastPDF(fcst, tercile.limits, extreme.limits = NULL, obs = NULL,
 a ggplot object containing the plot.
 }
 \description{
-This function plots the probability distribution function of several ensemble forecasts for the same event, either initialized at different moments or by different models. Probabilities for tercile categories are computed, plotted in colors and annotated. An asterisk marks the tercile with higher probabilities. Probabilities for extreme categories (above P90 and below P10) can also be included as hatched areas. Individual ensemble members can be plotted as jittered points. The observed value is optionally shown as a diamond.
+This function plots the probability distribution function of several ensemble forecasts. Separate panels are used to plot forecasts valid or initialized at different times or by different models or even at different locations. Probabilities for tercile categories are computed, plotted in colors and annotated. An asterisk marks the tercile with higher probabilities. Probabilities for extreme categories (above P90 and below P10) can also be included as hatched areas. Individual ensemble members can be plotted as jittered points. The observed value is optionally shown as a diamond.
 }
 \examples{
 fcsts <- data.frame(fcst1 = rnorm(10), fcst2 = rnorm(10, 0.5, 1.2), 
@@ -49,4 +57,3 @@ PlotForecastPDF(fcsts2, c(-0.66, 0.66), extreme.limits = c(-1.2, 1.2),
 \author{
 Llorenç Lledó \email{llledo@bsc.es}
 }
-\encoding{UTF-8}

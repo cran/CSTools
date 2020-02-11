@@ -4,9 +4,20 @@
 \alias{CST_RainFARM}
 \title{RainFARM stochastic precipitation downscaling of a CSTools object}
 \usage{
-CST_RainFARM(data, nf, weights = 1, slope = 0, kmin = 1, nens = 1,
-  fglob = FALSE, fsmooth = TRUE, nprocs = 1, time_dim = NULL,
-  verbose = FALSE, drop_realization_dim = FALSE)
+CST_RainFARM(
+  data,
+  nf,
+  weights = 1,
+  slope = 0,
+  kmin = 1,
+  nens = 1,
+  fglob = FALSE,
+  fsmooth = TRUE,
+  nprocs = 1,
+  time_dim = NULL,
+  verbose = FALSE,
+  drop_realization_dim = FALSE
+)
 }
 \arguments{
 \item{data}{An object of the class 's2dv_cube' as returned by `CST_Load`, 
@@ -96,12 +107,11 @@ dim(res$data)
 #       1           2           3           3           4          64          64
 
 }
-\author{
-Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}
-}
 \references{
 Terzago, S. et al. (2018). NHESS 18(11), 2825-2840.
 http://doi.org/10.5194/nhess-18-2825-2018 ;
 D'Onofrio et al. (2014), J of Hydrometeorology 15, 830-843; Rebora et. al. (2006), JHM 7, 724.
 }
-
+\author{
+Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}
+}

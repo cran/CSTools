@@ -30,10 +30,9 @@ CST_SaveExp(data = data, destination = destination)
 }
 
 }
-\author{
-Perez-Zanon Nuria, \email{nuria.perez@bsc.es}
-}
 \seealso{
 \code{\link{CST_Load}}, \code{\link{as.s2dv_cube}} and \code{\link{s2dv_cube}}
 }
-
+\author{
+Perez-Zanon Nuria, \email{nuria.perez@bsc.es}
+}

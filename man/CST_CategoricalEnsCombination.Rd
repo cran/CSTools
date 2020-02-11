@@ -4,8 +4,14 @@
 \alias{CST_CategoricalEnsCombination}
 \title{Make categorical forecast based on a multi-model forecast with potential for calibrate}
 \usage{
-CST_CategoricalEnsCombination(exp, obs, cat.method = "pool",
-  eval.method = "leave-one-out", amt.cat = 3, ...)
+CST_CategoricalEnsCombination(
+  exp,
+  obs,
+  cat.method = "pool",
+  eval.method = "leave-one-out",
+  amt.cat = 3,
+  ...
+)
 }
 \arguments{
 \item{exp}{an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the seasonal forecast experiment data in the element named \code{$data}. The amount of forecasting models is equal to the size of the \code{dataset} dimension of the data array. The amount of members per model may be different. The  size of the \code{member} dimension of the data array is equal to the maximum of the ensemble members among the models. Models with smaller ensemble sizes have residual indices of \code{member} dimension in the data array filled with NA values.}
@@ -83,9 +89,6 @@ attr(obs, 'class') <- 's2dv_cube'
 a <- CST_CategoricalEnsCombination(exp = exp, obs = obs, amt.cat = 3, cat.method = "mmw")
 }
 }
-\author{
-Bert Van Schaeybroeck, \email{bertvs@meteo.be}
-}
 \references{
 Rajagopalan, B., Lall, U., & Zebiak, S. E. (2002). Categorical climate forecasts through regularization and optimal combination of multiple GCM ensembles. Monthly Weather Review, 130(7), 1792-1811.
 
@@ -93,4 +96,6 @@ Robertson, A. W., Lall, U., Zebiak, S. E., & Goddard, L. (2004). Improved combin
 
 Van Schaeybroeck, B., & Vannitsem, S. (2019). Postprocessing of Long-Range Forecasts. In Statistical Postprocessing of Ensemble Forecasts (pp. 267-290).
 }
-
+\author{
+Bert Van Schaeybroeck, \email{bertvs@meteo.be}
+}

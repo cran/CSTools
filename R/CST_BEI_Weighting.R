@@ -19,6 +19,10 @@
 #' (time, member), when 'time' is the temporal dimension as default. 
 #' When 'aweights' parameter has any other dimensions (as e.g. 'lat') and 
 #' 'var_exp' parameter has also the same dimension, they must be equals.  
+#' @param terciles A numeric array with at least one dimension 'tercil' equal to 
+#' 2, the first element is the lower tercil for a hindcast period, and the second  
+#' element is the upper tercile. By default is NULL, the terciles are computed  
+#' from var_exp data.
 #' @param type A character string indicating the type of output. 
 #' If 'type' =  'probs', the function returns, in the element data from 
 #' 'var_exp' parameter, an array with at least two 
@@ -36,7 +40,7 @@
 #' with weighted members.
 #' @param time_dim_name A character string indicating the name of the 
 #' temporal dimension, by default 'time'.
-#'  
+#' 
 #' @return CST_BEI_Weighting() returns a CSTools object (i.e., of the
 #' class 's2dv_cube').
 #' This object has at least an element named \code{$data}
@@ -56,8 +60,10 @@
 #' # time     lat     lon   dataset
 #' #    2       3       2         2
 #' @export
-CST_BEI_Weighting <- function(var_exp, aweights, type = 'ensembleMean', 
-                         time_dim_name = 'time') {
+
+CST_BEI_Weighting <- function(var_exp, aweights, terciles = NULL, 
+                              type = 'ensembleMean', time_dim_name = 'time') {
+  
   if (!is.character(time_dim_name)) {
     stop("Parameter 'time_dim_name' must be a character string indicating",
          " the name of the temporal dimension.")
@@ -79,6 +85,27 @@ CST_BEI_Weighting <- function(var_exp, aweights, type = 'ensembleMean',
   if (!inherits(var_exp, 's2dv_cube')) {
     stop("Parameter 'var_exp' must be of the class 's2dv_cube', ",
          "as output by CSTools::CST_Load.")
+  }
+  if (!is.null(terciles)){
+    if(!is.array(terciles)){
+      stop("Parameter 'terciles' must be an array.")
+    } 
+    if (is.null(names(dim(terciles)))) {
+      stop("Parameters 'terciles' should have dimmension names.")
+    }
+    if(!('tercil' %in% names(dim(terciles)))) {
+      stop("Parameter 'terciles' must have dimension 'tercil'.")
+    }
+    if (dim(terciles)['tercil'] != 2) {
+      stop("Length of dimension 'tercil' ",
+           "of parameter 'terciles' must be equal to 2.")
+    }
+    if(time_dim_name %in% names(dim(terciles))) {
+      stop("Parameter 'terciles' must not have temporal dimension.")
+    }
+    if('member' %in% names(dim(terciles))) {
+      stop("Parameter 'terciles' must not have dimension 'member'.")
+    }
   }
   if (!is.array(aweights)) {
     stop("Parameter 'aweights' must be an array.")
@@ -115,7 +142,10 @@ CST_BEI_Weighting <- function(var_exp, aweights, type = 'ensembleMean',
     em <- BEI_EMWeighting(var_exp$data, aweights, time_dim_name)
     var_exp$data <- em
   } else if (type == 'probs'){
-    probs <- BEI_ProbsWeighting(var_exp$data, aweights, time_dim_name)
+    if (is.null(terciles)){
+      terciles <- BEI_TercilesWeighting(var_exp$data, aweights, time_dim_name)
+    }
+    probs <- BEI_ProbsWeighting(var_exp$data, aweights, terciles, time_dim_name)
     var_exp$data <- probs
   } else {
       stop("Parameter 'type' must be a character string ('probs' or ",
@@ -265,6 +295,9 @@ BEI_EMWeighting <- function(var_exp, aweights, time_dim_name = 'time') {
 #' variable, as 'time' the spatial dimension by default.
 #' @param aweights Normalized weights array with at least dimensions 
 #' (time, member), when 'time' is the temporal dimension as default.
+#' @param terciles A numeric array with at least one dimension 'tercil' equal to 
+#' 2, the first element is the lower tercil for a hindcast period, and the second  
+#' element is the upper tercile. 
 #' @param time_dim_name A character string indicating the name of the 
 #' temporal dimension, by default 'time'.
 #' 
@@ -284,7 +317,9 @@ BEI_EMWeighting <- function(var_exp, aweights, time_dim_name = 'time') {
 #' dim(var_exp) <- c(time = 2, member = 4)
 #' aweights<- c(0.2, 0.1, 0.3, 0.4, 0.1, 0.2, 0.4, 0.3)
 #' dim(aweights) <- c(time = 2, member = 4)
-#' res <- BEI_ProbsWeighting(var_exp, aweights)
+#' terciles <- c(2.5,5)
+#' dim(terciles) <- c(tercil = 2)
+#' res <- BEI_ProbsWeighting(var_exp, aweights, terciles)
 #' dim(res)
 #' # time tercil 
 #' #    2      3 
@@ -293,12 +328,196 @@ BEI_EMWeighting <- function(var_exp, aweights, time_dim_name = 'time') {
 #' dim(var_exp) <- c(time = 2, member = 4, lat = 2, lon = 3)
 #' aweights<- c(0.2, 0.1, 0.3, 0.4, 0.1, 0.2, 0.4, 0.3)
 #' dim(aweights) <- c(time = 2, member = 4)
-#' res <- BEI_ProbsWeighting(var_exp, aweights)
+#' terciles <- rep(c(48,50), 2*3)
+#' dim(terciles) <- c(tercil = 2, lat = 2, lon = 3)
+#' res <- BEI_ProbsWeighting(var_exp, aweights, terciles)
 #' dim(res)
 #' # time  tercil  lat     lon
 #' #    2       3    2       3
 #' @noRd
-BEI_ProbsWeighting <- function(var_exp, aweights, time_dim_name = 'time') {
+BEI_ProbsWeighting <- function(var_exp, aweights, terciles, 
+                               time_dim_name = 'time') {
+  
+  if (!is.character(time_dim_name)) {
+    stop("Parameter 'time_dim_name' must be a character string indicating",
+         " the name of the temporal dimension.")
+  }
+  if (length(time_dim_name) > 1) {
+    warning("Parameter 'time_dim_name' has length greater than 1 and ",
+            "only the first element will be used.")
+    time_dim_name <- time_dim_name[1]
+  }
+  if (is.null(terciles)){
+    stop("Parameter 'terciles' is null")
+  }
+  if(!is.array(terciles)){
+    stop("Parameter 'terciles' must be an array.")
+  } 
+  if (is.null(names(dim(terciles)))) {
+    stop("Parameters 'terciles' should have dimmension names.")
+  }
+  if(!('tercil' %in% names(dim(terciles)))) {
+    stop("Parameter 'terciles' must have dimension 'tercil'.")
+  }
+  if (dim(terciles)['tercil'] != 2) {
+    stop("Length of dimension 'tercil' ",
+         "of parameter 'terciles' must be equal to 2.")
+  }
+  if(time_dim_name %in% names(dim(terciles))) {
+    stop("Parameter 'terciles' must not have temporal dimension.")
+  }
+  if('member' %in% names(dim(terciles))) {
+    stop("Parameter 'terciles' must not have dimension 'member'.")
+  }
+  if (!is.array(var_exp)) {
+    stop("Parameter 'var_exp' must be an array.")
+  }
+  if (!is.array(aweights)) {
+    stop("Parameter 'aweights' must be an array.")
+  }
+  if (is.null(names(dim(var_exp))) || is.null(names(dim(aweights)))) {
+    stop("Parameters 'var_exp' and 'aweights'",
+         " should have dimmension names.")
+  }
+  if(!(time_dim_name %in% names(dim(var_exp)))) {
+    stop("Parameter 'var_exp' must have temporal dimension.")
+  }
+  if(!(time_dim_name %in% names(dim(aweights)))) {
+    stop("Parameter 'aweights' must have temporal dimension.")
+  }
+  if(!('member' %in% names(dim(var_exp)))) {
+    stop("Parameter 'var_exp' must have dimension 'member'.")
+  }
+  if(!('member' %in% names(dim(aweights)))) {
+    stop("Parameter 'aweights' must have dimension 'member'.")
+  }
+  if (dim(var_exp)[time_dim_name] != dim(aweights)[time_dim_name]) {
+    stop("Length of temporal dimensions ",
+         "of parameter 'var_exp' and 'aweights' must be equals.")
+  }
+  if (dim(var_exp)['member'] != dim(aweights)['member']) {
+    stop("Length of dimension 'member' ",
+         "of parameter 'var_exp' and 'aweights' must be equals.")
+  }
+  
+  
+  res <- Apply(list(var_exp, aweights, terciles),
+               target_dims = list(c(time_dim_name,'member'), 
+                                  c(time_dim_name,'member'),
+                                  c('tercil')),
+               fun = .BEI_ProbsWeighting, time_dim_name)$output1
+  return(res)
+}
+
+#' Atomic BEI_ProbsWeighting
+#' @param var_exp Variable (e.g. precipitation, temperature, NAO index)
+#' array from a SFS with a temporal dimension, 
+#' by default 'time', and dimension 'member'.
+#' @param aweights Normalized weights array with a temporal dimension, 
+#' by default 'time', and dimension 'member'
+#' @param terciles A numeric array with one dimension 'tercil' equal to 2, 
+#' the first element is the lower tercil for a hindcast period, and the second  
+#' element is the upper tercile.
+#' @param time_dim_name A character string indicating the name of the 
+#' temporal dimension, by default 'time'.
+#' 
+#' @return .BEI_ProbsWeighting returns an array of with a temporal dimension,
+#' as default 'time', and 'tercil' dimension, containing the probabilities 
+#' for each tercile computing with weighted members.
+#' The firt tercil is the lower tercile, the second is the normal tercile and
+#' the third is the upper tercile.
+#' @examples
+#' # Example
+#' var_exp <- 1 : 8
+#' dim(var_exp) <- c(stime = 2, member = 4)
+#' aweights <- c(0.2, 0.1, 0.3, 0.4, 0.1, 0.2, 0.4, 0.3)
+#' dim(aweights) <- c(stime = 2, member = 4)
+#' terciles <- quantile(1:8, probs = c(1/3, 2/3))
+#' dim(terciles) <- c(tercil = 2)
+#' res <- .BEI_ProbsWeighting(var_exp, aweights, terciles, time_dim_name = 'stime')
+#' dim(res)
+#' # stime tercil
+#' #     2      3
+#' @noRd
+.BEI_ProbsWeighting <- function(var_exp, aweights, terciles, 
+                                time_dim_name = 'time') {
+  if(any(is.na(var_exp)) || any(is.na(aweights))){
+    probTercile <- array(NA, dim = c(dim(var_exp)[time_dim_name], tercil = 3))
+  } else {
+    if(any(is.na(terciles))) stop("Terciles are NAs")
+    terciles_exp <- list(lowerTercile = terciles[1], 
+                         upperTercile = terciles[2])
+    
+    lowerTercile <- terciles_exp$lowerTercile
+    upperTercile <- terciles_exp$upperTercile
+    
+    # Probabilities
+    aTerciles <- Apply(list(var_exp), target_dims = list('member'),
+                       fun = Data2Tercil, lowerTercile, upperTercile)$output1
+    
+    pos <- match(names(dim(aTerciles)), c(time_dim_name,'member'))
+    aTerciles <- aperm(aTerciles,pos)
+    names(dim(aTerciles)) <- c(time_dim_name,'member')
+    
+    probTercile <- array(NA, dim = c(dim(var_exp)[time_dim_name], tercil = 3))
+    for (idTercil in 1:3){
+      probTercile[,idTercil] <- Apply(list(aTerciles, aweights),
+                                      target_dims = list('member','member'),
+                                      fun = WeightTercil2Prob, idTercil)$output1
+    }
+  }
+  return(probTercile)
+}
+
+#' Computing the weighted terciles for SFSs.
+#' @author Eroteida Sanchez-Garcia - AEMET, \email{esanchezg@aemet.es}
+#' 
+#' @description This function implements the computation to obtain the terciles
+#' for a weighted variable for SFSs using a normalized weights array,
+#' 
+#' @references Regionally improved seasonal forecast of precipitation through Best
+#' estimation of winter NAO, Sanchez-Garcia, E. et al.,
+#' Adv. Sci. Res., 16, 165174, 2019, https://doi.org/10.5194/asr-16-165-2019
+#' 
+#' @param var_exp Variable (e.g. precipitation, temperature, NAO index)
+#' array from a SFS with at least dimensions (time, member) for a spatially 
+#' aggregated variable or dimensions (time, member, lat, lon) for a spatial 
+#' variable, as 'time' the spatial dimension by default.
+#' @param aweights Normalized weights array with at least dimensions 
+#' (time, member), when 'time' is the temporal dimension as default.
+#' @param time_dim_name A character string indicating the name of the 
+#' temporal dimension, by default 'time'.
+#' 
+#' @return BEI_TercilesWeighting() returns an array with at least one 
+#' dimension depending if the variable is a spatially aggregated variable 
+#' (as e.g. NAO index)(tercil) or it is spatial variable (as e.g. 
+#' precipitation or temperature)(tercil, lat, lon), containing the 
+#' terciles computing with weighted members.
+#' The first tercil is the lower tercile, the second is the upper tercile.
+#'  
+#' @import multiApply
+#' 
+#' @examples
+#' # Example 1 
+#' var_exp <- 1 : (2 * 4)
+#' dim(var_exp) <- c(time = 2, member = 4)
+#' aweights<- c(0.2, 0.1, 0.3, 0.4, 0.1, 0.2, 0.4, 0.3)
+#' dim(aweights) <- c(time = 2, member = 4)
+#' res <- BEI_TercilesWeighting(var_exp, aweights)
+#' dim(res)
+#' # tercil 
+#' #      2
+#' # Example 2 
+#' var_exp <- rnorm(48, 50, 9)
+#' dim(var_exp) <- c(time = 2, member = 4, lat = 2, lon = 3)
+#' aweights<- c(0.2, 0.1, 0.3, 0.4, 0.1, 0.2, 0.4, 0.3)
+#' dim(aweights) <- c(time = 2, member = 4)
+#' res <- BEI_TercilesWeighting(var_exp, aweights)
+#' dim(res)
+#' # tercil  lat     lon
+#' #      2    2       3
+#' @noRd
+BEI_TercilesWeighting <- function(var_exp, aweights, time_dim_name = 'time') {
   
   if (!is.character(time_dim_name)) {
     stop("Parameter 'time_dim_name' must be a character string indicating",
@@ -342,11 +561,11 @@ BEI_ProbsWeighting <- function(var_exp, aweights, time_dim_name = 'time') {
   
   res <- Apply(list(var_exp, aweights),
                target_dims = list(c(time_dim_name,'member'), c(time_dim_name,'member')),
-               fun = .BEI_ProbsWeighting, time_dim_name)$output1
+               fun = .BEI_TercilesWeighting, time_dim_name)$output1
   return(res)
 }
 
-#' Atomic BEI_ProbsWeighting
+#' Atomic BEI_TercilesWeighting
 #' @param var_exp Variable (e.g. precipitation, temperature, NAO index)
 #' array from a SFS with a temporal dimension, 
 #' by default 'time', and dimension 'member'.
@@ -354,57 +573,64 @@ BEI_ProbsWeighting <- function(var_exp, aweights, time_dim_name = 'time') {
 #' by default 'time', and dimension 'member'
 #' @param time_dim_name A character string indicating the name of the 
 #' temporal dimension, by default 'time'.
-#' @return .BEI_ProbsWeighting returns an array of with a temporal dimension,
-#' as default 'time', and 'tercil' dimension, containing the probabilities 
-#' for each tercile computing with weighted members.
-#' The firt tercil is the lower tercile, the second is the normal tercile and
-#' the third is the upper tercile.
+#' @return .BEI_TercilesWeighting returns a numeric array with dimension tercil
+#' equal to 2, the first is the lower tercil and the second the upper tercile, 
+#' computing with weighted members considering all members and all period.
+#' If any member value for any period is NA , the terciles are not computed, and
+#' the function return NA value as tercile upper and lower.
 #' @examples
 #' # Example
 #' var_exp <- 1 : 8
 #' dim(var_exp) <- c(stime = 2, member = 4)
-#' aweights <- c(0.2, 0.1, 0.3, 0.4, 0.1, 0.2, 0.3, 0.3)
+#' aweights <- c(0.2, 0.1, 0.3, 0.4, 0.1, 0.2, 0.4, 0.3)
 #' dim(aweights) <- c(stime = 2, member = 4)
-#' res <- .BEI_ProbsWeighting(var_exp, aweights, time_dim_name = 'stime')
+#' res <- .BEI_TercilesWeighting(var_exp, aweights, time_dim_name = 'stime')
 #' dim(res)
-#' # stime tercil
-#' #     2      3
+#' # tercil
+#' #      2
 #' @noRd
-.BEI_ProbsWeighting <- function(var_exp, aweights, time_dim_name = 'time') {
-  # computing terciles
-  terciles_exp <- WeightTerciles(var_exp, aweights, time_dim_name)
-  lowerTercile <- terciles_exp$lowerTercile
-  upperTercile <- terciles_exp$upperTercile
-  
-  # Probabilities
-  aTerciles <- Apply(list(var_exp), target_dims = list('member'),
-                     fun = Data2Tercil, lowerTercile, upperTercile)$output1
-  
-  pos <- match(names(dim(aTerciles)), c(time_dim_name,'member'))
-  aTerciles <- aperm(aTerciles,pos)
-  names(dim(aTerciles)) <- c(time_dim_name,'member')
-  
-  probTercile <- array(NA, dim = c(dim(var_exp)[time_dim_name], tercil = 3))
-  for (idTercil in 1:3){
-    probTercile[,idTercil] <- Apply(list(aTerciles, aweights),
-                                    target_dims = list('member','member'),
-                                    fun = WeightTercil2Prob, idTercil)$output1
+.BEI_TercilesWeighting <- function(var_exp, aweights, time_dim_name = 'time') {
+  if(any(is.na(var_exp)) || any(is.na(aweights))){
+    terciles_exp <- array(c(NA, NA), dim = c(tercil = 2))
+  } else {
+    l_terciles_exp <- WeightTerciles(var_exp, aweights, time_dim_name)
+    terciles_exp <- array(c(l_terciles_exp$lowerTercile, 
+                            l_terciles_exp$upperTercile), dim = c(tercil = 2))
   }
-  return(probTercile)
+  return(terciles_exp)
 }
 
 # Auxiliar function to compute in which tercile is a data value
-Data2Tercil <- function(x,lt,ut) {
-  y <- rep(2,length(x))
-  y[x <= lt] <- 1
-  y[x >= ut] <- 3
-  if (lt == ut) {
-    warning("The upper and lower terciles are equals")
+Data2Tercil_old <- function(x,lt,ut) {
+  if(is.na(lt) || is.na(ut)){
+    y <- rep(NA, length(x))
+  } else {
+    y <- rep(2,length(x))
+    y[x <= lt] <- 1
+    y[x >= ut] <- 3
+    if (lt == ut) {
+      warning("The upper and lower terciles are equals")
+    }
   }
   dim(y) <- c(member = length(x))
   return (y)
 }
-
+# Auxiliar function to compute in which tercile is a data value
+Data2Tercil <- function(x,lt,ut) {
+  if(is.na(lt) || is.na(ut)){
+    y <- rep(NA, length(x))
+  } else {
+    y <- rep(2,length(x))
+    y[x <= lt] <- 1
+    y[x >= ut] <- 3
+    if (lt == ut) {
+      y <- rep(NA, length(x))
+    }
+  }
+  dim(y) <- c(member = length(x))
+  y[which(is.na(x))] <- NA
+  return (y)
+}
 # Auxiliar function to convers weighted terciles to probabilities
 WeightTercil2Prob <- function(aTerciles, aWeights, idTercil) {
   return(sum(aWeights[which(aTerciles == idTercil)]))
@@ -419,10 +645,12 @@ WeightTerciles <- function(data, aweights, time_dim_name = 'time') {
   names(dim(aweights)) <- namesdimdata
   vectorData <- as.vector(data)
   vectorWeights <- as.vector(aweights/dim(aweights)[time_dim_name]) # normalized
-  lSortData <- sort(vectorData,index.return=TRUE)
-  indSort <- lSortData$ix # index asociated to weight
+  #lSortData <- sort(vectorData,index.return=TRUE)
+  indSort <- order(vectorData) # index asociated to weight
+  # indSort <- lSortData$ix # index asociated to weight
   # corresponding for this data
-  dataSort <- lSortData$x
+  dataSort <- vectorData[indSort]
+  # dataSort <- lSortData$x
   # Adding normalized weights. When 1/3 is reached, the data value
   # is lower tercile and when 2/3 is reached, it is the upper tercile.
   sumWeights <- 0

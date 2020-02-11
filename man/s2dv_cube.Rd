@@ -4,8 +4,16 @@
 \alias{s2dv_cube}
 \title{Creation of a 's2dv_cube' object}
 \usage{
-s2dv_cube(data, lon = NULL, lat = NULL, Variable = NULL,
-  Datasets = NULL, Dates = NULL, when = NULL, source_files = NULL)
+s2dv_cube(
+  data,
+  lon = NULL,
+  lat = NULL,
+  Variable = NULL,
+  Datasets = NULL,
+  Dates = NULL,
+  when = NULL,
+  source_files = NULL
+)
 }
 \arguments{
 \item{data}{an array with any number of named dimensions, typically an object output from CST_Load, with the following dimensions: dataset, member, sdate, ftime, lat and lon.}
@@ -75,10 +83,9 @@ exp8 <- s2dv_cube(data = exp_original, lon = seq(-10, 10, 5), lat = c(45, 50),
                               end = paste0(rep("31", 10), rep("01", 10), 1990:1999)))  
 class(exp8)
 }
-\author{
-Perez-Zanon Nuria, \email{nuria.perez@bsc.es}
-}
 \seealso{
 \code{\link[s2dverification]{Load}} and \code{\link{CST_Load}}
 }
-
+\author{
+Perez-Zanon Nuria, \email{nuria.perez@bsc.es}
+}

@@ -4,8 +4,7 @@
 \alias{CST_Anomaly}
 \title{Anomalies relative to a climatology along selected dimension with or without cross-validation}
 \usage{
-CST_Anomaly(exp = NULL, obs = NULL, cross = FALSE, memb = TRUE,
-  dim_anom = 3)
+CST_Anomaly(exp = NULL, obs = NULL, cross = FALSE, memb = TRUE, dim_anom = 3)
 }
 \arguments{
 \item{exp}{an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the seasonal forecast experiment data in the element named \code{$data}.}
@@ -54,12 +53,11 @@ anom4 <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = FALSE)
 str(anom4)
 
 }
+\seealso{
+\code{\link[s2dverification]{Ano_CrossValid}}, \code{\link[s2dverification]{Clim}} and \code{\link{CST_Load}}
+}
 \author{
 Perez-Zanon Nuria, \email{nuria.perez@bsc.es}
 
 Pena Jesus, \email{jesus.pena@bsc.es}
 }
-\seealso{
-\code{\link[s2dverification]{Ano_CrossValid}}, \code{\link[s2dverification]{Clim}} and \code{\link{CST_Load}}
-}
-
