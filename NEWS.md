@@ -1,3 +1,28 @@
+### CSTools 3.1.0
+**Submission date to CRAN: XX-06-2020**
+
+- New features:
+    + EnsClustering vignette
+    + EnsClustering has a new parameter 'time_dim'
+    + CST_BiasCorrection has na.rm paramter
+    + CST_Anomaly allows to smooth the climatology with filter.span parameter
+    + PlotTriangles4Categories new plotting function to convert any 3-d numerical array to a grid of coloured triangles.
+    + CST_WeatherRegimes/WeatherRegimes and CST_RegimeAssign/RegimeAssign
+    + PlotPDFsOLE plots two probability density gaussian functions and the optimal linear estimation
+    + CST_RFTemp/RF_Temp functions available for downscaling temperature
+    + Weather Regimes vignette
+
+- Fixes
+    + CST_Anomaly handles exp, obs or both
+    + PlotForecastPDF vignette displays figures correctly
+    + Calibration function is exposed to users
+    + MultiMetric vignette fixed typo text description
+    + RainFARM checks 'slope' is not a vector
+    + DESCRIPTION specifies the minimum multiApply version required
+    + EnsClustering has a fixed 'closest_member' output
+    + PlotCombinedMap handles masks correctly
+    + CST_SaveExp uses multiApply and save time dimension correctly
+
 ### CSTools 3.0.0
 **Submission date to CRAN: 10-02-2020**
 
@@ -8,6 +33,7 @@
 - Fixes
     + CST_Calibration handles missing values
     + BEI functions handle missing values
+
     
 ### CSTools 2.0.0 
 **Submission date to CRAN: 25-11-2019**
@@ -32,6 +58,7 @@
 - Minor fix in RainFARM vignette
 - Adding reference to S2S4E H2020 project into the DESCRIPTION file
 - Adding NEWS.md file
+
 
 ### CSTools 1.0.1 
 **Release date on CRAN: 19-06-2019**

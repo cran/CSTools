@@ -34,12 +34,9 @@
 #'str(a)
 #'@export
 
-CST_Calibration <- function(exp, obs, 
-  cal.method = "mse_min", 
-  eval.method = "leave-one-out",  
-  multi.model = F, 
-  na.fill = T,
-  ncores = 1) {
+CST_Calibration <- function(exp, obs, cal.method = "mse_min", 
+                            eval.method = "leave-one-out", multi.model = FALSE, 
+                            na.fill = TRUE, ncores = 1) {
   if (!inherits(exp, "s2dv_cube") || !inherits(obs, "s2dv_cube")) {
     stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube', ",
          "as output by CSTools::CST_Load.")
@@ -92,13 +89,16 @@ CST_Calibration <- function(exp, obs,
 #'
 #'@seealso \code{\link{CST_Load}}
 #'
-
-Calibration <- function(exp, obs,
-  cal.method = "mse_min", 
-  eval.method = "leave-one-out",  
-  multi.model = F, 
-  na.fill = T,
-  ncores = 1) {
+#'@examples
+#'mod1 <- 1 : (1 * 3 * 4 * 5 * 6 * 7)
+#'dim(mod1) <- c(dataset = 1, member = 3, sdate = 4, ftime = 5, lat = 6, lon = 7)
+#'obs1 <- 1 : (1 * 1 * 4 * 5 * 6 * 7)
+#'dim(obs1) <- c(dataset = 1, member = 1, sdate = 4, ftime = 5, lat = 6, lon = 7)
+#'a <- Calibration(exp = mod1, obs = obs1)
+#'str(a)
+#'@export
+Calibration <- function(exp, obs, cal.method = "mse_min", eval.method = "leave-one-out",  
+                        multi.model = FALSE, na.fill = TRUE, ncores = 1) {
 	
   dim.exp <- dim(exp)
   amt.dims.exp <- length(dim.exp)

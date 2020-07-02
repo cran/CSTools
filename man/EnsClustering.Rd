@@ -15,6 +15,7 @@ EnsClustering(
   variance_explained = 80,
   numpcs = NULL,
   time_percentile = 90,
+  time_dim = NULL,
   cluster_dim = "member",
   verbose = T
 )
@@ -28,7 +29,7 @@ EnsClustering(
 
 \item{time_moment}{Decides the moment to be applied to the time dimension. Can be either 'mean' (time mean),
 'sd' (standard deviation along time) or 'perc' (a selected percentile on time).
-If 'perc' the keyword 'time_percentile' is also needed.}
+If 'perc' the keyword 'time_percentile' is also used.}
 
 \item{numclus}{Number of clusters (scenarios) to be calculated.
 If set to NULL the number of ensemble members divided by 10 is used, with a minimum of 2 and a maximum of 8.}
@@ -44,7 +45,11 @@ Defaults to 80. Not used if numpcs is specified.}
 
 \item{time_percentile}{Set the percentile in time you want to analyse (used for `time_moment = "perc").}
 
-\item{cluster_dim}{Dimension along which to cluster. Typically "member" or "sdate". This can also be a list like c("member", "sdate").}
+\item{time_dim}{String or character array with name(s) of dimension(s) over which to compute statistics.
+If omitted c("ftime", "sdate", "time") are searched in this order.}
+
+\item{cluster_dim}{Dimension along which to cluster. Typically "member" or "sdate".
+This can also be a list like c("member", "sdate").}
 
 \item{verbose}{Logical for verbose output}
 }
@@ -62,9 +67,11 @@ and returns a number of scenarios, with representative members for each of them.
 The clustering is performed in a reduced EOF space.
 }
 \examples{
+\donttest{
 exp <- lonlat_data$exp
 res <- EnsClustering(exp$data, exp$lat, exp$lon, numclus = 3,
                      cluster_dim = c("member", "dataset", "sdate"))
+}
 }
 \author{
 Federico Fabiano - ISAC-CNR, \email{f.fabiano@isac.cnr.it}

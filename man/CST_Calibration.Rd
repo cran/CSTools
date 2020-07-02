@@ -9,8 +9,8 @@ CST_Calibration(
   obs,
   cal.method = "mse_min",
   eval.method = "leave-one-out",
-  multi.model = F,
-  na.fill = T,
+  multi.model = FALSE,
+  na.fill = TRUE,
   ncores = 1
 )
 }

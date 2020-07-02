@@ -12,6 +12,7 @@ CST_EnsClustering(
   lat_lim = NULL,
   variance_explained = 80,
   numpcs = NULL,
+  time_dim = NULL,
   time_percentile = 90,
   cluster_dim = "member",
   verbose = F
@@ -24,7 +25,7 @@ spatial dimensions named "lon" and "lat", and dimensions "dataset", "member", "f
 
 \item{time_moment}{Decides the moment to be applied to the time dimension. Can be either 'mean' (time mean),
 'sd' (standard deviation along time) or 'perc' (a selected percentile on time).
-If 'perc' the keyword 'time_percentile' is also needed.}
+If 'perc' the keyword 'time_percentile' is also used.}
 
 \item{numclus}{Number of clusters (scenarios) to be calculated.
 If set to NULL the number of ensemble members divided by 10 is used, with a minimum of 2 and a maximum of 8.}
@@ -38,9 +39,13 @@ Defaults to 80. Not used if numpcs is specified.}
 
 \item{numpcs}{Number of EOFs retained in the analysis (optional).}
 
+\item{time_dim}{String or character array with name(s) of dimension(s) over which to compute statistics.
+If omitted c("ftime", "sdate", "time") are searched in this order.}
+
 \item{time_percentile}{Set the percentile in time you want to analyse (used for `time_moment = "perc").}
 
-\item{cluster_dim}{Dimension along which to cluster. Typically "member" or "sdate". This can also be a list like c("member", "sdate").}
+\item{cluster_dim}{Dimension along which to cluster. Typically "member" or "sdate".
+This can also be a list like c("member", "sdate").}
 
 \item{verbose}{Logical for verbose output}
 }
@@ -94,22 +99,23 @@ the maximum distance between a member in a cluster and the cluster centroid
 deviation for each cluster (i.e. how much the cluster is compact).
 }
 \examples{
+\donttest{
 exp <- lonlat_data$exp
 # Example 1: Cluster on all start dates, members and models
 res <- CST_EnsClustering(exp, numclus = 3,
                          cluster_dim = c("member", "dataset", "sdate"))
 iclus = res$cluster[2, 1, 3]
-\donttest{
+
 print(paste("Cluster of 2. member, 1. dataset, 3. sdate:", iclus))
 print(paste("Frequency (numerosity) of cluster (", iclus, ") :", res$freq[iclus]))
 library(s2dverification)
 PlotEquiMap(res$repr_field[iclus, , ], exp$lon, exp$lat,
             filled.continents = FALSE,
             toptitle = paste("Representative field of cluster", iclus))
-}
+
 # Example 2: Cluster on members retaining 4 EOFs during 
 # preliminary dimensional reduction
-\donttest{
+
 res <- CST_EnsClustering(exp, numclus = 3, numpcs = 4, cluster_dim = "member")
 # Example 3: Cluster on members, retain 80\% of variance during 
 # preliminary dimensional reduction

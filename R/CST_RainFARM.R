@@ -237,6 +237,12 @@ RainFARM <- function(data, lon, lat, nf, weights = 1., nens = 1,
     }
     warning(paste("Selected time dim:", time_dim))
   }
+  # Check if slope is an array
+  if (length(slope) > 1) {
+    warning("Parameter 'slope' has length > 1 and only the first ",
+            "element will be used.")
+    slope <- as.numeric(slope[1])
+  }
 
   # Perform common calls
   r <- lon_lat_fine(lon, lat, nf)

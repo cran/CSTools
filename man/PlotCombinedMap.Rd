@@ -82,6 +82,17 @@ PlotCombinedMap(list(a, b, c), lons, lats,
                display_range = c(0, 1),
                bar_titles = paste('\% of belonging to', c('a', 'b', 'c')), 
                brks = 20, width = 10, height = 8)
+
+Lon <- c(0:40, 350:359)
+Lat <- 51:26
+data <- rnorm(51 * 26 * 3)
+dim(data) <- c(map = 3, lon = 51, lat = 26)
+mask <-  sample(c(0,1), replace = TRUE, size = 51 * 26)
+dim(mask) <- c(lat = 26, lon = 51)
+PlotCombinedMap(data, lon = Lon, lat = Lat, map_select_fun = max,
+               display_range = range(data), mask = mask,
+               width = 12, height = 8) 
+
 }
 \seealso{
 \code{PlotCombinedMap} and \code{PlotEquiMap}

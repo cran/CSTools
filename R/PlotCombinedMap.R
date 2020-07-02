@@ -43,7 +43,17 @@
 #'                display_range = c(0, 1),
 #'                bar_titles = paste('% of belonging to', c('a', 'b', 'c')), 
 #'                brks = 20, width = 10, height = 8)
-
+#'
+#'Lon <- c(0:40, 350:359)
+#'Lat <- 51:26
+#'data <- rnorm(51 * 26 * 3)
+#'dim(data) <- c(map = 3, lon = 51, lat = 26)
+#'mask <-  sample(c(0,1), replace = TRUE, size = 51 * 26)
+#'dim(mask) <- c(lat = 26, lon = 51)
+#'PlotCombinedMap(data, lon = Lon, lat = Lat, map_select_fun = max,
+#'                display_range = range(data), mask = mask,
+#'                width = 12, height = 8) 
+#'
 #'@export
 PlotCombinedMap <- function(maps, lon, lat, 
                             map_select_fun, display_range, 
@@ -349,9 +359,19 @@ PlotCombinedMap <- function(maps, lon, lat,
   # Add overplot on top
   #----------------------
   if (!is.null(mask)) {
+    dims_mask <- dim(mask)
+    latb <- sort(lat, index.return = TRUE)
+    dlon <- lon[2:dims_mask[2]] - lon[1:(dims_mask[2] - 1)]
+    wher <- which(dlon > (mean(dlon) + 1))
+    if (length(wher) > 0) {
+      lon[(wher + 1):dims_mask[2]] <- lon[(wher + 1):dims_mask[2]] - 360
+    }
+    lonb <- sort(lon, index.return = TRUE)
+
     cols_mask <- sapply(seq(from = 0, to = 1, length.out = 10), 
                         function(x) adjustcolor(col_mask, alpha.f = x))
-    image(lon, lat, t(mask), axes = FALSE, col = cols_mask, 
+    image(lonb$x, latb$x, t(mask)[lonb$ix, latb$ix], 
+          axes = FALSE, col = cols_mask, 
           breaks = seq(from = 0, to = 1, by = 0.1), 
           xlab='', ylab='', add = TRUE, xpd = TRUE)
     if (!exists('coast_color')) {

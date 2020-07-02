@@ -14,11 +14,11 @@
 #'
 #'@details The different methods are:
 #'\itemize{ 
-#'\item{'PTF'} {fits a parametric transformations to the quantile-quantile relation of observed and modelled values. See \code{\link[qmap]{fitQmapPTF}}.}
-#' \item{'DIST'} {fits a theoretical distribution to observed and to modelled time series. See \code{\link[qmap]{fitQmapDIST}}.}
-#'\item{'RQUANT'} {estimates the values of the quantile-quantile relation of observed and modelled time series for regularly spaced quantiles using local linear least square regression. See \code{\link[qmap]{fitQmapRQUANT}}.}
-#'\item{'QUANT'} {estimates values of the empirical cumulative distribution function of observed and modelled time series for regularly spaced quantiles. See \code{\link[qmap]{fitQmapQUANT}}.}
-#'\item{'SSPLIN'} {fits a smoothing spline to the quantile-quantile plot of observed and modelled time series. See \code{\link[qmap]{fitQmapSSPLIN}}}.}
+#'\item{'PTF'} {fits a parametric transformations to the quantile-quantile relation of observed and modelled values. See \code{?qmap::fitQmapPTF}.}
+#' \item{'DIST'} {fits a theoretical distribution to observed and to modelled time series. See \code{?qmap::fitQmapDIST}.}
+#'\item{'RQUANT'} {estimates the values of the quantile-quantile relation of observed and modelled time series for regularly spaced quantiles using local linear least square regression. See \code{?qmap::fitQmapRQUANT}.}
+#'\item{'QUANT'} {estimates values of the empirical cumulative distribution function of observed and modelled time series for regularly spaced quantiles. See \code{?qmap::fitQmapQUANT}.}
+#'\item{'SSPLIN'} {fits a smoothing spline to the quantile-quantile plot of observed and modelled time series. See \code{?qmap::fitQmapSSPLIN}.}}
 #'All methods accepts some common arguments:
 #'\itemize{
 #'\item{wet.day} {logical indicating whether to perform wet day correction or not.(Not available in 'DIS' method)}
@@ -29,7 +29,7 @@
 #'@import multiApply
 #'@import abind
 #'
-#'@seealso \code{\link[qmap]{fitQmap}} and \code{\link[qmap]{doQmap}}
+#'@seealso \code{qmap::fitQmap} and \code{qmap::doQmap}
 #'@examples
 #'library(qmap)
 #'exp <- 1 : (1 * 5 * 10 * 6 * 2 * 3)

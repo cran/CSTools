@@ -319,7 +319,7 @@ While other relevant data is being stored in the corresponding element of the ob
 [1] &quot;glosea5&quot;                &quot;ecmwf/system4_m1&quot;       &quot;meteofrance/system5_m1&quot; &quot;erainterim&quot;    
 </code></pre>
 
-<p>In the second element of the list <code>AnomDJF</code>, <code>metric</code>, the third dimension contains the lower limit of the 95% confidence interval, the correlation, the upper limit of the 95% confidence interval and the 95% significance level given by a one-sided T-test. </p>
+<p>In the element $data of the <code>AnomDJF</code> object, the third dimension contains the lower limit of the 95% confidence interval, the correlation, the upper limit of the 95% confidence interval and the 95% significance level given by a one-sided T-test. </p>
 
 <pre><code class="r">corre &lt;- AnomDJF$data[ , , 2, , ]
 names(dim(corre)) &lt;- c(&quot;maps&quot;, &quot;lat&quot;, &quot;lon&quot;)

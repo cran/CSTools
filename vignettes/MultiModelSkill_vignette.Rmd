@@ -155,7 +155,7 @@ While other relevant data is being stored in the corresponding element of the ob
 [1] "glosea5"                "ecmwf/system4_m1"       "meteofrance/system5_m1" "erainterim"    
 ```
  
-In the second element of the list `AnomDJF`, `metric`, the third dimension contains the lower limit of the 95% confidence interval, the correlation, the upper limit of the 95% confidence interval and the 95% significance level given by a one-sided T-test. 
+In the element $data of the `AnomDJF` object, the third dimension contains the lower limit of the 95% confidence interval, the correlation, the upper limit of the 95% confidence interval and the 95% significance level given by a one-sided T-test. 
 
 
 ```r

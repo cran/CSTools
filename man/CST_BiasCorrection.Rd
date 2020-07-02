@@ -4,12 +4,14 @@
 \alias{CST_BiasCorrection}
 \title{Bias Correction based on the mean and standard deviation adjustment}
 \usage{
-CST_BiasCorrection(exp, obs)
+CST_BiasCorrection(exp, obs, na.rm = FALSE)
 }
 \arguments{
 \item{exp}{an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the seasonal forecast experiment data in the element named \code{$data}}
 
 \item{obs}{an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the observed data in the element named \code{$data}.}
+
+\item{na.rm}{a logical value indicating whether missing values should be stripped before the computation proceeds, by default it is set to FALSE.}
 }
 \value{
 an object of class \code{s2dv_cube} containing the bias corrected forecasts in the element called \code{$data} with the same dimensions of the experimental data.

@@ -12,7 +12,7 @@
 #'@param cross A logical value indicating whether cross-validation should be applied or not. Default = FALSE.
 #'@param memb A logical value indicating whether Clim() computes one climatology for each experimental data 
 #'product member(TRUE) or it computes one sole climatology for all members (FALSE). Default = TRUE.
-#'
+#'@param filter_span a numeric value indicating the degree of smoothing. This option is only available if parameter \code{cross} is set to FALSE.  
 #'@param dim_anom An integer indicating the dimension along which the climatology will be computed. It 
 #'usually corresponds to 3 (sdates) or 4 (ftime). Default = 3.
 #'
@@ -44,22 +44,29 @@
 #'anom4 <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = FALSE)
 #'str(anom4)
 #'
+#'anom5 <- CST_Anomaly(lonlat_data$exp)
+#'
+#'anom6 <- CST_Anomaly(obs = lonlat_data$obs)
+#'
 #'@seealso \code{\link[s2dverification]{Ano_CrossValid}}, \code{\link[s2dverification]{Clim}} and \code{\link{CST_Load}}
 #'
 #'
 #'@export
-CST_Anomaly <- function(exp = NULL, obs = NULL, cross = FALSE, memb = TRUE, dim_anom = 3) {
+CST_Anomaly <- function(exp = NULL, obs = NULL, cross = FALSE, memb = TRUE,
+                        filter_span = NULL, dim_anom = 3) {
  
-  if (!inherits(exp, 's2dv_cube') || !inherits(obs, 's2dv_cube')) {
+  if (!inherits(exp, 's2dv_cube') & !is.null(exp) || 
+      !inherits(obs, 's2dv_cube') & !is.null(obs)) {
     stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube', ",
          "as output by CSTools::CST_Load.")
   }
 
- if (!is.null(obs) & dim(obs$data)['member'] != 1) {
+ if (!is.null(obs)) {
+    if (dim(obs$data)['member'] != 1) {
     stop("The length of the dimension 'member' in the component 'data' ",
          "of the parameter 'obs' must be equal to 1.")
+    }
   }
-
   case_exp = case_obs = 0
   if (is.null(exp) & is.null(obs)) {
     stop("One of the parameter 'exp' or 'obs' cannot be NULL.")
@@ -75,6 +82,7 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, cross = FALSE, memb = TRUE, dim_
     warning("Parameter 'obs' is not provided and will be recycled.")
   }
 
+
   if (!is.null(names(dim(exp$data))) & !is.null(names(dim(obs$data)))) {
     if (all(names(dim(exp$data)) %in% names(dim(obs$data)))) {
       dimnames <- names(dim(exp$data))
@@ -88,8 +96,8 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, cross = FALSE, memb = TRUE, dim_
   }
   dim_exp <- dim(exp$data)
   dim_obs <- dim(obs$data)
+
   dimnames_data <- names(dim_exp)
- 
   if (dim_exp[dim_anom] == 1 | dim_obs[dim_anom] == 1) {
     stop("The length of dimension 'dim_anom' in label 'data' of the parameter ",
          "'exp' and 'obs' must be greater than 1.")
@@ -137,7 +145,22 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, cross = FALSE, memb = TRUE, dim_
     #  Without cross-validation 
   } else {
     tmp <- Clim(var_exp = exp$data, var_obs = obs$data, memb = memb)
-    
+    if (!is.null(filter_span)) {
+        if (is.numeric(filter_span)) {
+            pos_dims <- names(dim(tmp$clim_exp))
+            reorder <- match(pos_dims, c('ftime',
+                             pos_dims[-which(pos_dims == 'ftime')]))
+            tmp$clim_obs <- aperm(apply(tmp$clim_obs, c(1 : 
+               length(dim(tmp$clim_obs)))[-which(names(dim(tmp$clim_obs)) == 'ftime')],
+               .Loess, loess_span = filter_span), reorder)
+            tmp$clim_exp <- aperm(apply(tmp$clim_exp, c(1 :
+               length(dim(tmp$clim_exp)))[-which(names(dim(tmp$clim_exp)) == 'ftime')],
+               .Loess, loess_span = filter_span), reorder)
+        } else {
+            warning("Paramater 'filter_span' is not numeric and any filter",
+                    " is being applied.")
+        }
+    }
     if (memb) { 
       clim_exp <- tmp$clim_exp
       clim_obs <- tmp$clim_obs
@@ -186,3 +209,10 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, cross = FALSE, memb = TRUE, dim_
     return(list(exp = exp, obs = obs)) 
   }
 }
+.Loess <- function(clim, loess_span) {
+  data <- data.frame(ensmean = clim, day = 1 : length(clim))
+  loess_filt <- loess(ensmean ~ day, data, span = loess_span)
+  output <- predict(loess_filt)
+  return(output)
+}
+

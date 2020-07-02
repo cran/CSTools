@@ -220,7 +220,7 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
         })
         attr <- attr(hatch.ls, "split_labels")
         for (i in 1:length(hatch.ls)) {
-            hatch.ls[[i]] <- cbind(hatch.ls[[i]], attr[i, ])
+            hatch.ls[[i]] <- cbind(hatch.ls[[i]], attr[i, ], row.names = NULL)
         }
         hatch.df <- do.call("rbind", hatch.ls)
         # Compute max y for each extreme category
@@ -229,7 +229,7 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
         })
         attr <- attr(max.ls, "split_labels")
         for (i in 1:length(max.ls)) {
-            max.ls[[i]] <- cbind(max.ls[[i]], attr[i, ])
+            max.ls[[i]] <- cbind(max.ls[[i]], attr[i, ], row.names = NULL)
         }
         max.df <- do.call("rbind", max.ls)
     }
@@ -323,7 +323,8 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
         pct2$lab.pos <-  as.vector(apply(extreme.limits, 1, function(x) {c(x[1], NA, x[2])}))
         pct2 <- merge(pct2, max.df, by = c("init", "extremes"))
         # include potentially missing groups
-        pct2 <- pct2[CJ(levels(pct2$init), factor(c("Below P10", "Normal", "Above P90"), 
+        pct2 <- pct2[CJ(factor(levels(pct2$init), levels = levels(pct2$init)), 
+            factor(c("Below P10", "Normal", "Above P90"), 
             levels = c("Below P10", "Normal", "Above P90"))), ]
     }
     #------------------------

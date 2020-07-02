@@ -9,8 +9,8 @@ Calibration(
   obs,
   cal.method = "mse_min",
   eval.method = "leave-one-out",
-  multi.model = F,
-  na.fill = T,
+  multi.model = FALSE,
+  na.fill = TRUE,
   ncores = 1
 )
 }
@@ -36,6 +36,14 @@ an array containing the calibrated forecasts with the same dimensions as the \co
 Four types of member-by-member bias correction can be performed. The \code{bias} method corrects the bias only, the \code{evmos} method applies a variance inflation technique to ensure the correction of the bias and the correspondence of variance between forecast and observation (Van Schaeybroeck and Vannitsem, 2011). The ensemble calibration methods \code{"mse_min"} and \code{"crps_min"} correct the bias, the overall forecast variance and the ensemble spread as described in Doblas-Reyes et al. (2005) and Van Schaeybroeck and Vannitsem (2015), respectively. While the \code{"mse_min"} method minimizes a constrained mean-squared error using three parameters, the \code{"crps_min"} method features four parameters and minimizes the Continuous Ranked Probability Score (CRPS).
 
 Both in-sample or our out-of-sample (leave-one-out cross validation) calibration are possible.
+}
+\examples{
+mod1 <- 1 : (1 * 3 * 4 * 5 * 6 * 7)
+dim(mod1) <- c(dataset = 1, member = 3, sdate = 4, ftime = 5, lat = 6, lon = 7)
+obs1 <- 1 : (1 * 1 * 4 * 5 * 6 * 7)
+dim(obs1) <- c(dataset = 1, member = 1, sdate = 4, ftime = 5, lat = 6, lon = 7)
+a <- Calibration(exp = mod1, obs = obs1)
+str(a)
 }
 \references{
 Doblas-Reyes F.J, Hagedorn R, Palmer T.N. The rationale behind the success of multi-model ensembles in seasonal forecasting-II calibration and combination. Tellus A. 2005;57:234-252. doi:10.1111/j.1600-0870.2005.00104.x

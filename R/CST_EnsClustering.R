@@ -52,7 +52,7 @@
 #' spatial dimensions named "lon" and "lat", and dimensions "dataset", "member", "ftime", "sdate".
 #' @param time_moment Decides the moment to be applied to the time dimension. Can be either 'mean' (time mean),
 #'        'sd' (standard deviation along time) or 'perc' (a selected percentile on time).
-#'        If 'perc' the keyword 'time_percentile' is also needed.
+#'        If 'perc' the keyword 'time_percentile' is also used.
 #' @param time_percentile Set the percentile in time you want to analyse (used for `time_moment = "perc").
 #' @param numclus Number of clusters (scenarios) to be calculated.
 #'        If set to NULL the number of ensemble members divided by 10 is used, with a minimum of 2 and a maximum of 8.
@@ -61,7 +61,10 @@
 #' @param variance_explained variance (percentage) to be explained by the set of EOFs.
 #'        Defaults to 80. Not used if numpcs is specified.
 #' @param numpcs Number of EOFs retained in the analysis (optional).
-#' @param cluster_dim Dimension along which to cluster. Typically "member" or "sdate". This can also be a list like c("member", "sdate").
+#' @param cluster_dim Dimension along which to cluster. Typically "member" or "sdate".
+#'        This can also be a list like c("member", "sdate").
+#' @param time_dim String or character array with name(s) of dimension(s) over which to compute statistics.
+#'        If omitted c("ftime", "sdate", "time") are searched in this order.
 #' @param verbose Logical for verbose output
 #' @return A list with elements \code{$cluster} (cluster assigned for each member),
 #'         \code{$freq} (relative frequency of each cluster), \code{$closest_member}
@@ -70,22 +73,23 @@
 #'         \code{$lon} (selected longitudes of output fields),
 #'         \code{$lat} (selected longitudes of output fields).
 #' @examples
+#'\donttest{
 #' exp <- lonlat_data$exp
 #' # Example 1: Cluster on all start dates, members and models
 #' res <- CST_EnsClustering(exp, numclus = 3,
 #'                          cluster_dim = c("member", "dataset", "sdate"))
 #' iclus = res$cluster[2, 1, 3]
-#'\donttest{
+#'
 #' print(paste("Cluster of 2. member, 1. dataset, 3. sdate:", iclus))
 #' print(paste("Frequency (numerosity) of cluster (", iclus, ") :", res$freq[iclus]))
 #' library(s2dverification)
 #' PlotEquiMap(res$repr_field[iclus, , ], exp$lon, exp$lat,
 #'             filled.continents = FALSE,
 #'             toptitle = paste("Representative field of cluster", iclus))
-#'}
+#'
 #' # Example 2: Cluster on members retaining 4 EOFs during 
 #' # preliminary dimensional reduction
-#'\donttest{
+#'
 #' res <- CST_EnsClustering(exp, numclus = 3, numpcs = 4, cluster_dim = "member")
 #' # Example 3: Cluster on members, retain 80% of variance during 
 #' # preliminary dimensional reduction
@@ -100,7 +104,7 @@
 #'@export
 CST_EnsClustering <- function(exp, time_moment = "mean", numclus = NULL,
                         lon_lim = NULL, lat_lim = NULL,
-                        variance_explained = 80, numpcs = NULL,
+                        variance_explained = 80, numpcs = NULL, time_dim = NULL,
                         time_percentile = 90, cluster_dim = "member",
                         verbose = F) {
   if (!inherits(exp, "s2dv_cube")) {
@@ -112,7 +116,7 @@ CST_EnsClustering <- function(exp, time_moment = "mean", numclus = NULL,
                     time_moment = time_moment, numclus = numclus,
                     lon_lim = lon_lim, lat_lim = lat_lim,
                     variance_explained = variance_explained, numpcs = numpcs,
-                    time_percentile = time_percentile,
+                    time_percentile = time_percentile, time_dim = time_dim,
                     cluster_dim = cluster_dim, verbose = verbose)
 
   return(result)
@@ -136,7 +140,7 @@ CST_EnsClustering <- function(exp, time_moment = "mean", numclus = NULL,
 #' @param lon Vector of longitudes.
 #' @param time_moment Decides the moment to be applied to the time dimension. Can be either 'mean' (time mean),
 #'        'sd' (standard deviation along time) or 'perc' (a selected percentile on time).
-#'        If 'perc' the keyword 'time_percentile' is also needed.
+#'        If 'perc' the keyword 'time_percentile' is also used.
 #' @param time_percentile Set the percentile in time you want to analyse (used for `time_moment = "perc").
 #' @param numclus Number of clusters (scenarios) to be calculated.
 #'        If set to NULL the number of ensemble members divided by 10 is used, with a minimum of 2 and a maximum of 8.
@@ -145,7 +149,10 @@ CST_EnsClustering <- function(exp, time_moment = "mean", numclus = NULL,
 #' @param variance_explained variance (percentage) to be explained by the set of EOFs.
 #'        Defaults to 80. Not used if numpcs is specified.
 #' @param numpcs Number of EOFs retained in the analysis (optional).
-#' @param cluster_dim Dimension along which to cluster. Typically "member" or "sdate". This can also be a list like c("member", "sdate").
+#' @param cluster_dim Dimension along which to cluster. Typically "member" or "sdate".
+#'        This can also be a list like c("member", "sdate").
+#' @param time_dim String or character array with name(s) of dimension(s) over which to compute statistics.
+#'        If omitted c("ftime", "sdate", "time") are searched in this order.
 #' @param verbose Logical for verbose output
 #' @return A list with elements \code{$cluster} (cluster assigned for each member),
 #'         \code{$freq} (relative frequency of each cluster), \code{$closest_member}
@@ -155,27 +162,50 @@ CST_EnsClustering <- function(exp, time_moment = "mean", numclus = NULL,
 #'         \code{$lat} (selected longitudes of output fields).
 #' 
 #' @examples
+#'\donttest{
 #' exp <- lonlat_data$exp
 #' res <- EnsClustering(exp$data, exp$lat, exp$lon, numclus = 3,
 #'                      cluster_dim = c("member", "dataset", "sdate"))
+#'}
 #'@export
 
 EnsClustering <- function(data, lat, lon, time_moment = "mean", numclus = NULL,
                     lon_lim = NULL, lat_lim = NULL, variance_explained = 80,
-                    numpcs = NULL, time_percentile = 90,
+                    numpcs = NULL, time_percentile = 90, time_dim = NULL,
                     cluster_dim = "member", verbose = T) {
+
+  # Check/detect time_dim
+  if (is.null(time_dim)) {
+    time_dim_names <- c("ftime", "sdate", "time")
+    time_dim_num <- which(time_dim_names %in% names(dim(data)))
+    if (length(time_dim_num) > 0) {
+      # Find time dimension with length > 1
+      ilong <- which(dim(data)[time_dim_names[time_dim_num]] > 1)
+      if (length(ilong) > 0) {
+        time_dim <- time_dim_names[time_dim_num[ilong[1]]]
+      } else {
+        stop("No time dimension longer than one found.")
+      }
+    } else {
+      stop("Could not automatically detect a target time dimension ",
+           "in the provided data in 'data'.")
+    }
+    .printv(paste("Selected time dim:", time_dim), verbose)
+  }
 
   # Apply time_moment
   if (time_moment == "mean") {
     .printv("Considering the time_moment: mean", verbose)
-    exp <- apply(data, c(1, 2, 3, 5, 6), mean)
+    exp <- Apply(data, target_dims = time_dim, mean)$output1
   } else if (time_moment == "sd") {
     .printv("Considering the time_moment: sd", verbose)
-    exp <- apply(data, c(1, 2, 3, 5, 6), sd)
+    exp <- Apply(data, target_dims = time_dim, sd)$output1
   } else if (time_moment == "perc") {
     .printv(paste0("Considering the time_moment: percentile ",
                  sprintf("%5f", time_percentile)), verbose)
-    exp <- apply(data, c(1, 2, 3, 5, 6), quantile, time_percentile / 100.)
+    exp <- Apply(data, target_dims = time_dim,
+                 function(x) {quantile(as.vector(x),
+                                       time_percentile / 100.)})$output1
   } else {
     stop(paste0("Invalid time_moment '", time_moment, "' specified!"))
   }
@@ -186,6 +216,20 @@ EnsClustering <- function(data, lat, lon, time_moment = "mean", numclus = NULL,
                   lon_lim = lon_lim, lat_lim = lat_lim,
                   variance_explained = variance_explained,
                   numpcs = numpcs, verbose = verbose)
+
+  # Expand result$closest_member into indices in cluster_dim dimensions
+  cm=result$closest_member
+  cml <- vector(mode = "list", length = length(cluster_dim))
+  cum <- cm * 0
+  dim_cd <- dim(exp)[cluster_dim]
+  for (i in rev(seq_along(cluster_dim))) {
+    cml[[i]] <- floor((cm - cum - 1) / prod(dim_cd[-i])) + 1
+    cum <- cum + (cml[[i]] - 1) * prod(dim_cd[-i])
+    dim_cd <- dim_cd[-i]
+  }
+  names(cml) <- cluster_dim
+  result$closest_member <- cml
+
   return(append(result, list(lat = lat, lon = lon)))
 }
 

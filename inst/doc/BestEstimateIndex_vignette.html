@@ -176,35 +176,61 @@ hr {
 <pre><code>library(CSTools)
 </code></pre>
 
-<p>The required data to applied this methodology are: </p>
+<p>The required data to applied this methodology are:</p>
 
 <ul>
-<li>the winter index NAO for two (or three) different SFS in a reference period (hindcast) and in a future simulation (forecast),</li>
-<li>the observed (reconstructed) NAO index in the reference period and </li>
-<li>the acumulated precipitation field from a SFS that aims to be improved (hindcast or hindcast and forecast)</li>
+<li>the observed (reconstructed) NAO index in the reference period</li>
+<li>the winter index NAO for two different SFSs (SFS1 and SFS2, to combine both of them) in a reference period (hindcast) and in a future simulation (forecast)</li>
+<li>the winter index NAO and the acumulated precipitation field from a SFS that aims to be improved (hindcast and forecast)</li>
 </ul>
 
 <p>Given the memory limitations, the following example uses synthetic data.</p>
 
-<p>The first SFS is a dynamical model containing 25 ensemble members and its output will be save in the object <code>NAO_hind1</code> for the 20 years reference period and <code>NAO_fcst1</code> for a next season forecast.
-The second SFS is a empirical model, so, the <code>NAO_hind2</code> and <code>NAO_fcst2</code> are characterized by a mean and standard deviation saved in the &#39;statistics&#39; dimension.</p>
+<p>The SFS1 system is a dynamical model containing 25 ensemble members and its output will be save in the object <code>NAO_hind1</code> for the 20 years reference period and <code>NAO_fcst1</code> for a next season forecast.
+The second SFS, SFS2, is a empirical model, so, the <code>NAO_hind2</code> and <code>NAO_fcst2</code> are characterized by a mean and standard deviation saved in the &#39;statistics&#39; dimension.
+The model for improving is a dynamical model containing 25 ensemble members.
+The synthetic data is created by running the following lines:</p>
 
-<p>The synthetic data is created by running the following lines:</p>
+<pre><code># observations
+NAO_obs &lt;- rnorm(20, sd=3) 
+dim(NAO_obs) &lt;- c(time = 20)
 
-<pre><code>NAO_obs &lt;- rnorm(3, sd=3)
-dim(NAO_obs) &lt;- c(time = 3)
-NAO_hind1 &lt;- rnorm(3 * 6, sd=3)
-dim(NAO_hind1) &lt;- c(time = 3, member = 6)
-NAO_hind2_mean &lt;- rnorm(3, sd=3)
-NAO_hind2_sd &lt;- rnorm(3, mean=5, sd=1)
-NAO_hind2 &lt;- cbind(NAO_hind2_mean,NAO_hind2_sd)
-dim(NAO_hind2) &lt;- c(time=3, statistic=2)
+# hindcast and forecast of a dynamical SFS 1
+NAO_hind1 &lt;- rnorm(20 * 2 * 25, sd=2.5) 
+dim(NAO_hind1) &lt;- c(time = 20, member = 50)
+NAO_fcst1 &lt;- rnorm(2*51, sd=2.5) 
+dim(NAO_fcst1) &lt;- c(time = 1, member = 102)
+
+# hindcast and forecast of an empirical SFS 2 
+NAO_hind2_mean &lt;- rnorm(20, sd=3) 
+NAO_hind2_sd &lt;- rnorm(20, mean=5, sd=1) 
+NAO_hind2 &lt;- cbind(NAO_hind2_mean, NAO_hind2_sd) 
+dim(NAO_hind2) &lt;- c(time=20, statistic=2)
+NAO_fcst2_mean &lt;- rnorm(1, sd=3) 
+NAO_fcst2_sd &lt;- rnorm(1, mean=5, sd=1) 
+NAO_fcst2 &lt;- cbind(NAO_fcst2_mean, NAO_fcst2_sd) 
+dim(NAO_fcst2) &lt;- c(time=1, statistic=2)
 
 </code></pre>
 
-<p>The acumulated precipiation field (only march for memory limiations) is loaded by running:</p>
+<p>The winter index NAO and the acumulated precipiation field from the dynamical SFS that aims to be improved could be created by running:</p>
 
-<pre><code>lonlat_prec$data &lt;- apply(lonlat_prec$data, c(1, 2, 3, 5, 6), sum)
+<pre><code># NAO index of a SFS to compute weights for each ensemble&#39;s member 
+NAO_hind &lt;- rnorm(20 * 25, sd=2.5) 
+dim(NAO_hind) &lt;- c(time = 20, member = 25)
+NAO_fcst &lt;- rnorm(51, sd=2.5) 
+dim(NAO_fcst) &lt;- c(time = 1, member = 51)
+
+# The acumulated precipiation field
+prec_hind &lt;- rnorm(20 * 25 * 21 * 31, mean=30, sd=10) 
+dim(prec_hind) &lt;- c(time = 20, member = 25, lat = 21, lon = 31)
+prec_hind &lt;- list(data = prec_hind)
+class(prec_hind) &lt;- &#39;s2dv_cube&#39;
+prec_fcst &lt;- rnorm(51 * 21 * 31, mean=25,sd=8) 
+dim(prec_fcst) &lt;- c(time = 1, member = 51, lat = 21, lon = 31)
+prec_fcst &lt;- list(data = prec_fcst)
+class(prec_fcst) &lt;- &#39;s2dv_cube&#39;
+
 </code></pre>
 
 <h2>1- Best Estimate Index NAO</h2>
@@ -214,21 +240,29 @@ dim(NAO_hind2) &lt;- c(time=3, statistic=2)
 <ul>
 <li>improves the PDF NAO index for each SFS (it could use bias correction method) and </li>
 <li>does a statistical combination of these improved NAO indexes.
-Its output is an array containing the parameters (mean and starndar deviation) of the PDF for the reference period. </li>
+Its output is an array containing the parameters (mean and starndar deviation) of the PDF for the reference period (hindcast) or forecast period. </li>
 </ul>
 
-<pre><code>pdf_hind_best &lt;- BEI_PDFBest(NAO_obs, NAO_hind1, NAO_hind2, index_fcst1 = NULL,
+<pre><code># for hindcast 
+pdf_hind_best &lt;- BEI_PDFBest(NAO_obs, NAO_hind1, NAO_hind2, index_fcst1 = NULL,
                              index_fcst2 = NULL, method_BC = &#39;none&#39;,
-                             time_dim_name = &#39;time&#39;, na.rm = FALSE) 
+                             time_dim_name = &#39;time&#39;, na.rm = FALSE)
+# for forecast                             
+pdf_fcst_best &lt;- BEI_PDFBest (NAO_obs, NAO_hind1, NAO_hind2, index_fcst1 = NAO_fcst1,
+                             index_fcst2 = NAO_fcst2, method_BC = &#39;none&#39;,
+                             time_dim_name = &#39;time&#39;, na.rm = FALSE)
 </code></pre>
 
 <h2>2- Compute weights using the Best Estimation of Index NAO</h2>
 
-<p>An array of weights is calculated for a SFS. This SFS could be a different SFS than the ones in section 1. 
+<p>An array of weights is calculated for the SFS. This SFS could be the same or different SFS than the ones in section 1. 
 The function WeightIndex computes these weights for each ensemble&#39;s member based on the best NAO PDF estimate.</p>
 
-<pre><code>weights_hind &lt;- BEI_Weights(NAO_hind1, pdf_hind_best)
-names(dim(weights_hind))[1] &lt;- &#39;sdate&#39;
+<pre><code># for hindcast 
+weights_hind &lt;- BEI_Weights(NAO_hind, pdf_hind_best)
+# for forecast
+weights_fcst &lt;- BEI_Weights(NAO_fcst, pdf_fcst_best)
+
 </code></pre>
 
 <p>The expected dimensions of these weights are &#39;member&#39; and temporal dimension.</p>
@@ -236,22 +270,28 @@ names(dim(weights_hind))[1] &lt;- &#39;sdate&#39;
 <h2>3- Apply weights to a precipitation field</h2>
 
 <p>The function <code>CST_BEI_Weighting</code> computes the ensemble mean or the terciles probabilities for a climate variable. 
-The corrected precipitation field is obtained by running:</p>
+The ensemble mean and the probabilities of terciles from the weighted precipitation field is obtained by running:</p>
 
-<pre><code>em_prec &lt;- CST_BEI_Weighting(lonlat_prec, weights_hind, type = &#39;ensembleMean&#39;, time_dim_name = &#39;sdate&#39;)
-prob_prec &lt;- CST_BEI_Weighting(lonlat_prec, weights_hind, type = &#39;probs&#39;, )
+<pre><code># for hindcast
+em_prec_hind &lt;- CST_BEI_Weighting(prec_hind, weights_hind, type = &#39;ensembleMean&#39;)
+prob_prec_hind &lt;- CST_BEI_Weighting(prec_hind, weights_hind, type = &#39;probs&#39;)
+
+# for forecast
+em_prec_fcst &lt;- CST_BEI_Weighting(prec_fcst, weights_fcst, type = &#39;ensembleMean&#39;)
+prob_prec_fcst &lt;- CST_BEI_Weighting(prec_fcst, weights_fcst, type = &#39;probs&#39;)
+
 </code></pre>
 
 <h2>Comparison and visualization</h2>
 
 <p>The original model output can be compared against the BEI corrected field.
-To do this a equiprobability weights are created and they are applied to the original precipitation field:</p>
+To do this a equiprobability weights are created for hindcast period and they are applied to the original precipitation field:</p>
 
-<pre><code>aweights_raw &lt;- rep(1/6, 3 * 6)
+<pre><code>aweights_raw &lt;- rep(1/25, 20 * 25)
 dim(aweights_raw) &lt;- dim(weights_hind)
 
-em_prec_raw &lt;- CST_BEI_Weighting(lonlat_prec, aweights_raw, type = &#39;ensembleMean&#39;, time_dim_name = &#39;sdate&#39;)
-prob_prec_raw &lt;- CST_BEI_Weighting(lonlat_prec, aweights_raw, type = &#39;probs&#39;, time_dim_name = &#39;sdate&#39;)
+em_prec_raw &lt;- CST_BEI_Weighting(prec_hind, aweights_raw, type = &#39;ensembleMean&#39;)
+prob_prec_raw &lt;- CST_BEI_Weighting(prec_hind, aweights_raw, type = &#39;probs&#39;)
 
 </code></pre>
 

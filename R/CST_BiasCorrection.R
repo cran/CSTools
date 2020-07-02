@@ -5,6 +5,7 @@
 #'
 #'@param exp an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the seasonal forecast experiment data in the element named \code{$data}
 #'@param obs an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the observed data in the element named \code{$data}.
+#'@param na.rm a logical value indicating whether missing values should be stripped before the computation proceeds, by default it is set to FALSE.
 #'
 #'@return an object of class \code{s2dv_cube} containing the bias corrected forecasts in the element called \code{$data} with the same dimensions of the experimental data.
 #'
@@ -30,7 +31,7 @@
 #'a <- CST_BiasCorrection(exp = exp, obs = obs)
 #'str(a)
 #'@export
-CST_BiasCorrection <- function(exp, obs) {
+CST_BiasCorrection <- function(exp, obs, na.rm = FALSE) {
   if (!inherits(exp, 's2dv_cube') || !inherits(obs, 's2dv_cube')) {
     stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube', ",
          "as output by CSTools::CST_Load.")
@@ -41,7 +42,7 @@ CST_BiasCorrection <- function(exp, obs) {
          "of the parameter 'obs' must be equal to 1.")
   }
   dimnames <- names(dim(exp$data))
-  BiasCorrected <- BiasCorrection(exp = exp$data, obs = obs$data)
+  BiasCorrected <- BiasCorrection(exp = exp$data, obs = obs$data, na.rm = na.rm)
   pos <- match(dimnames, names(dim(BiasCorrected)))
   BiasCorrected <- aperm(BiasCorrected, pos)
   names(dim(BiasCorrected)) <- dimnames
@@ -51,7 +52,7 @@ CST_BiasCorrection <- function(exp, obs) {
   return(exp)
 }
 
-BiasCorrection <- function (exp, obs) {
+BiasCorrection <- function (exp, obs , na.rm = FALSE) {
  
    if (!all(c('member', 'sdate') %in% names(dim(exp)))) {
     stop("Parameter 'exp' must have the dimensions 'member' and 'sdate'.")
@@ -69,6 +70,16 @@ BiasCorrection <- function (exp, obs) {
     warning("Parameter 'obs' contains NA values.")
   }
 
+  if (!is.logical(na.rm))  {
+    na.rm <- FALSE
+    warning("Paramater 'na.rm' must be a logical, it has been set to FALSE.")
+  }
+
+  if (length(na.rm)>1) {
+    na.rm <- na.rm[1]
+    warning("Paramter 'na.rm' has length greater than 1, and only the fist element is used.")
+  }
+
   target_dims_obs <- 'sdate'
   if ('member' %in% names(dim(obs))) {
     target_dims_obs <- c('member', target_dims_obs)
@@ -76,11 +87,11 @@ BiasCorrection <- function (exp, obs) {
 
   BiasCorrected <- Apply(data = list(var_obs = obs, var_exp = exp),
                       target_dims = list(target_dims_obs, c('member', 'sdate')),
-                      fun = .sbc)$output1
+                      fun = .sbc , na.rm = na.rm)$output1
   return(BiasCorrected)
 }
 
-.sbc <- function(var_obs, var_exp) {
+.sbc <- function(var_obs, var_exp , na.rm = FALSE) {
   nmembers <- dim(var_exp)['member'][]
   ntime <- dim(var_exp)['sdate'][]
   if (all(names(dim(var_exp)) != c('member','sdate'))) {
@@ -96,10 +107,10 @@ BiasCorrection <- function (exp, obs) {
     obs <- var_obs[-t]
     
     # parameters
-    sd_obs <- sd(obs)
-    sd_exp <- sd(hcst)
-    clim_exp <- mean(hcst)
-    clim_obs <- mean(obs)
+    sd_obs <- sd(obs , na.rm = na.rm)
+    sd_exp <- sd(hcst , na.rm = na.rm)
+    clim_exp <- mean(hcst , na.rm = na.rm)
+    clim_obs <- mean(obs , na.rm = na.rm)
     
     # bias corrected forecast
     corrected[ , t] <- ((fcst - clim_exp) * (sd_obs / sd_exp)) + clim_obs

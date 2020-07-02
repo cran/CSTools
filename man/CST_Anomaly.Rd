@@ -4,7 +4,14 @@
 \alias{CST_Anomaly}
 \title{Anomalies relative to a climatology along selected dimension with or without cross-validation}
 \usage{
-CST_Anomaly(exp = NULL, obs = NULL, cross = FALSE, memb = TRUE, dim_anom = 3)
+CST_Anomaly(
+  exp = NULL,
+  obs = NULL,
+  cross = FALSE,
+  memb = TRUE,
+  filter_span = NULL,
+  dim_anom = 3
+)
 }
 \arguments{
 \item{exp}{an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the seasonal forecast experiment data in the element named \code{$data}.}
@@ -15,6 +22,8 @@ CST_Anomaly(exp = NULL, obs = NULL, cross = FALSE, memb = TRUE, dim_anom = 3)
 
 \item{memb}{A logical value indicating whether Clim() computes one climatology for each experimental data 
 product member(TRUE) or it computes one sole climatology for all members (FALSE). Default = TRUE.}
+
+\item{filter_span}{a numeric value indicating the degree of smoothing. This option is only available if parameter \code{cross} is set to FALSE.}
 
 \item{dim_anom}{An integer indicating the dimension along which the climatology will be computed. It 
 usually corresponds to 3 (sdates) or 4 (ftime). Default = 3.}
@@ -51,6 +60,10 @@ str(anom3)
 
 anom4 <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = FALSE)
 str(anom4)
+
+anom5 <- CST_Anomaly(lonlat_data$exp)
+
+anom6 <- CST_Anomaly(obs = lonlat_data$obs)
 
 }
 \seealso{
