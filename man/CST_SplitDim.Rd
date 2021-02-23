@@ -4,7 +4,14 @@
 \alias{CST_SplitDim}
 \title{Function to Split Dimension}
 \usage{
-CST_SplitDim(data, split_dim = "time", indices = NULL, freq = "monthly")
+CST_SplitDim(
+  data,
+  split_dim = "time",
+  indices = NULL,
+  freq = "monthly",
+  new_dim_name = NULL,
+  insert_ftime = NULL
+)
 }
 \arguments{
 \item{data}{a 's2dv_cube' object}
@@ -14,9 +21,16 @@ CST_SplitDim(data, split_dim = "time", indices = NULL, freq = "monthly")
 \item{indices}{a vector of numeric indices or dates. If left at NULL, the dates provided in the s2dv_cube object (element Dates) will be used.}
 
 \item{freq}{a character string indicating the frequency: by 'day', 'month' and 'year' or 'monthly' (by default). 'month' identifies months between 1 and 12 independently of the year they belong to, while 'monthly' differenciates months from different years.}
+
+\item{new_dim_name}{a character string indicating the name of the new dimension.}
+
+\item{insert_ftime}{an integer indicating the number of time steps to add at the begining of the time series.}
 }
 \description{
 This function split a dimension in two. The user can select the dimension to split and provide indices indicating how to split that dimension or dates and the frequency expected (monthly or by day, month and year). The user can also provide a numeric frequency indicating the length of each division.
+}
+\details{
+Parameter 'insert_ftime' has been included for the case of using daily data, requiring split the temporal dimensions by months (or similar) and the first lead time doesn't correspondt to the 1st day of the month. In this case, the insert_ftime could be used, to get a final output correctly organized. E.g.: leadtime 1 is the 2nd of November and the input time series extend to the 31st of December. When requiring split by month with \code{inset_ftime = 1}, the 'monthly' dimension of length two will indicate the month (position 1 for November and position 2 for December), dimension 'time' will be length 31. For November, the position 1 and 31 will be NAs, while from positon 2 to 30 will be filled with the data provided. This allows to select correctly days trhough time dimension.
 }
 \examples{
 

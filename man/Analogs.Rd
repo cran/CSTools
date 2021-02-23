@@ -8,14 +8,17 @@ Analogs(
   expL,
   obsL,
   time_obsL,
+  time_expL = NULL,
   expVar = NULL,
   obsVar = NULL,
   criteria = "Large_dist",
+  excludeTime = NULL,
   lonVar = NULL,
   latVar = NULL,
   region = NULL,
   nAnalogs = NULL,
-  return_list = FALSE
+  AnalogsInfo = FALSE,
+  ncores = 1
 )
 }
 \arguments{
@@ -28,11 +31,15 @@ to be already subset for the desired large scale region.}
 
 \item{obsL}{an array of N named dimensions containing the observational field 
 on the large scale. The element 'data' in the 's2dv_cube' object must have 
-the same latitudinal and longitudinal dimensions as parameter 'expL' and a
-temporal dimension with the maximum number of available observations.}
+the same latitudinal and longitudinal dimensions as parameter 'expL' and a 
+single temporal dimension with the maximum number of available observations.}
 
 \item{time_obsL}{a character string indicating the date of the observations 
-in the format "dd/mm/yyyy"}
+in the format "dd/mm/yyyy". Reference time to search for analogs.}
+
+\item{time_expL}{an array of N named dimensions (coinciding with time 
+dimensions in expL) of character string(s) indicating the date(s) of the 
+experiment in the format "dd/mm/yyyy". Time(s) to find the analogs.}
 
 \item{expVar}{an array of N named dimensions containing the experimental 
 field on the local scale, usually a different variable to the parameter 
@@ -49,8 +56,14 @@ selection of analogs:
 \item{Local_dist} minimum Euclidean distance in the large scale pattern 
 and minimum Euclidean distance in the local scale pattern; and
 \item{Local_cor} minimum Euclidean distance in the large scale pattern, 
-minimum Euclidean distance in the local scale pattern and highest correlation
-in the local variable to downscale.}}
+minimum Euclidean distance in the local scale pattern and highest 
+correlation in the local variable to downscale.}}
+
+\item{excludeTime}{an array of N named dimensions (coinciding with time 
+dimensions in expL) of character string(s) indicating the date(s) of the 
+observations in the format "dd/mm/yyyy" to be excluded during the search of 
+analogs. It can be NULL but if expL is not a forecast (time_expL contained in 
+time_obsL),by default time_expL will be removed during the search of analogs.}
 
 \item{lonVar}{a vector containing the longitude of parameter 'expVar'.}
 
@@ -63,25 +76,29 @@ the maximum longitude, the minimum latitude and the maximum latitude.}
 'Local_dist' or 'Local_cor'. This is not the necessary the number of analogs 
 that the user can get, but the number of events with minimum distance in 
 which perform the search of the best Analog. The default value for the 
-'Large_dist' criteria is 1, for 'Local_dist' and 'Local_cor'criterias must
-be selected by the user otherwise the default value will be set as 10.}
+'Large_dist' criteria is 1, for 'Local_dist' and 'Local_cor' criterias must
+be greater than 1 in order to match with the first criteria, if nAnalogs is
+NULL for 'Local_dist' and 'Local_cor' the default value will be set at the 
+length of 'time_obsL'. If AnalogsInfo is FALSE the function returns just 
+the best analog.}
 
-\item{return_list}{TRUE to get a list with the best analogs. FALSE
-to get a single analog, the best analog. For Downscaling return_list must be
-FALSE.}
+\item{AnalogsInfo}{TRUE to get a list with two elements: 1) the downscaled 
+field and 2) the AnalogsInfo which contains: a) the number of the best 
+analogs, b) the corresponding value of the metric used in the selected 
+criteria (distance values for Large_dist and Local_dist,correlation values 
+for Local_cor), c)dates of the analogs). The analogs are listed in decreasing
+order, the first one is the best analog (i.e if the selected criteria is 
+Local_cor the best analog will be the one with highest correlation, while for
+Large_dist criteria the best analog will be the day with minimum Euclidean 
+distance). Set to FALSE to get a single analog, the best analog, for instance
+for downscaling.}
+
+\item{ncores}{the number of cores to use in parallel computation.}
 }
 \value{
 AnalogsFields, dowscaled values of the best analogs for the criteria 
-selected.
-
-AnalogsInfo, a dataframe with information about the number of the 
-best analogs, the corresponding value of the metric used in the selected 
-criteria (distance values for Large_dist and Local_dist,correlation values 
-for Local_cor), date of the analog). The analogs are listed in decreasing 
-order, the first one is the best analog (i.e if the selected criteria 
-is Local_cor the best analog will be the one with highest correlation, while
-for Large_dist criteria the best analog will be the day with minimum 
-Euclidean distance)
+selected. If AnalogsInfo is set to TRUE the function also returns a 
+list with the dowsncaled field and the Analogs Information.
 }
 \description{
 This function perform a downscaling using Analogs. To compute 
@@ -96,9 +113,9 @@ The analogs function will find the best analogs based in three criterias:
 (1) Minimum Euclidean distance in the large scale pattern (i.e. SLP)
 (2) Minimum Euclidean distance in the large scale pattern (i.e. SLP) 
 and minimum Euclidean distance in the local scale pattern (i.e. SLP). 
-(3) Minimum Euclidean distance in the large scale pattern (i.e. SLP), minimum 
-distance in the local scale pattern (i.e. SLP) and highest correlation in the
-local variable to downscale (i.e Precipitation).
+(3) Minimum Euclidean distance in the large scale pattern (i.e. SLP), 
+minimum distance in the local scale pattern (i.e. SLP) and highest 
+correlation in the local variable to downscale (i.e Precipitation).
 The search of analogs must be done in the longest dataset posible. This is 
 important since it is necessary to have a good representation of the 
 possible states of the field in the past, and therefore, to get better 
@@ -114,279 +131,102 @@ the large and local scale in based of the observations. The function is an
 adapted version of the method of Yiou et al 2013.
 }
 \examples{
-require(zeallot)
-
 # Example 1:Downscaling using criteria 'Large_dist' and a single variable:
-# The best analog is found using a single variable (i.e. Sea level pressure, 
-# SLP). The downscaling will be done in the same variable used to study the 
-# minimal distance (i.e. SLP). obsVar and expVar NULLS or equal to obsL and 
-# expL respectively region, lonVar and latVar not necessary here. 
-# return_list=FALSE 
-
 expSLP <- rnorm(1:20)
 dim(expSLP) <- c(lat = 4, lon = 5)
-obsSLP <- c(rnorm(1:180),expSLP*1.2)
-dim(obsSLP) <- c(lat = 4, lon = 5, time = 10)
+obsSLP <- c(rnorm(1:180), expSLP * 1.2)
+dim(obsSLP) <- c(time = 10, lat = 4, lon = 5)
 time_obsSLP <- paste(rep("01", 10), rep("01", 10), 1994 : 2003, sep = "-")
-downscale_field <- Analogs(expL=expSLP, obsL=obsSLP, time_obsL=time_obsSLP)
-str(downscale_field)
+downscale_field <- Analogs(expL = expSLP, obsL = obsSLP, 
+                  time_obsL = time_obsSLP,time_expL = "01-01-1994")
 
 # Example 2: Downscaling using criteria 'Large_dist' and 2 variables:
-# The best analog is found using 2 variables (i.e. Sea Level Pressure, SLP 
-# and precipitation, pr): one variable (i.e. sea level pressure, expL) to 
-# find the best analog day (defined in criteria 'Large_dist' as the day, in 
-# obsL, with the minimum Euclidean distance to the day of interest in expL) 
-# The second variable will be the variable to donwscale (i.e. precipitation, 
-# obsVar). Parameter obsVar must be different to obsL.The downscaled 
-# precipitation will be the precipitation that belongs to the best analog day
-# in SLP. Region not needed here since will be the same for both variables.
-
-expSLP <- rnorm(1:20)
-dim(expSLP) <- c(lat = 4, lon = 5)
-obsSLP <- c(rnorm(1:180),expSLP*2)
-dim(obsSLP) <- c(lat = 4, lon = 5, time = 10)
-time_obsSLP <- paste(rep("01", 10), rep("01", 10), 1994 : 2003, sep = "-")
-obs.pr <- c(rnorm(1:200)*0.001)
-dim(obs.pr)=dim(obsSLP)
-downscale_field <- Analogs(expL=expSLP, obsL=obsSLP, 
-                          obsVar=obs.pr,
-                          time_obsL=time_obsSLP)
-str(downscale_field)
+obs.pr <- c(rnorm(1:200) * 0.001)
+dim(obs.pr) <- dim(obsSLP)
+downscale_field <- Analogs(expL = expSLP, obsL = obsSLP, obsVar = obs.pr,
+                          time_obsL = time_obsSLP, time_expL = "01-01-1994")
 
 # Example 3:List of best Analogs using criteria 'Large_dist' and a single 
-# variable: same as Example 1 but getting a list of best analogs (return_list
-# =TRUE) with the corresponding downscaled values, instead of only 1 single 
-# donwscaled value instead of 1 single downscaled value. Imposing nAnalogs 
-# (number of analogs to do the search of the best Analogs). obsVar and expVar
-# NULL or equal to obsL and expL,respectively.
-
-expSLP <- rnorm(1:20)
-dim(expSLP) <- c(lat = 4, lon = 5)
-obsSLP <- c(rnorm(1:1980),expSLP*1.5)
+obsSLP <- c(rnorm(1:1980), expSLP * 1.5)
 dim(obsSLP) <- c(lat = 4, lon = 5, time = 100)
 time_obsSLP <- paste(rep("01", 100), rep("01", 100), 1920 : 2019, sep = "-")
-downscale_field<- Analogs(expL=expSLP, obsL=obsSLP, time_obsSLP,
-                         nAnalogs=5,return_list = TRUE)
-str(downscale_field)
+downscale_field<- Analogs(expL = expSLP, obsL = obsSLP, time_obsSLP,
+                         nAnalogs = 5, time_expL = "01-01-2003", 
+                         AnalogsInfo = TRUE, excludeTime = "01-01-2003")
 
 # Example 4:List of best Analogs using criteria 'Large_dist' and 2 variables:
-# same as example 2 but getting a list of best analogs (return_list =TRUE) 
-# with the values instead of only a single downscaled value. Imposing 
-# nAnalogs (number of analogs to do the search of the best Analogs). obsVar 
-# and expVar must be different to obsL and expL.
-
-expSLP <- rnorm(1:20)
-dim(expSLP) <- c(lat = 4, lon = 5)
-obsSLP <- c(rnorm(1:180),expSLP*2)
+obsSLP <- c(rnorm(1:180), expSLP * 2)
 dim(obsSLP) <- c(lat = 4, lon = 5, time = 10)
 time_obsSLP <- paste(rep("01", 10), rep("01", 10), 1994 : 2003, sep = "-")
-obs.pr <- c(rnorm(1:200)*0.001)
-dim(obs.pr)=dim(obsSLP)
-downscale_field <- Analogs(expL=expSLP, obsL=obsSLP, 
-                          obsVar=obs.pr,
-                          time_obsL=time_obsSLP,nAnalogs=5,
-                          return_list = TRUE)
-str(downscale_field)
+downscale_field <- Analogs(expL = expSLP, obsL = obsSLP, obsVar = obs.pr,
+                          time_obsL = time_obsSLP,nAnalogs=5,
+                          time_expL = "01-10-2003", AnalogsInfo = TRUE)
 
 # Example 5: Downscaling using criteria 'Local_dist' and 2 variables:
-# The best analog is found using 2 variables (i.e. Sea Level Pressure, 
-# SLP and precipitation, pr). Parameter obsVar must be different to obsL.The 
-# downscaled precipitation will be the precipitation that belongs to the best 
-# analog day in SLP. lonVar, latVar and Region must be given here to select 
-# the local scale
-
-expSLP <- rnorm(1:20)
-dim(expSLP) <- c(lat = 4, lon = 5)
-obsSLP <- c(rnorm(1:180),expSLP*2)
-dim(obsSLP) <- c(lat = 4, lon = 5, time = 10)
-time_obsSLP <- paste(rep("01", 10), rep("01", 10), 1994 : 2003, sep = "-")
-obs.pr <- c(rnorm(1:200)*0.001)
-dim(obs.pr)=dim(obsSLP)
 # analogs of local scale using criteria 2
-lonmin=-1
-lonmax=2
-latmin=30
-latmax=33
-region=c(lonmin,lonmax,latmin,latmax)
-Local_scale <- Analogs(expL=expSLP,
-                      obsL=obsSLP, time_obsL=time_obsSLP,
-                      obsVar=obs.pr,
-                      criteria="Local_dist",lonVar=seq(-1,5,1.5),
-                      latVar=seq(30,35,1.5),region=region, 
-                      nAnalogs = 10, return_list = FALSE)
-str(Local_scale)
+region=c(lonmin = -1 ,lonmax = 2, latmin = 30, latmax = 33)
+Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
+                      obsVar = obs.pr, criteria = "Local_dist", 
+                      lonVar = seq(-1, 5, 1.5),latVar = seq(30, 35, 1.5), 
+                      region = region,time_expL = "01-10-2000", 
+                      nAnalogs = 10, AnalogsInfo = TRUE)
 
 # Example 6: list of best analogs using criteria 'Local_dist' and 2 
-# variables:
-# The best analog is found using 2 variables. Parameter obsVar must be 
-# different to obsL in this case.The downscaled precipitation will be the 
-# precipitation that belongs to the best analog day in SLP. lonVar, latVar 
-# and Region needed. return_list=TRUE
-
-expSLP <- rnorm(1:20)
-dim(expSLP) <- c(lat = 4, lon = 5)
-obsSLP <- c(rnorm(1:180),expSLP*2)
-dim(obsSLP) <- c(lat = 4, lon = 5, time = 10)
-time_obsSLP <- paste(rep("01", 10), rep("01", 10), 1994 : 2003, sep = "-")
-obs.pr <- c(rnorm(1:200)*0.001)
-dim(obs.pr)=dim(obsSLP)
-# analogs of local scale using criteria 2
-lonmin=-1
-lonmax=2
-latmin=30
-latmax=33
-region=c(lonmin,lonmax,latmin,latmax)
-Local_scale <- Analogs(expL=expSLP,
-                      obsL=obsSLP, time_obsL=time_obsSLP,
-                      obsVar=obs.pr,
-                      criteria="Local_dist",lonVar=seq(-1,5,1.5),
-                      latVar=seq(30,35,1.5),region=region, 
-                      nAnalogs = 5, return_list = TRUE)
-str(Local_scale)
+Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
+                      criteria = "Local_dist", lonVar = seq(-1, 5, 1.5),
+                      latVar = seq(30, 35, 1.5), region = region,
+                      time_expL = "01-10-2000", nAnalogs = 5, 
+                      AnalogsInfo = TRUE)
 
 # Example 7: Downscaling using Local_dist criteria
-# without parameters obsVar and expVar. return list =FALSE 
-
-expSLP <- rnorm(1:20)
-dim(expSLP) <- c(lat = 4, lon = 5)
-obsSLP <- c(rnorm(1:180),expSLP*2)
-dim(obsSLP) <- c(lat = 4, lon = 5, time = 10)
-time_obsSLP <- paste(rep("01", 10), rep("01", 10), 1994 : 2003, sep = "-")
-# analogs of local scale using criteria 2
-lonmin=-1
-lonmax=2
-latmin=30
-latmax=33
-region=c(lonmin,lonmax,latmin,latmax)
-Local_scale <- Analogs(expL=expSLP,
-                      obsL=obsSLP, time_obsL=time_obsSLP,
-                      criteria="Local_dist",lonVar=seq(-1,5,1.5),
-                      latVar=seq(30,35,1.5),region=region, 
-                      nAnalogs = 10, return_list = TRUE)
-str(Local_scale)
+Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
+                      criteria = "Local_dist", lonVar = seq(-1, 5, 1.5),
+                      latVar = seq(30, 35, 1.5), region = region, 
+                      time_expL = "01-10-2000",
+                      nAnalogs = 10, AnalogsInfo = FALSE)
 
 # Example 8: Downscaling using criteria 'Local_cor' and 2 variables:
-# The best analog is found using 2 variables. Parameter obsVar and expVar 
-# are necessary and must be different to obsL and expL, respectively.
-# The downscaled precipitation will be the precipitation that belongs to
-# the best analog day in SLP large and local scales, and to the day with 
-# the higher correlation in precipitation. return_list=FALSE. two options 
-# for nAnalogs
+exp.pr <- c(rnorm(1:20) * 0.001)
+dim(exp.pr) <- dim(expSLP)
+Local_scalecor <- Analogs(expL = expSLP, obsL = obsSLP,time_obsL = time_obsSLP,
+                         obsVar = obs.pr, expVar = exp.pr,
+                         criteria = "Local_cor", lonVar = seq(-1, 5, 1.5),
+                         time_expL = "01-10-2000", latVar = seq(30, 35, 1.5),
+                         nAnalogs = 8, region = region, AnalogsInfo = FALSE)
+# same but without imposing nAnalogs,so nAnalogs will be set by default as 10 
+Local_scalecor <- Analogs(expL = expSLP, obsL = obsSLP,time_obsL = time_obsSLP,
+                         obsVar = obs.pr, expVar = exp.pr,
+                         criteria = "Local_cor", lonVar = seq(-1,5,1.5),
+                         time_expL = "01-10-2000", latVar=seq(30, 35, 1.5), 
+                         region = region, AnalogsInfo = TRUE)
 
-expSLP <- rnorm(1:20)
-dim(expSLP) <- c(lat = 4, lon = 5)
-obsSLP <- c(rnorm(1:180),expSLP*2)
-dim(obsSLP) <- c(lat = 4, lon = 5, time = 10)
-time_obsSLP <- paste(rep("01", 10), rep("01", 10), 1994 : 2003, sep = "-")
-exp.pr <- c(rnorm(1:20)*0.001)
-dim(exp.pr)=dim(expSLP)
-obs.pr <- c(rnorm(1:200)*0.001)
-dim(obs.pr)=dim(obsSLP)
-# analogs of local scale using criteria 2
-lonmin=-1
-lonmax=2
-latmin=30
-latmax=33
-region=c(lonmin,lonmax,latmin,latmax)
-Local_scalecor <- Analogs(expL=expSLP,
-                         obsL=obsSLP, time_obsL=time_obsSLP,
-                         obsVar=obs.pr,expVar=exp.pr,
-                         criteria="Local_cor",lonVar=seq(-1,5,1.5),
-                         latVar=seq(30,35,1.5),nAnalogs=8,region=region, 
-                         return_list = FALSE)
-Local_scalecor$AnalogsInfo
-Local_scalecor$DatesAnalogs
-# same but without imposing nAnalogs, so nAnalogs will be set by default as 10 
-Local_scalecor <- Analogs(expL=expSLP,
-                         obsL=obsSLP, time_obsL=time_obsSLP,
-                         obsVar=obs.pr,expVar=exp.pr,
-                         criteria="Local_cor",lonVar=seq(-1,5,1.5),
-                         latVar=seq(30,35,1.5),region=region, 
-                         return_list = FALSE)
-Local_scalecor$AnalogsInfo
-Local_scalecor$DatesAnalogs
-
-# Example 9: List of best analogs in the three criterias Large_dist, 
-# Local_dist, and Local_cor return list TRUE same variable
-
-expSLP <- rnorm(1:20)
-dim(expSLP) <- c(lat = 4, lon = 5)
-obsSLP <- c(rnorm(1:180),expSLP*2)
-dim(obsSLP) <- c(lat = 4, lon = 5, time = 10)
-time_obsSLP <- paste(rep("01", 10), rep("01", 10), 1994 : 2003, sep = "-")
-# analogs of large scale using criteria 1
-Large_scale <- Analogs(expL=expSLP,
-                      obsL=obsSLP, time_obsL=time_obsSLP,
-                      criteria="Large_dist", 
-                      nAnalogs = 7, return_list = TRUE)
-str(Large_scale)
-Large_scale$AnalogsInfo
-# analogs of local scale using criteria 2
-lonmin=-1
-lonmax=2
-latmin=30
-latmax=33
-region=c(lonmin,lonmax,latmin,latmax)
-Local_scale <- Analogs(expL=expSLP,
-                      obsL=obsSLP, time_obsL=time_obsSLP,
-                      criteria="Local_dist",lonVar=seq(-1,5,1.5),
-                      latVar=seq(30,35,1.5),nAnalogs=7,region=region, 
-                      return_list = TRUE)
-str(Local_scale)
-Local_scale$AnalogsInfo
-# analogs of local scale using criteria 3
-Local_scalecor <- Analogs(expL=expSLP,
-                         obsL=obsSLP, time_obsL=time_obsSLP,
-                         obsVar=obsSLP,expVar=expSLP,
-                         criteria="Local_cor",lonVar=seq(-1,5,1.5),
-                         latVar=seq(30,35,1.5),nAnalogs=7,region=region, 
-                         return_list = TRUE)
-str(Local_scalecor)
-Local_scalecor$AnalogsInfo
-
-# Example 10: Downscaling in the three criteria Large_dist, Local_dist, and 
-# Local_cor return list FALSE, different variable
-
-expSLP <- rnorm(1:20)
-dim(expSLP) <- c(lat = 4, lon = 5)
-obsSLP <- c(rnorm(1:180),expSLP*2)
-dim(obsSLP) <- c(lat = 4, lon = 5, time = 10)
-time_obsSLP <- paste(rep("01", 10), rep("01", 10), 1994 : 2003, sep = "-")
-exp.pr <- c(rnorm(1:20)*0.001)
-dim(exp.pr)=dim(expSLP)
-obs.pr <- c(rnorm(1:200)*0.001)
-dim(obs.pr)=dim(obsSLP)
-# analogs of large scale using criteria 1
-Large_scale <- Analogs(expL=expSLP,
-                      obsL=obsSLP, time_obsL=time_obsSLP,
-                      criteria="Large_dist", 
-                      nAnalogs = 7, return_list = FALSE)
-str(Large_scale)
-Large_scale$AnalogsInfo
-# analogs of local scale using criteria 2
-lonmin=-1
-lonmax=2
-latmin=30
-latmax=33
-region=c(lonmin,lonmax,latmin,latmax)
-Local_scale <- Analogs(expL=expSLP,
-                      obsL=obsSLP, time_obsL=time_obsSLP,
-                      obsVar=obs.pr,
-                      criteria="Local_dist",lonVar=seq(-1,5,1.5),
-                      latVar=seq(30,35,1.5),nAnalogs=7,region=region, 
-                      return_list = FALSE)
-str(Local_scale)
-Local_scale$AnalogsInfo
-# analogs of local scale using criteria 3
-Local_scalecor <- Analogs(expL=expSLP,
-                         obsL=obsSLP, time_obsL=time_obsSLP,
-                         obsVar=obs.pr,expVar=exp.pr,
-                         criteria="Local_cor",lonVar=seq(-1,5,1.5),
-                         latVar=seq(30,35,1.5),nAnalogs=7,region=region, 
-                         return_list = FALSE)
-str(Local_scalecor)
-Local_scalecor$AnalogsInfo
-
+#'Example 9: List of best analogs in the three criterias Large_dist, 
+Large_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
+                      criteria = "Large_dist", time_expL = "01-10-2000",
+                      nAnalogs = 7, AnalogsInfo = TRUE)
+Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
+                      time_expL = "01-10-2000", criteria = "Local_dist",
+                      lonVar = seq(-1, 5, 1.5), latVar = seq(30, 35, 1.5), 
+                      nAnalogs = 7,region = region, AnalogsInfo = TRUE)
+Local_scalecor <- Analogs(expL = expSLP, obsL = obsSLP,time_obsL = time_obsSLP,
+                         obsVar = obsSLP, expVar = expSLP, 
+                         time_expL = "01-10-2000",criteria = "Local_cor", 
+                         lonVar = seq(-1, 5, 1.5), latVar = seq(30, 35, 1.5),
+                         nAnalogs = 7,region = region, 
+                         AnalogsInfo = TRUE)
+#Example 10: Downscaling using criteria 'Large_dist' and a single variable, 
+# more than 1 sdate:
+expSLP <- rnorm(1:40)
+dim(expSLP) <- c(sdate = 2, lat = 4, lon = 5)
+obsSLP <- c(rnorm(1:180), expSLP * 1.2)
+dim(obsSLP) <- c(time = 11, lat = 4, lon = 5)
+time_obsSLP <- paste(rep("01", 11), rep("01", 11), 1993 : 2003, sep = "-")
+time_expSLP <- paste(rep("01", 2), rep("01", 2), 1994 : 1995, sep = "-")
+excludeTime <- c("01-01-2003", "01-01-2003")
+dim(excludeTime) <- c(sdate = 2)
+downscale_field_exclude <- Analogs(expL = expSLP, obsL = obsSLP, 
+                         time_obsL = time_obsSLP, time_expL = time_expSLP, 
+                         excludeTime = excludeTime, AnalogsInfo = TRUE)
 }
 \references{
 Yiou, P., T. Salameh, P. Drobinski, L. Menut, R. Vautard,
@@ -396,6 +236,10 @@ from surface pressure using analogues.  Clim. Dyn., 41, 1419-1437.
 }
 \author{
 M. Carmen Alvarez-Castro, \email{carmen.alvarez-castro@cmcc.it}
+
+Maria M. Chaves-Montero, \email{mariadm.chaves@cmcc.it }
+
+Veronica Torralba, \email{veronica.torralba@cmcc.it}
 
 Nuria Perez-Zanon \email{nuria.perez@bsc.es}
 }

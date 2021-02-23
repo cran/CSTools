@@ -25,7 +25,7 @@ This function allows to divide and save a object of class
 \dontrun{
 library(CSTools)
 data <- lonlat_data$exp
-destination <- "./path/"
+destination <- "./path2/"
 CST_SaveExp(data = data, destination = destination)
 }
 

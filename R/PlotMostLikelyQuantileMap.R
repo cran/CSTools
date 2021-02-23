@@ -12,7 +12,6 @@
 #'@param ... additional parameters to be sent to \code{PlotCombinedMap} and \code{PlotEquiMap}.
 #'@seealso \code{PlotCombinedMap} and \code{PlotEquiMap}
 #' 
-#'@import s2dverification
 #'@importFrom maps map 
 #'@importFrom graphics box image layout mtext par plot.new
 #'@importFrom grDevices adjustcolor bmp colorRampPalette dev.cur dev.new dev.off hcl jpeg pdf png postscript svg tiff

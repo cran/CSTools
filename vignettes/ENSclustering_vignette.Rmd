@@ -180,7 +180,7 @@ PlotLayout(PlotEquiMap, plot_dims = c("lat", "lon"),
            fileout = "EnsClus_4clus_both_mem_std_Fig1.png")
 ```
 
-![Figure 1 - Representative temperature anomalies of each cluster.](./Figures/EnsClus_4clus_both_mem_std_Fig1.png){width=100%}
+![Figure 1 - Representative temperature anomalies of each cluster.](./Figures/EnsClus_4clus_both_mem_std_Fig1.png)
 
 
 
@@ -202,7 +202,7 @@ PlotLayout(PlotEquiMap, plot_dims = c("lat", "lon"),
            fileout = "EnsClus_4clus_both_mem_std_Fig2.png")
 ```
 
-![Figure 2 - Temperature anomalies pattern per 'member - start_date' pair with cluster to which it is assigned displayed as map title.](./Figures/EnsClus_4clus_both_mem_std_Fig2.png){width=100%}
+![Figure 2 - Temperature anomalies pattern per 'member - start_date' pair with cluster to which it is assigned displayed as map title.](./Figures/EnsClus_4clus_both_mem_std_Fig2.png)
 
 ### Final notes
 

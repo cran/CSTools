@@ -40,8 +40,10 @@
 #'@param cex_leg a number to indicate the increase/reductuion of the lab_legend used 
 #'  to represent sig_data.
 #'@param col_leg color of the legend (triangles).
+#'@param cex_axis a number to indicate the increase/reduction of the axis labels.
 #'@param fileout A string of full directory path and file name indicating where 
 #'  to save the plot. If not specified (default), a graphics device will pop up. 
+#'@param mar A numerical vector of the form c(bottom, left, top, right) which gives the number of lines of margin to be specified on the four sides of the plot. 
 #'@param size_units A string indicating the units of the size of the device 
 #'  (file or window) to plot in. Set 'px' as default. See ?Devices and the 
 #'  creator function of the corresponding device.
@@ -72,6 +74,7 @@
 #'@importFrom grDevices dev.new dev.off dev.cur 
 #'@importFrom graphics plot points polygon text title axis
 #'@importFrom RColorBrewer brewer.pal
+#'@importFrom s2dv ColorBar
 #'@export
 PlotTriangles4Categories <- function(data, brks = NULL, cols = NULL,
                                      toptitle = NULL, sig_data = NULL,
@@ -81,6 +84,7 @@ PlotTriangles4Categories <- function(data, brks = NULL, cols = NULL,
                                      ylabels = NULL, ytitle = NULL,
                                      legend = TRUE, lab_legend = NULL,
                                      cex_leg = 1, col_leg = 'black',
+                                     cex_axis = 1.5, mar = c(5, 4, 0, 0),
                                      fileout = NULL, size_units = 'px',
                                      res = 100, figure.width = 1, ...) {
   # Checking the dimensions
@@ -100,7 +104,9 @@ PlotTriangles4Categories <- function(data, brks = NULL, cols = NULL,
       stop("Parameter 'data' should contain 'dimx', 'dimy' and 'dimcat' dimension names. ")
     }
   }
-  
+  if (!is.vector(mar) & length(mar) != 4) {
+    stop("Parameter 'mar' must be a vector of length 4.")
+  }
   if (!is.null(sig_data)) {
     if (!is.logical(sig_data)) {
       stop("Parameter 'sig_data' array must be logical.")}
@@ -179,7 +185,7 @@ PlotTriangles4Categories <- function(data, brks = NULL, cols = NULL,
   if(legend){
     layout(matrix(c(1, 2, 1, 3), 2, 2, byrow = T),
            widths = c(10, 3.4), heights = c(10, 3.5))
-    par(oma = c(1, 1, 1, 1), mar = c(5, 4, 0, 0))
+    par(oma = c(1, 1, 1, 1), mar = mar)
     if(is.null(lab_legend)) {
       lab_legend = 1:ncat
     }
@@ -202,10 +208,10 @@ PlotTriangles4Categories <- function(data, brks = NULL, cols = NULL,
   }
   
   if (xlab){
-    axis(1, at =(1:ncol) - 0.5, las = 2, labels = xlabels, cex.axis = 1.5)
+    axis(1, at =(1:ncol) - 0.5, las = 2, labels = xlabels, cex.axis = cex_axis)
   }
   if (ylab){
-    axis(2, at = (1:nrow) - 0.5, las = 2, labels = ylabels, cex.axis = 1.5)
+    axis(2, at = (1:nrow) - 0.5, las = 2, labels = ylabels, cex.axis = cex_axis)
   }
   
   

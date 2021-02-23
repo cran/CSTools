@@ -158,9 +158,9 @@ The following figures show the probabilities for lower tercile for precipitation
 - The winter precipitation (from November to March) from 1997 to 2016 over Iberia Peninsula from he ECMWF-S5 dynamical model with resolution 0.5º x 0.5º, to weighting with the previous Best Estimation of Index NAO.   
 
 
-![](./Figures/BestEstimateIndex_fig1.png){width=70%}
+![](./Figures/BestEstimateIndex_fig1.png)
 
-![](./Figures/BestEstimateIndex_fig3.png){width=70%}
+![](./Figures/BestEstimateIndex_fig3.png)
 
 
 
@@ -169,6 +169,6 @@ March 2013, for example, will be in the lower tercile from ECMWF Seasonal Foreca
 
 
 
-![](./Figures/BestEstimateIndex_fig2.png){width=70%}
+![](./Figures/BestEstimateIndex_fig2.png)
 
-![](./Figures/BestEstimateIndex_fig4.png){width=70%}
+![](./Figures/BestEstimateIndex_fig4.png)

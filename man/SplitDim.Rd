@@ -4,7 +4,13 @@
 \alias{SplitDim}
 \title{Function to Split Dimension}
 \usage{
-SplitDim(data, split_dim = "time", indices, freq = "monthly")
+SplitDim(
+  data,
+  split_dim = "time",
+  indices,
+  freq = "monthly",
+  new_dim_name = NULL
+)
 }
 \arguments{
 \item{data}{an n-dimensional array with named dimensions}
@@ -13,7 +19,9 @@ SplitDim(data, split_dim = "time", indices, freq = "monthly")
 
 \item{indices}{a vector of numeric indices or dates}
 
-\item{freq}{a character string indicating the frequency: by 'day', 'month' and 'year' or 'monthly' (by default). 'month' identifies months between 1 and 12 independetly of the year they belong to, while 'monthly' differenciates months from different years. Parameter 'freq' can also be numeric indicating the length in which to subset the dimension}
+\item{freq}{a character string indicating the frequency: by 'day', 'month' and 'year' or 'monthly' (by default). 'month' identifies months between 1 and 12 independetly of the year they belong to, while 'monthly' differenciates months from different years. Parameter 'freq' can also be numeric indicating the length in which to subset the dimension.}
+
+\item{new_dim_name}{a character string indicating the name of the new dimension.}
 }
 \description{
 This function split a dimension in two. The user can select the dimension to split and provide indices indicating how to split that dimension or dates and the frequency expected (monthly or by day, month and year). The user can also provide a numeric frequency indicating the length of each division.

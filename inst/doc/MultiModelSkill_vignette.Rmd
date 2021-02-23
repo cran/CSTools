@@ -145,9 +145,12 @@ While other relevant data is being stored in the corresponding element of the ob
 
 
 ```r
-> dim(AnomDJF$data)
-   dataset    dataset statistics        lat        lon 
-         4          1          4         35         43 
+> str(AnomDJF$data)
+List of 4
+ $ corr      : num [1:4, 1, 1:35, 1:64] 0.586 0.614 0.143 0.501 0.419 ...
+ $ p.val     : num [1:4, 1, 1:35, 1:64] 0.0026 0.00153 0.26805 0.01036 0.02931 ...
+ $ conf.lower: num [1:4, 1, 1:35, 1:64] 0.2073 0.2485 -0.3076 0.0883 -0.0154 ...
+ $ conf.upper: num [1:4, 1, 1:35, 1:64] 0.812 0.827 0.541 0.767 0.72 ...
 > names(AnomDJF)
 [1] "data"            "lon"             "lat"             "Variable"        "Datasets"        "Dates"          
 [7] "when"            "source_files"    "load_parameters"
@@ -155,26 +158,19 @@ While other relevant data is being stored in the corresponding element of the ob
 [1] "glosea5"                "ecmwf/system4_m1"       "meteofrance/system5_m1" "erainterim"    
 ```
  
-In the element $data of the `AnomDJF` object, the third dimension contains the lower limit of the 95% confidence interval, the correlation, the upper limit of the 95% confidence interval and the 95% significance level given by a one-sided T-test. 
-
-
-```r
-corre <- AnomDJF$data[ , , 2, , ]
-names(dim(corre)) <- c("maps", "lat", "lon")
-```
-
+In the element $data of the `AnomDJF` object is a list of object for the metric and its statistics: correlation, p-value, the lower limit of the 95% confidence interval and the upper limit of the 95% confidence interval and the 95% significance level given by a one-sided T-test. 
 
 To obtain a spatial plot with a scale from -1 to 1 value of correlation for the model with the highest correlation for each grid point, the following lines should be run:
 
 ```r
-PlotCombinedMap(corre, lon = Lon, lat = Lat, map_select_fun = max,
-                display_range = c(0, 1), map_dim = 'maps',
+PlotCombinedMap(AnomDJF$data$corr[,1,,], lon = Lon, lat = Lat, map_select_fun = max,
+                display_range = c(0, 1), map_dim = 'nexp',
                 legend_scale = 0.5, brks = 11,
-                cols = list(c('white', 'darkblue'),
+                cols = list(c('white', 'black'),
+                            c('white', 'darkblue'),
                             c('white', 'darkred'),
-                            c('white', 'darkorange'),
-                            c('white', 'black')),
-                bar_titles = c(names(AnomDJF$Datasets)[-4], "MMM"),
+                            c('white', 'darkorange')),
+                bar_titles = c("MMM", names(AnomDJF$Datasets)),
                 fileout = "./vignettes/Figures/MultiModelSkill_cor_tas_1992-2012.png",
                 width = 14, height = 8)                
 ```
@@ -200,14 +196,14 @@ The following lines are necessary to obtain the plot which visualizes the best m
 
 ```r
 names(dim(RMS)) <- c("maps", "lat", "lon")
-PlotCombinedMap(RMS, lon = Lon, lat = Lat, map_select_fun = min,
-                display_range = c(0, ceiling(max(abs(RMS)))), map_dim = 'maps',
+PlotCombinedMap(AnomDJF$data$rms[,1,,], lon = Lon, lat = Lat, map_select_fun = min,
+                display_range = c(0, ceiling(max(abs(AnomDJF$data$rms)))), map_dim = 'nexp',
                 legend_scale = 0.5, brks = 11,
-                cols = list(c('darkblue', 'white'),
+                cols = list(c('black', 'white'),
+                            c('darkblue', 'white'),
                             c('darkred', 'white'),
-                            c('darkorange', 'white'),
-                            c('black', 'white')),
-                bar_titles = c(names(AnomDJF$Datasets)[-4], "MMM"), 
+                            c('darkorange', 'white')),
+                bar_titles = c("MMM", names(AnomDJF$Datasets)), 
                 fileout = "./vignettes/Figures/MultiModelSkill_rms_tas_1992-2012.png",
                 width = 14, height = 8)              
 ```
@@ -226,19 +222,17 @@ Notice that the perfect RMSSS is 1 and the parameter  `map_select_fun` from `Plo
 ```r
 AnomDJF <- CST_MultiMetric(exp = ano_exp, obs = ano_obs, metric = 'rmsss', 
                           multimodel = TRUE)
-RMSSS <- AnomDJF$data[ , , 1, , ]
-names(dim(RMSSS)) <- c("maps", "lat", "lon")
 
-PlotCombinedMap(RMSSS, lon = Lon, lat = Lat, 
+PlotCombinedMap(AnomDJF$data$rmsss[,1,,], lon = Lon, lat = Lat, 
                 map_select_fun = function(x) {x[which.min(abs(x - 1))]},
                 display_range = c(0, 
-                                  ceiling(max(abs(RMSSS)))), map_dim = 'maps',
+                                  ceiling(max(abs(AnomDJF$data$rmsss)))), map_dim = 'nexp',
                 legend_scale = 0.5, brks = 11,
-                cols = list(c('white', 'darkblue'),
+                cols = list(c('white', 'black'),
+                            c('white', 'darkblue'),
                             c('white', 'darkred'),
-                            c('white', 'darkorange'),
-                            c('white', 'black')),
-                bar_titles = c(names(AnomDJF$Datasets)[-4], "MMM"), 
+                            c('white', 'darkorange')),
+                bar_titles = c("MMM", names(AnomDJF$Datasets)), 
                 fileout = "./vignettes/Figures/MultiModelSkill_rmsss_tas_1992-2012.png",
                 width = 14, height = 8)                
 ```

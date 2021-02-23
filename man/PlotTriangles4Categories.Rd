@@ -23,6 +23,8 @@ PlotTriangles4Categories(
   lab_legend = NULL,
   cex_leg = 1,
   col_leg = "black",
+  cex_axis = 1.5,
+  mar = c(5, 4, 0, 0),
   fileout = NULL,
   size_units = "px",
   res = 100,
@@ -83,6 +85,10 @@ the categories (2 or 4).}
 to represent sig_data.}
 
 \item{col_leg}{color of the legend (triangles).}
+
+\item{cex_axis}{a number to indicate the increase/reduction of the axis labels.}
+
+\item{mar}{A numerical vector of the form c(bottom, left, top, right) which gives the number of lines of margin to be specified on the four sides of the plot.}
 
 \item{fileout}{A string of full directory path and file name indicating where 
 to save the plot. If not specified (default), a graphics device will pop up.}

@@ -34,7 +34,7 @@
 #'          \code{cluster} (A matrix or vector with integers (from 1:k) indicating the cluster to which each time step is allocated.),
 #'         \code{persistence} (Percentage of days in a month/season before a cluster is replaced for a new one (only if method=’kmeans’ has been selected.)),
 #'         \code{frequency} (Percentage of days in a month/season belonging to each cluster (only if method=’kmeans’ has been selected).),
-#'@import s2dverification
+#'@importFrom s2dverification EOF
 #'@import multiApply
 #'@examples
 #'\dontrun{
@@ -109,7 +109,7 @@ CST_WeatherRegimes <- function(data, ncenters = NULL,
 #'         \code{cluster} (A matrix or vector with integers (from 1:k) indicating the cluster to which each time step is allocated.),
 #'         \code{persistence} (Percentage of days in a month/season before a cluster is replaced for a new one (only if method=’kmeans’ has been selected.)),
 #'         \code{frequency} (Percentage of days in a month/season belonging to each cluster (only if method=’kmeans’ has been selected).),
-#'@import s2dverification
+#'@importFrom s2dverification EOF
 #'@import multiApply
 #'@examples
 #'\dontrun{

@@ -6,9 +6,9 @@
 \usage{
 CST_RainFARM(
   data,
-  nf,
   weights = 1,
   slope = 0,
+  nf,
   kmin = 1,
   nens = 1,
   fglob = FALSE,
@@ -29,15 +29,14 @@ which can be specified by parameter \code{time_dim}.
 The number of longitudes and latitudes in the input data is expected to be even and the same. If not
 the function will perform a subsetting to ensure this condition.}
 
-\item{nf}{Refinement factor for downscaling (the output resolution is increased by this factor).}
-
 \item{weights}{Matrix with climatological weights which can be obtained using
 the \code{CST_RFWeights} function. If \code{weights=1.} (default) no weights are used.
-The matrix should have dimensions (lon, lat) in this order.
-The names of these dimensions are not checked.}
+The names of these dimensions must be at least 'lon' and 'lat'.}
 
 \item{slope}{Prescribed spectral slope. The default is \code{slope=0.}
-meaning that the slope is determined automatically over the dimensions specified by \code{time_dim}.}
+meaning that the slope is determined automatically over the dimensions specified by \code{time_dim}. A 1D array with named dimension can be provided (see details and examples)}
+
+\item{nf}{Refinement factor for downscaling (the output resolution is increased by this factor).}
 
 \item{kmin}{First wavenumber for spectral slope (default: \code{kmin=1}).}
 
@@ -72,7 +71,7 @@ with the following behaviour if set to TRUE:
 \value{
 CST_RainFARM() returns a downscaled CSTools object (i.e., of the 
 class 's2dv_cube').
-If \code{nens>1} an additional dimension named "realization" is added to the 
+If \code{nens>1} an additional dimension named "realizatio"n is added to the 
 \code{$data} array after the "member" dimension (unless 
 \code{drop_realization_dim=TRUE} is specified).
 The ordering of the remaining dimensions in the \code{$data} element of the input object is maintained.
@@ -83,6 +82,9 @@ downscaling method and accepts a CSTools object (an object of the class
 's2dv_cube' as provided by `CST_Load`) as input.
 Adapted for climate downscaling and including orographic correction
 as described in Terzago et al. 2018.
+}
+\details{
+Wether parameter 'slope' and 'weights' presents seasonality dependency, a dimension name should match between these parameters and the input data in parameter 'data'. See example 2 below where weights and slope vary with 'sdate' dimension.
 }
 \examples{
 #Example 1: using CST_RainFARM for a CSTools object
@@ -95,8 +97,8 @@ lat <- seq(40, 43.5, 0.5)
 dim(lat) <- c(lat = length(lat))
 data <- list(data = exp, lon = lon, lat = lat)
 # Create a test array of weights
-ww <- array(1., dim = c(8 * nf, 8 * nf))
-res <- CST_RainFARM(data, nf, ww, nens=3)
+ww <- array(1., dim = c(lon = 8 * nf, lat = 8 * nf))
+res <- CST_RainFARM(data, nf = nf, weights = ww, nens=3)
 str(res)
 #List of 3
 # $ data: num [1, 1:2, 1:3, 1:3, 1:4, 1:64, 1:64] 260 553 281 278 143 ...
@@ -106,6 +108,11 @@ dim(res$data)
 # dataset      member realization       sdate       ftime         lat         lon 
 #       1           2           3           3           4          64          64
 
+# Example 2:
+slo <- array(c(0.1, 0.5, 0.7), c(sdate= 3))
+wei <- array(rnorm(8 * 8 * 3), c(lon = 8, lat = 8, sdate = 3))
+res <- CST_RainFARM(lonlat_prec,
+                    weights = wei, slope = slo, nf = 2)
 }
 \references{
 Terzago, S. et al. (2018). NHESS 18(11), 2825-2840.

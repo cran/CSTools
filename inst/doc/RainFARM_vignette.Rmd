@@ -110,7 +110,7 @@ title(main = "pr 17/03/2010 downscaled")
 ```
 <!-- dev.off() -->
 
-![Comparison between an original precipitation field at 1-degree resolution (left) and the same field downscaled with RainFARM to 0.05 degree resolution (right)](Figures/RainFARM_fig1.png){width=420px}
+![Comparison between an original precipitation field at 1-degree resolution (left) and the same field downscaled with RainFARM to 0.05 degree resolution (right)](Figures/RainFARM_fig1.png)
 
 RainFARM has downscaled the original field with a realistic fine-scale correlation structure. Precipitation is conserved in an average sense (in this case smoothing both the original and the downscaled fields with a circular kernel with a diameter equal to the original field grid spacing would lead to the same results). The downscaled field presents more extreme precipitation peaks.
 
@@ -118,7 +118,7 @@ RainFARM has downscaled the original field with a realistic fine-scale correlati
 
 The area of interest in our example presents a complex orography, but the basic RainFARM algorithm used does not consider topographic elevation in deciding how to distribute fine-scale precipitation. A long term climatology of the downscaled fields would have a resolution comparable to that of the original coarse fields and would not resemble the fine-scale structure of an observed climatology. If an external fine-scale climatology of precipitation is available, we can use the method discussed in Terzago et al. (2018) to change the distribution of precipitation by RainFARM for each timestep, so that the long-term average is close to this reference climatology in terms of precipitation distribution (while the total precipitation amount of the original fields to downscale is preserved).
 
-Suitable climatology files could be for example a fine-scale precipitation climatology from a high-resolution regional climate model (see e.g. Terzago et al. 2018), a local high-resolution gridded climatology from observations, or a reconstruction such as those which can be downloaded from the WORLDCLIM (http://www.worldclim.org) or CHELSA (http://chelsa-climate.org) websites. The latter data will need to be converted to NetCDF format before being used (see for example the GDAL tools (https://www.gdal.org).
+Suitable climatology files could be for example a fine-scale precipitation climatology from a high-resolution regional climate model (see e.g. Terzago et al. 2018), a local high-resolution gridded climatology from observations, or a reconstruction such as those which can be downloaded from the WORLDCLIM (https://www.worldclim.org) or CHELSA (https://chelsa-climate.org) websites. The latter data will need to be converted to NetCDF format before being used (see for example the GDAL tools (https://gdal.org).
 We will assume that a copy of the WORLDCLIM precipitation climatology at 30 arcseconds (about 1km resolution) is available in the local file `medscope.nc`. From this file we can derive suitable weights to be used with RainFARM using the `CST_RFWeights` functions as follows:
 ```{r}  
 ww <- CST_RFWeights("./worldclim.nc", nf = 20, lon = exp$lon, lat = exp$lat)
@@ -168,7 +168,7 @@ dev.off()
 ```
 -->
 
-![The same field as in Fig. 1 downscaled using climatological weights from the WORLDCLIM dataset. (left panel). The center and right panel show the climatology of the downscaled fields over all ensemble members, realizations and forecast times without and with climatological weights respectively, for the first starting date. The center and right panels use a different colorscale than the left panel.](Figures/RainFARM_fig2.png){width=640px}
+![The same field as in Fig. 1 downscaled using climatological weights from the WORLDCLIM dataset. (left panel). The center and right panel show the climatology of the downscaled fields over all ensemble members, realizations and forecast times without and with climatological weights respectively, for the first starting date. The center and right panels use a different colorscale than the left panel.](Figures/RainFARM_fig2.png)
 
 ### Determining the spectral slopes
 

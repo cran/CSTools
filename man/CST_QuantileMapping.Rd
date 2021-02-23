@@ -51,6 +51,7 @@ All methods accepts some common arguments:
 \itemize{
 \item{wet.day} {logical indicating whether to perform wet day correction or not.(Not available in 'DIS' method)}
 \item{qstep} {NULL or a numeric value between 0 and 1.}}
+When providing a forecast to be corrected through the pararmeter \code{exp_cor}, some inputs might need to be modified. The quantile correction is compute by comparing objects passed through 'exp' and 'obs' parameters, this correction will be later applied to the forecast provided in 'exp_cor'. Imaging the case of 'exp' and 'obs' having several start dates, stored using a dimension e.g. 'sdate', 'sample_dims' include this dimension 'sdate' and 'exp_cor' has forecasts for several sdates but different from the ones in 'exp'. In this case, the correction computed with 'exp' and 'obs' would be applied for each 'sdate' of 'exp_cor' separately. This example corresponds to a case of split a dataset in training set and validation set.
 }
 \examples{
 library(qmap)
@@ -70,6 +71,14 @@ exp <- lonlat_data$exp
 obs <- lonlat_data$obs
 res <- CST_QuantileMapping(exp, obs)
 
+exp_cor <- exp
+exp_cor$data <- exp_cor$data[,,1,,,]
+dim(exp_cor$data) <- c(dataset = 1, member = 15, sdate = 1, ftime = 3, 
+                      lat = 22, lon = 53)
+res <- CST_QuantileMapping(exp, obs, exp_cor,
+                          sample_dims = c('sdate', 'ftime', 'member'))
+res <- CST_QuantileMapping(exp, obs, exp_cor,
+                          sample_dims = c('ftime', 'member'))
 data(obsprecip)
 data(modprecip)
 exp <- modprecip$MOSS[1:10000]
@@ -82,6 +91,27 @@ obs <- list(data = obs)
 class(obs) <- 's2dv_cube'
 res <- CST_QuantileMapping(exp = exp, obs = obs, sample_dims = 'time',
                           method = 'DIST')
+# Example using different lenght of members and sdates:
+exp <- lonlat_data$exp
+exp$data <- exp$data[,,1:4,,,]
+dim(exp$data) <- c(dataset = 1, member = 15, sdate = 4, ftime = 3, 
+                      lat = 22, lon = 53)
+obs <- lonlat_data$obs
+obs$data <- obs$data[,,1:4, ,,]
+dim(obs$data) <- c(dataset = 1, member = 1, sdate = 4, ftime = 3, 
+                      lat = 22, lon = 53)
+exp_cor <- lonlat_data$exp
+exp_cor$data <- exp_cor$data[,1:5,5:6,,,]
+dim(exp_cor$data) <- c(dataset = 1, member = 5, sdate = 2, ftime = 3, 
+                     lat = 22, lon = 53)
+res <- CST_QuantileMapping(exp, obs, exp_cor,
+                          sample_dims = c('sdate', 'ftime', 'member'))
+exp_cor <- lonlat_data$exp
+exp_cor$data <- exp_cor$data[,,5:6,,,]
+dim(exp_cor$data) <- c(dataset = 1, member = 15, sdate = 2, ftime = 3, 
+                      lat = 22, lon = 53)
+res <- CST_QuantileMapping(exp, obs, exp_cor,
+                          sample_dims = c('sdate', 'ftime', 'member'))
 }
 }
 \seealso{

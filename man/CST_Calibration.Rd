@@ -11,6 +11,11 @@ CST_Calibration(
   eval.method = "leave-one-out",
   multi.model = FALSE,
   na.fill = TRUE,
+  na.rm = TRUE,
+  apply_to = NULL,
+  alpha = NULL,
+  memb_dim = "member",
+  sdate_dim = "sdate",
   ncores = 1
 )
 }
@@ -19,13 +24,23 @@ CST_Calibration(
 
 \item{obs}{an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the observed data in the element named \code{$data}.}
 
-\item{cal.method}{is the calibration method used, can be either \code{bias}, \code{evmos}, \code{mse_min} or \code{crps_min}. Default value is \code{mse_min}.}
+\item{cal.method}{is the calibration method used, can be either \code{bias}, \code{evmos}, \code{mse_min}, \code{crps_min} or \code{rpc-based}. Default value is \code{mse_min}.}
 
 \item{eval.method}{is the sampling method used, can be either \code{in-sample} or \code{leave-one-out}. Default value is the \code{leave-one-out} cross validation.}
 
 \item{multi.model}{is a boolean that is used only for the \code{mse_min} method. If multi-model ensembles or ensembles of different sizes are used, it must be set to \code{TRUE}. By default it is \code{FALSE}. Differences between the two approaches are generally small but may become large when using small ensemble sizes. Using multi.model when the calibration method is \code{bias}, \code{evmos} or \code{crps_min} will not affect the result.}
 
 \item{na.fill}{is a boolean that indicates what happens in case calibration is not possible or will yield unreliable results. This happens when three or less forecasts-observation pairs are available to perform the training phase of the calibration. By default \code{na.fill} is set to true such that NA values will be returned. If \code{na.fill} is set to false, the uncorrected data will be returned.}
+
+\item{na.rm}{is a boolean that indicates whether to remove the NA values or not. The default value is \code{TRUE}. See Details section for further information about its use and compatibility with \code{na.fill}.}
+
+\item{apply_to}{is a character string that indicates whether to apply the calibration to all the forecast (\code{"all"}) or only to those where the correlation between the ensemble mean and the observations is statistically significant (\code{"sign"}). Only useful if \code{cal.method == "rpc-based"}.}
+
+\item{alpha}{is a numeric value indicating the significance level for the correlation test. Only useful if \code{cal.method == "rpc-based" & apply_to == "sign"}.}
+
+\item{memb_dim}{is a character string indicating the name of the member dimension. By default, it is set to 'member'.}
+
+\item{sdate_dim}{is a character string indicating the name of the start date dimension. By default, it is set to 'sdate'.}
 
 \item{ncores}{is an integer that indicates the number of cores for parallel computations using multiApply function. The default value is one.}
 }

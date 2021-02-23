@@ -10,8 +10,8 @@
 #'
 #'@return an object of class \code{s2dv_cube} containing the RMSE in the element \code{$data} which is an array with two datset dimensions equal to the 'dataset' dimension in the \code{exp$data} and \code{obs$data} inputs.  An array with dimensions: c(number of exp, number of obs, 1 (the multivariate RMSE value), number of lat, number of lon)
 #'
-#'@seealso \code{\link[s2dverification]{RMS}} and \code{\link{CST_Load}}
-#'@import s2dverification
+#'@seealso \code{\link[s2dv]{RMS}} and \code{\link{CST_Load}}
+#'@importFrom s2dv RMS MeanDims
 #'@examples
 #'# Creation of sample s2dverification objects. These are not complete
 #'# s2dverification objects though. The Load function returns complete objects.
@@ -108,17 +108,18 @@ CST_MultivarRMSE <- function(exp, obs, weight = NULL) {
   sumweights <- 0
   for (j in 1 : nvar) {
     # seasonal average of anomalies
-    AvgExp <- MeanListDim(exp[[j]]$data, narm = TRUE, c(2, 4))
-    AvgObs <- MeanListDim(obs[[j]]$data, narm = TRUE, c(2, 4))
+    AvgExp <- MeanDims(exp[[j]]$data, c('member', 'ftime'), na.rm = TRUE)
+    AvgObs <- MeanDims(obs[[j]]$data, c('member', 'ftime'), na.rm = TRUE)
     # multivariate RMSE (weighted) 
-    rmse <- RMS(AvgExp, AvgObs, posloop = 1, posRMS = 2, conf = FALSE)
+    rmse <- s2dv::RMS(AvgExp, AvgObs, dat_dim = 'dataset', time_dim = 'sdate',
+                conf = FALSE)$rms
     stdev <- sd(AvgObs)
     mvrmse <- mvrmse + (rmse / stdev * as.numeric(weight[j]))
     sumweights <- sumweights + as.numeric(weight[j])
   }
   mvrmse <- mvrmse / sumweights 
   
-  names(dim(mvrmse)) <- c(dimnames[1], dimnames[1], 'statistics', dimnames[5 : 6])
+ # names(dim(mvrmse)) <- c(dimnames[1], dimnames[1], 'statistics', dimnames[5 : 6])
   exp_Datasets <- unlist(lapply(exp, function(x) {
                          x[[which(names(x) == 'Datasets')]]}))
   exp_source_files <- unlist(lapply(exp, function(x) {

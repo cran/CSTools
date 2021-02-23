@@ -17,14 +17,14 @@
 #'@seealso \code{\link{CST_Load}}, \code{\link{as.s2dv_cube}} and \code{\link{s2dv_cube}}
 #'
 #'@import ncdf4
-#'@importFrom s2dv Reorder
+#'@importFrom s2dv Reorder InsertDim
 #'@import multiApply
 #'
 #'@examples
 #'\dontrun{
 #'library(CSTools)
 #'data <- lonlat_data$exp
-#'destination <- "./path/"
+#'destination <- "./path2/"
 #'CST_SaveExp(data = data, destination = destination)
 #'}
 #'
@@ -40,7 +40,7 @@ CST_SaveExp <- function(data, destination = "./CST_Data") {
          "as output by CSTools::CST_Load.")
   }
   sdates <- lapply(1:length(data$Datasets), function(x) {
-                          data$Datasets[[x]]$InitializationDates[[1]]})[[1]]
+                          unique(data$Datasets[[x]]$InitializationDates)})[[1]]
   if (!is.character(attributes(data$Variable)$units)) {
       units <- attributes(data$Variable)$variable$units
   } else {
@@ -78,7 +78,7 @@ CST_SaveExp <- function(data, destination = "./CST_Data") {
 #' The path will be created with the name of the variable and each Datasets.
 #' 
 #'@import ncdf4
-#'@importFrom s2dv Reorder
+#'@importFrom s2dv Reorder InsertDim
 #'@import multiApply
 #'
 #'@examples
@@ -142,7 +142,7 @@ SaveExp <- function(data, lon, lat, Dataset, var_name, units, startdates, Dates,
   if (length(dataset_pos) == 0) {
     warning("Element 'data' in parameter 'data' hasn't 'dataset' dimension. ",
             "All data is stored in the same 'dataset' folder.")
-    data$data <- InsertDim(var = data, posdim = 1, lendim = 1)
+    data$data <- InsertDim(data, posdim = 1, lendim = 1)
     names(dim(data))[1] <- "dataset"
     dimname <- c("dataset", dimname)
     dataset_pos = 1
@@ -256,9 +256,10 @@ SaveExp <- function(data, lon, lat, Dataset, var_name, units, startdates, Dates,
   dim_names <- names(dim(data))
   if (any(dim_names != c('longitude', 'latitude', 'member', 'time'))) {
     data <- Reorder(data, c('longitude', 'latitude', 'member', 'time'))
-  } 
-  dim_time <- ncdim_def(name = 'time', units = 'days since 1970-01-01',
-                        vals = as.numeric(Dates),
+  }
+  differ <- as.numeric((Dates - Dates[1])/3600)  
+  dim_time <- ncdim_def(name = 'time', units = paste('hours since', Dates[1]),
+                        vals = differ, calendar = 'proleptic_gregorian',
                         longname = 'time', unlim = TRUE)
   list_pos = length(dims_var) + 1
   dims_var[[list_pos]] <- dim_time

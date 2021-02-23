@@ -11,6 +11,11 @@ Calibration(
   eval.method = "leave-one-out",
   multi.model = FALSE,
   na.fill = TRUE,
+  na.rm = TRUE,
+  apply_to = NULL,
+  alpha = NULL,
+  memb_dim = "member",
+  sdate_dim = "sdate",
   ncores = 1
 )
 }
@@ -19,7 +24,7 @@ Calibration(
 
 \item{obs}{an array containing the observed data.}
 
-\item{cal.method}{is the calibration method used, can be either \code{bias}, \code{evmos}, \code{mse_min} or \code{crps_min}. Default value is \code{mse_min}.}
+\item{cal.method}{is the calibration method used, can be either \code{bias}, \code{evmos}, \code{mse_min}, \code{crps_min} or \code{rpc-based}. Default value is \code{mse_min}.}
 
 \item{eval.method}{is the sampling method used, can be either \code{in-sample} or \code{leave-one-out}. Default value is the \code{leave-one-out} cross validation.}
 
@@ -27,15 +32,28 @@ Calibration(
 
 \item{na.fill}{is a boolean that indicates what happens in case calibration is not possible or will yield unreliable results. This happens when three or less forecasts-observation pairs are available to perform the training phase of the calibration. By default \code{na.fill} is set to true such that NA values will be returned. If \code{na.fill} is set to false, the uncorrected data will be returned.}
 
+\item{na.rm}{is a boolean that indicates whether to remove the NA values or not. The default value is \code{TRUE}.}
+
+\item{apply_to}{is a character string that indicates whether to apply the calibration to all the forecast (\code{"all"}) or only to those where the correlation between the ensemble mean and the observations is statistically significant (\code{"sign"}). Only useful if \code{cal.method == "rpc-based"}.}
+
+\item{alpha}{is a numeric value indicating the significance level for the correlation test. Only useful if \code{cal.method == "rpc-based" & apply_to == "sign"}.}
+
+\item{memb_dim}{is a character string indicating the name of the member dimension. By default, it is set to 'member'.}
+
+\item{sdate_dim}{is a character string indicating the name of the start date dimension. By default, it is set to 'sdate'.}
+
 \item{ncores}{is an integer that indicates the number of cores for parallel computations using multiApply function. The default value is one.}
 }
 \value{
 an array containing the calibrated forecasts with the same dimensions as the \code{exp} array.
 }
 \description{
-Four types of member-by-member bias correction can be performed. The \code{bias} method corrects the bias only, the \code{evmos} method applies a variance inflation technique to ensure the correction of the bias and the correspondence of variance between forecast and observation (Van Schaeybroeck and Vannitsem, 2011). The ensemble calibration methods \code{"mse_min"} and \code{"crps_min"} correct the bias, the overall forecast variance and the ensemble spread as described in Doblas-Reyes et al. (2005) and Van Schaeybroeck and Vannitsem (2015), respectively. While the \code{"mse_min"} method minimizes a constrained mean-squared error using three parameters, the \code{"crps_min"} method features four parameters and minimizes the Continuous Ranked Probability Score (CRPS).
+Four types of member-by-member bias correction can be performed. The \code{"bias"} method corrects the bias only, the \code{"evmos"} method applies a variance inflation technique to ensure the correction of the bias and the correspondence of variance between forecast and observation (Van Schaeybroeck and Vannitsem, 2011). The ensemble calibration methods \code{"mse_min"} and \code{"crps_min"} correct the bias, the overall forecast variance and the ensemble spread as described in Doblas-Reyes et al. (2005) and Van Schaeybroeck and Vannitsem (2015), respectively. While the \code{"mse_min"} method minimizes a constrained mean-squared error using three parameters, the \code{"crps_min"} method features four parameters and minimizes the Continuous Ranked Probability Score (CRPS). The \code{"rpc-based"} method adjusts the forecast variance ensuring that the ratio of predictable components (RPC) is equal to one, as in Eade et al. (2014).
 
 Both in-sample or our out-of-sample (leave-one-out cross validation) calibration are possible.
+}
+\details{
+Both the \code{na.fill} and \code{na.rm} parameters can be used to indicate how the function has to handle the NA values. The \code{na.fill} parameter checks whether there are more than three forecast-observations pairs to perform the computation. In case there are three or less pairs, the computation is not carried out, and the value returned by the function depends on the value of this parameter (either NA if \code{na.fill == TRUE} or the uncorrected value if \code{na.fill == TRUE}). On the other hand, \code{na.rm} is used to indicate the function whether to remove the missing values during the computation of the parameters needed to perform the calibration.
 }
 \examples{
 mod1 <- 1 : (1 * 3 * 4 * 5 * 6 * 7)
@@ -47,6 +65,8 @@ str(a)
 }
 \references{
 Doblas-Reyes F.J, Hagedorn R, Palmer T.N. The rationale behind the success of multi-model ensembles in seasonal forecasting-II calibration and combination. Tellus A. 2005;57:234-252. doi:10.1111/j.1600-0870.2005.00104.x
+
+Eade, R., Smith, D., Scaife, A., Wallace, E., Dunstone, N., Hermanson, L., & Robinson, N. (2014). Do seasonal-to-decadal climate predictions underestimate the predictability of the read world? Geophysical Research Letters, 41(15), 5620-5628. doi: 10.1002/2014GL061146
 
 Van Schaeybroeck, B., & Vannitsem, S. (2011). Post-processing through linear regression. Nonlinear Processes in Geophysics, 18(2), 147. doi:10.5194/npg-18-147-2011
 

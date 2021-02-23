@@ -1,11 +1,12 @@
 Package: CSTools
 Title: Assessing Skill of Climate Forecasts on Seasonal-to-Decadal
         Timescales
-Version: 3.1.0
+Version: 4.0.0
 Authors@R: c(
     person("Nuria", "Perez-Zanon", , "nuria.perez@bsc.es", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-8568-3071")),
     person("Louis-Philippe", "Caron", , "louis-philippe.caron@bsc.es", role = "aut", comment = c(ORCID = "0000-0001-5221-0147")),
-    person("Carmen", "Alvarez-Castro", , "carmen.alvarez-castro@cmcc.it", role = "aut"),
+    person("Carmen", "Alvarez-Castro", , "carmen.alvarez-castro@cmcc.it", role = "aut", comment = c(ORCID = "0000-0002-9958-010X")),
+    person("Lauriane", "Batte", , "lauriane.batte@meteo.fr", role = "aut"),
     person("Jost", "von Hardenberg", , email = c("j.vonhardenberg@isac.cnr.it", "jost.hardenberg@polito.it"), role = "aut",  comment = c(ORCID = "0000-0002-5312-8070")),
     person("Llorenç", "LLedo", , "llledo@bsc.es", role = "aut"), 
     person("Nicolau", "Manubens", , "nicolau.manubens@bsc.es", role = "aut"),
@@ -13,16 +14,18 @@ Authors@R: c(
     person("Bert", "van Schaeybroeck", , "bertvs@meteo.be", role = "aut"),
     person("Veronica", "Torralba", , "veronica.torralba@bsc.es", role = "aut"),
     person("Deborah", "Verfaillie", , "deborah.verfaillie@bsc.es", role = "aut"),
-    person("Lauriane", "Batte", , "lauriane.batte@meteo.fr", role = "ctb"),
     person("Filippo", "Cali Quaglia", , "filippo.caliquaglia@gmail.com", role = "ctb"),
+    person("Maria M.", "Chaves-Montero", , "mariadm.chaves@cmcc.it", role = "ctb"),
     person("Chihchung", "Chou", , "chihchung.chou@bsc.es", role = "ctb"),
     person("Nicola", "Cortesi", , "nicola.cortesi@bsc.es", role = "ctb"),
     person("Susanna", "Corti", , "s.corti@isac.cnr.it", role = "ctb"),
     person("Paolo", "Davini", , "p.davini@isac.cnr.it", role = "ctb"),
+    person("Gildas", "Dayon", , "gildas.dayon@meteo.fr", role = "ctb"),
     person("Marta", "Dominguez", , "mdomingueza@aemet.es", role = "ctb"),
     person("Federico", "Fabiano", , "f.fabiano@isac.cnr.it", role = "ctb"),
     person("Ignazio", "Giuntoli", , "i.giuntoli@isac.cnr.it", role = "ctb"),
     person("Raul", "Marcos", , "raul.marcos@bsc.es", role = "ctb"),
+    person("Paola", "Marson", , "paola.marson@meteo.fr", role = "ctb"),
     person("Niti", "Mishra", , "niti.mishra@bsc.es", role = "ctb"),
     person("Jesus", "Peña", , "jesus.pena@bsc.es", role = "ctb"),
     person("Francesc", "Roura-Adserias", , "francesc.roura@bsc.es", role = "ctb"),
@@ -43,10 +46,11 @@ Description: Exploits dynamical seasonal forecasts in order to provide
     Terzago et al. (2018) <doi:10.5194/nhess-18-2825-2018>.
     Torralba et al. (2017) <doi:10.1175/JAMC-D-16-0204.1>.
     D'Onofrio et al. (2014) <doi:10.1175/JHM-D-13-096.1>.
+    Verfaillie et al. (2017) <doi:10.5194/gmd-10-4257-2017>.
     Van Schaeybroeck et al. (2019) <doi:10.1016/B978-0-12-812372-0.00010-8>.
     Yiou et al. (2013) <doi:10.1007/s00382-012-1626-3>.
-Depends: R (>= 3.4.0), maps
-Imports: s2dverification, s2dv, rainfarmr, multiApply (>= 2.1.1), qmap,
+Depends: R (>= 3.4.0), maps, qmap, easyVerification
+Imports: s2dverification, s2dv, rainfarmr, multiApply (>= 2.1.1),
         ClimProjDiags, ncdf4, plyr, abind, data.table, reshape2,
         ggplot2, RColorBrewer, graphics, grDevices, stats, utils,
         verification
@@ -56,11 +60,12 @@ License: Apache License 2.0
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.0.2
-NeedsCompilation: no
-Packaged: 2020-07-02 08:50:50 UTC; nperez
+NeedsCompilation: yes
+Packaged: 2021-02-23 18:32:42 UTC; nperez
 Author: Nuria Perez-Zanon [aut, cre] (<https://orcid.org/0000-0001-8568-3071>),
   Louis-Philippe Caron [aut] (<https://orcid.org/0000-0001-5221-0147>),
-  Carmen Alvarez-Castro [aut],
+  Carmen Alvarez-Castro [aut] (<https://orcid.org/0000-0002-9958-010X>),
+  Lauriane Batte [aut],
   Jost von Hardenberg [aut] (<https://orcid.org/0000-0002-5312-8070>),
   Llorenç LLedo [aut],
   Nicolau Manubens [aut],
@@ -68,16 +73,18 @@ Author: Nuria Perez-Zanon [aut, cre] (<https://orcid.org/0000-0001-8568-3071>),
   Bert van Schaeybroeck [aut],
   Veronica Torralba [aut],
   Deborah Verfaillie [aut],
-  Lauriane Batte [ctb],
   Filippo Cali Quaglia [ctb],
+  Maria M. Chaves-Montero [ctb],
   Chihchung Chou [ctb],
   Nicola Cortesi [ctb],
   Susanna Corti [ctb],
   Paolo Davini [ctb],
+  Gildas Dayon [ctb],
   Marta Dominguez [ctb],
   Federico Fabiano [ctb],
   Ignazio Giuntoli [ctb],
   Raul Marcos [ctb],
+  Paola Marson [ctb],
   Niti Mishra [ctb],
   Jesus Peña [ctb],
   Francesc Roura-Adserias [ctb],
@@ -86,4 +93,4 @@ Author: Nuria Perez-Zanon [aut, cre] (<https://orcid.org/0000-0001-8568-3071>),
   BSC-CNS [cph]
 Maintainer: Nuria Perez-Zanon <nuria.perez@bsc.es>
 Repository: CRAN
-Date/Publication: 2020-07-02 09:30:03 UTC
+Date/Publication: 2021-02-23 23:00:10 UTC

@@ -9,7 +9,7 @@
 #' @param ... Parameters that are automatically forwarded to the `s2dverification::Load` function. See details in `?s2dverification::Load`.
 #' @return A list with one or two S3 objects, named 'exp' and 'obs', of the class 's2dv_cube', containing experimental and date-corresponding observational data, respectively. These 's2dv_cube's can be ingested by other functions in CSTools. If the parameter `exp` in the call to `CST_Load` is set to `NULL`, then only the 'obs' component is returned, and viceversa.
 #' @author Nicolau Manubens, \email{nicolau.manubens@bsc.es}
-#' @import s2dverification
+#' @importFrom s2dverification Load
 #' @importFrom utils glob2rx
 #' @export
 #' @examples

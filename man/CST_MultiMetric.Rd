@@ -4,19 +4,33 @@
 \alias{CST_MultiMetric}
 \title{Multiple Metrics applied in Multiple Model Anomalies}
 \usage{
-CST_MultiMetric(exp, obs, metric = "correlation", multimodel = TRUE)
+CST_MultiMetric(
+  exp,
+  obs,
+  metric = "correlation",
+  multimodel = TRUE,
+  time_dim = "ftime",
+  memb_dim = "member",
+  sdate_dim = "sdate"
+)
 }
 \arguments{
-\item{exp}{an object of class \code{s2dv_cube} as returned by \code{CST_Anomaly} function, containing the anomaly of the seasonal forecast experiment data in the element named \code{$data}.}
+\item{exp}{an object of class \code{s2dv_cube} as returned by \code{CST_Anomaly} function, containing the anomaly of the seasonal forecast experiments data in the element named \code{$data}.}
 
 \item{obs}{an object of class \code{s2dv_cube} as returned by \code{CST_Anomaly} function, containing the anomaly of observed data in the element named \code{$data}.}
 
-\item{metric}{a character string giving the metric for computing the maximum skill. This must be one of the strings 'correlation', 'rms' or 'rmsss.}
+\item{metric}{a character string giving the metric for computing the maximum skill. This must be one of the strings 'correlation', 'rms', 'rmsss' and 'rpss'. If 'rpss' is chossen the terciles probabilities are evaluated.}
 
 \item{multimodel}{a logical value indicating whether a Multi-Model Mean should be computed.}
+
+\item{time_dim}{name of the temporal dimension where a mean will be applied. It can be NULL, the default value is 'ftime'.}
+
+\item{memb_dim}{name of the member dimension. It can be NULL, the default value is 'member'.}
+
+\item{sdate_dim}{name of the start date dimension or a dimension name identifiying the different forecast. It can be NULL, the default value is 'sdate'.}
 }
 \value{
-an object of class \code{s2dv_cube} containing the statistics of the selected metric in the element \code{$data} which is an array with two datset dimensions equal to the 'dataset' dimension in the \code{exp$data} and \code{obs$data} inputs. If \code{multimodel} is TRUE, the greatest first dimension correspons to the Multi-Model Mean. The third dimension contains the statistics selected. For metric \code{correlation}, the third dimension is of length four and they corresponds to the lower limit of the 95\% confidence interval, the statistics itselfs, the upper limit of the 95\% confidence interval and the 95\% significance level. For metric \code{rms}, the third dimension is length three and they corresponds to the lower limit of the 95\% confidence interval, the RMSE and the upper limit of the 95\% confidence interval. For metric \code{rmsss}, the third dimension is length two and they corresponds to the statistics itselfs and the p-value of the one-sided Fisher test with Ho: RMSSS = 0.
+an object of class \code{s2dv_cube} containing the statistics of the selected metric in the element \code{$data} which is a list of arrays: for the metric requested and others for statistics about its signeificance. The arrays have two dataset dimensions equal to the 'dataset' dimension in the \code{exp$data} and \code{obs$data} inputs. If \code{multimodel} is TRUE, the first position in the first 'nexp' dimension correspons to the Multi-Model Mean.
 }
 \description{
 This function calculates correlation (Anomaly Correlation Coefficient; ACC), root mean square error (RMS) and the root mean square error skill score (RMSSS) of individual anomaly models and multi-models mean (if desired) with the observations.
@@ -36,12 +50,20 @@ attr(obs, 'class') <- 's2dv_cube'
 c(ano_exp, ano_obs) \%<-\% CST_Anomaly(exp = exp, obs = obs, cross = TRUE, memb = TRUE)
 a <- CST_MultiMetric(exp = ano_exp, obs = ano_obs)
 str(a)
+\donttest{
+exp <- lonlat_data$exp
+obs <- lonlat_data$obs
+a <- CST_MultiMetric(exp, obs, metric = 'rpss', multimodel = FALSE)
+a <- CST_MultiMetric(exp, obs, metric = 'correlation')
+a <- CST_MultiMetric(exp, obs, metric = 'rms')
+a <- CST_MultiMetric(exp, obs, metric = 'rmsss')
+}
 }
 \references{
-Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31.\url{http://link.springer.com/10.1007/s00382-018-4404-z}
+Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31.\url{https://link.springer.com/10.1007/s00382-018-4404-z}
 }
 \seealso{
-\code{\link[s2dverification]{Corr}}, \code{\link[s2dverification]{RMS}}, \code{\link[s2dverification]{RMSSS}} and \code{\link{CST_Load}}
+\code{\link[s2dv]{Corr}}, \code{\link[s2dv]{RMS}}, \code{\link[s2dv]{RMSSS}} and \code{\link{CST_Load}}
 }
 \author{
 Mishra Niti, \email{niti.mishra@bsc.es}

@@ -25,7 +25,7 @@
 
 #'@seealso \code{PlotCombinedMap} and \code{PlotEquiMap}
 #' 
-#'@import s2dverification
+#'@importFrom s2dv PlotEquiMap ColorBar
 #'@importFrom maps map 
 #'@importFrom graphics box image layout mtext par plot.new
 #'@importFrom grDevices adjustcolor bmp colorRampPalette dev.cur dev.new dev.off hcl jpeg pdf png postscript svg tiff

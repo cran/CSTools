@@ -4,7 +4,17 @@
 \alias{CST_RFWeights}
 \title{Compute climatological weights for RainFARM stochastic precipitation downscaling}
 \usage{
-CST_RFWeights(climfile, nf, lon, lat, varname = "", fsmooth = TRUE)
+CST_RFWeights(
+  climfile,
+  nf,
+  lon,
+  lat,
+  varname = NULL,
+  fsmooth = TRUE,
+  lonname = "lon",
+  latname = "lat",
+  ncores = NULL
+)
 }
 \arguments{
 \item{climfile}{Filename of a fine-scale precipitation climatology.
@@ -15,7 +25,8 @@ Suitable climatology files could be for example a fine-scale precipitation clima
 from a high-resolution regional climate model (see e.g. Terzago et al. 2018), a local
 high-resolution gridded climatology from observations, or a reconstruction such as those which 
 can be downloaded from the WORLDCLIM (http://www.worldclim.org) or CHELSA (http://chelsa-climate.org)
-websites. The latter data will need to be converted to NetCDF format before being used (see for example the GDAL tools (https://www.gdal.org).}
+websites. The latter data will need to be converted to NetCDF format before being used (see for example the GDAL tools (https://www.gdal.org).
+It could also be a 's2dv_cube' object.}
 
 \item{nf}{Refinement factor for downscaling (the output resolution is increased by this factor).}
 
@@ -28,9 +39,15 @@ the function will perform a subsetting to ensure this condition.}
 \item{varname}{Name of the variable to be read from \code{climfile}.}
 
 \item{fsmooth}{Logical to use smooth conservation (default) or large-scale box-average conservation.}
+
+\item{lonname}{a character string indicating the name of the longitudinal dimension set as 'lon' by default.}
+
+\item{latname}{a character string indicating the name of the latitudinal dimension set as 'lat' by default.}
+
+\item{ncores}{an integer that indicates the number of cores for parallel computations using multiApply function. The default value is one.}
 }
 \value{
-A matrix containing the weights with dimensions (lon, lat).
+An object of class 's2dv_cube' containing in matrix \code{data} the weights with dimensions (lon, lat).
 }
 \description{
 Compute climatological ("orographic") weights from a fine-scale precipitation climatology file.

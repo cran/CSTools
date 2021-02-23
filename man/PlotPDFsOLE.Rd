@@ -9,6 +9,8 @@ PlotPDFsOLE(
   pdf_1,
   pdf_2,
   nsigma = 3,
+  legendPos = "bottom",
+  legendSize = 1,
   plotfile = NULL,
   width = 30,
   height = 15,
@@ -27,6 +29,12 @@ two parameters: mean' and 'standard deviation' of the second gaussian pdf
 
 \item{nsigma}{(optional) A numeric value for setting the limits of X axis. 
 (Default nsigma = 3).}
+
+\item{legendPos}{(optional) A character value for setting the position of the
+legend ("bottom", "top", "right" or "left")(Default 'bottom').}
+
+\item{legendSize}{(optional) A numeric value for setting the size of the 
+legend text. (Default 1.0).}
 
 \item{plotfile}{(optional) A filename where the plot will be saved. 
 (Default: the plot is not saved).}
@@ -61,6 +69,19 @@ dim(pdf_2) <-  c(statistic = 2)
 
 PlotPDFsOLE(pdf_1, pdf_2)
 
+# Example 2
+Glosea5PDF <- c(2.25, 0.67)
+attr(Glosea5PDF, "name") <- "Glosea5"
+dim(Glosea5PDF) <-  c(statistic = 2)
+ECMWFPDF <- c(2.38, 0.61)
+attr(ECMWFPDF, "name") <- "ECMWF"
+dim(ECMWFPDF) <-  c(statistic = 2)
+MFPDF <- c(4.52, 0.34)
+attr(MFPDF, "name") <- "MF"
+dim(MFPDF) <-  c(statistic = 2)
+PlotPDFsOLE(pdf_1 = Glosea5PDF, pdf_2 = ECMWFPDF, legendPos = 'left')
+PlotPDFsOLE(pdf_1 = Glosea5PDF, pdf_2 = MFPDF, legendPos = 'top')
+PlotPDFsOLE(pdf_1 = ECMWFPDF, pdf_2 = MFPDF, legendSize = 1.2)
 }
 \author{
 Eroteida Sanchez-Garcia - AEMET, //email{esanchezg@aemet.es}

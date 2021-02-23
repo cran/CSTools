@@ -4,7 +4,7 @@
 \alias{CST_RFSlope}
 \title{RainFARM spectral slopes from a CSTools object}
 \usage{
-CST_RFSlope(data, kmin = 1, time_dim = NULL)
+CST_RFSlope(data, kmin = 1, time_dim = NULL, ncores = 1)
 }
 \arguments{
 \item{data}{An object of the class 's2dv_cube', containing the spatial precipitation fields to downscale.
@@ -18,6 +18,8 @@ to average these slopes, which can be specified by parameter \code{time_dim}.}
 over which to compute spectral slopes. If a character array of dimension names is provided, the spectral slopes
 will be computed as an average over all elements belonging to those dimensions.
 If omitted one of c("ftime", "sdate", "time")  is searched and the first one with more than one element is chosen.}
+
+\item{ncores}{is an integer that indicates the number of cores for parallel computations using multiApply function. The default value is one.}
 }
 \value{
 CST_RFSlope() returns spectral slopes using the RainFARM convention

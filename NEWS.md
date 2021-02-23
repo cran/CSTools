@@ -1,5 +1,36 @@
+### CSTools 4.0.0 
+**Submission date to CRAN: XX-12-2020**
+
+- New features:
+    + ADAMONT downscaling method: requires CST_AdamontAnalogs and CST_AdamontQQCor functions
+    + Analogs method using Predictors: requires training_analogs and  CST_AnalogsPredictors
+    + PlotPDFsOLE includes parameters to modify legend style
+    + CST_RFSlope handless missing values in the temporal dimension and new 'ncores' parameter allows parallel computation
+    + CST_RFWeights accepts s2dv_cube objects as input and new 'ncores' paramenter allows parallel computation
+    + RFWeights is exposed to users
+    + CST_RainFARM accepts multi-dimensional slopes and weights and handless missing values in sample dimensions.
+    + QuantileMapping is exposed to users
+    + CST_MultiMetric includes 'rpss' metric and it is addapted to s2dv.
+    + PlotMostLikelyQuantileMap vignette
+    + PlotTriangles4Categories includes two parameters to adjust axis and margins
+    + CategoricalEnsCombination is exposed to users
+    + CST_SplitDims includes parameter 'insert_ftime'
+    + Analogs vignette
+    + Data Storage and retrieval vignette
+
+- Fixes:
+    + PlotForecastPDF correctly displays terciles labels 
+    + CST_SaveExp correctly save time units
+    + CST_SplitDims returns ordered output following ascending order provided in indices when it is numeric
+    + qmap library moved from Imports to Depends
+    + CST_QuantileMapping correctly handles exp_cor
+    + Figures resize option from vignettes has been removed
+    + Fix Analogs to work with three diferent criteria
+    + Vignette PlotForecastPDF updated plots
+    + Decrease package size compresing vignettes figures and removing areave_data sample
+
 ### CSTools 3.1.0
-**Submission date to CRAN: XX-06-2020**
+**Submission date to CRAN: 02-07-2020**
 
 - New features:
     + EnsClustering vignette

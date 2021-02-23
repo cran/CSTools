@@ -27,7 +27,8 @@
 #'         that accounts for the serial dependence of the data with the same structure as Composite.)(only when composite = 'TRUE'),
 #'         \code{$cluster} (array with the same dimensions as data (except latitude and longitude which are removed) indicating the ref_maps to which each point is allocated.) ,
 #'         \code{$frequency} (A vector of integers (from k=1,...k n reference maps) indicating the percentage of assignations corresponding to each map.),
-#'@import s2dverification
+#'@importFrom s2dverification ACC Mean1Dim
+#'@importFrom s2dv InsertDim
 #'@import multiApply
 #'@examples
 #'\dontrun{
@@ -102,7 +103,8 @@ CST_RegimesAssign <- function(data,  ref_maps,
 #'         \code{$cluster} (array with the same dimensions as data (except latitude and longitude which are removed) indicating the ref_maps to which each point is allocated.) ,
 #'         \code{$frequency} (A vector of integers (from k = 1, ... k n reference maps) indicating the percentage of assignations corresponding to each map.),
 #'  
-#'@import s2dverification
+#'@importFrom s2dverification ACC Mean1Dim Eno
+#'@importFrom s2dv InsertDim
 #'@import multiApply   
 #'@examples 
 #'\dontrun{
@@ -278,12 +280,8 @@ RegimesAssign <- function(data, ref_maps, lat, method = "distance", composite = 
     corr <- rep(NA, nclust)
     for (i in 1:nclust) {
       corr[i] <-
-        ACC(InsertDim(InsertDim(
-          InsertDim(ref[i, , ] * latWeights, 1, 1), 2, 1
-        ), 3, 1),
-        InsertDim(InsertDim(
-          InsertDim(target * latWeights, 1, 1), 2, 1
-        ), 3, 1))$ACC[2]
+        ACC(InsertDim(InsertDim(InsertDim(ref[i, , ] * latWeights, 1, 1), 2, 1), 3, 1),
+          InsertDim(InsertDim(InsertDim(target * latWeights, 1, 1), 2, 1), 3, 1))$ACC[2]
     }
     assign <- which(corr == max(corr))
   }

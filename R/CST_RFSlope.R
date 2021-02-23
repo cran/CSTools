@@ -15,6 +15,7 @@
 #' over which to compute spectral slopes. If a character array of dimension names is provided, the spectral slopes
 #' will be computed as an average over all elements belonging to those dimensions.
 #' If omitted one of c("ftime", "sdate", "time")  is searched and the first one with more than one element is chosen.
+#' @param ncores is an integer that indicates the number of cores for parallel computations using multiApply function. The default value is one.
 #' @return CST_RFSlope() returns spectral slopes using the RainFARM convention
 #' (the logarithmic slope of k*|A(k)|^2 where A(k) are the spectral amplitudes).
 #' The returned array has the same dimensions as the \code{exp} element of the input object,
@@ -38,7 +39,7 @@
 #' #[1,] 1.893503 1.893503 1.893503
 #' #[2,] 1.893503 1.893503 1.893503
 #' @export
-CST_RFSlope <- function(data, kmin = 1, time_dim = NULL) {
+CST_RFSlope <- function(data, kmin = 1, time_dim = NULL, ncores = 1) {
 
   slopes <- RFSlope(data$data, kmin, time_dim,
                     lon_dim = "lon", lat_dim = "lat")
@@ -68,11 +69,15 @@ CST_RFSlope <- function(data, kmin = 1, time_dim = NULL) {
 #' with more than one element is chosen.
 #' @param lon_dim Name of lon dimension ("lon" by default).
 #' @param lat_dim Name of lat dimension ("lat" by default).
+#' @param ncores is an integer that indicates the number of cores for parallel computations using multiApply function. The default value is one.
+#'
 #' @return RFSlope() returns spectral slopes using the RainFARM convention
 #' (the logarithmic slope of k*|A(k)|^2 where A(k) are the spectral amplitudes).
 #' The returned array has the same dimensions as the input array,
 #' minus the dimensions specified by \code{lon_dim}, \code{lat_dim} and \code{time_dim}.
 #' @import multiApply
+#' @import rainfarmr
+#' @importFrom s2dverification Subset
 #' @export
 #' @examples
 #' # Example for the 'reduced' RFSlope function 
@@ -94,8 +99,17 @@ CST_RFSlope <- function(data, kmin = 1, time_dim = NULL) {
 #' #[3,] 1.893503 1.893503 1.893503
 #' #[4,] 1.893503 1.893503 1.893503
 RFSlope <- function(data, kmin = 1, time_dim = NULL,
-                    lon_dim = "lon", lat_dim = "lat") {
-
+                    lon_dim = "lon", lat_dim = "lat", ncores = 1) {
+  if (length(ncores) > 1) {
+    ncores = ncores[1]
+    warning("Parameter 'ncores' has length > 1 and only the first element will be used.")
+  }
+  if (!is.null(ncores)) {
+    ncores <- round(ncores)
+    if (ncores == 0) {
+      ncores = NULL
+    }
+  }
   # Ensure input  grid is square and with even dimensions
   if ( (dim(data)[lon_dim] != dim(data)[lat_dim]) |
        (dim(data)[lon_dim] %% 2 == 1)) {
@@ -139,7 +153,7 @@ RFSlope <- function(data, kmin = 1, time_dim = NULL,
 
   # Repeatedly apply .RFSlope
   result <- Apply(data, c(lon_dim, lat_dim, "rainfarm_samples"),
-                  .RFSlope, kmin)$output1
+                  .RFSlope, kmin, ncores = ncores)$output1
 
   return(slopes = result)
 }
@@ -152,7 +166,11 @@ RFSlope <- function(data, kmin = 1, time_dim = NULL,
 #' @noRd
 
 .RFSlope <- function(pr, kmin) {
-
+  if (any(is.na(pr))) {
+    posna <- unlist(lapply(1:dim(pr)['rainfarm_samples'],
+                         function(x){!is.na(pr[1, 1, x])}))
+    pr <- Subset(pr, 'rainfarm_samples', posna)
+  }
   fxp <- fft2d(pr)
   sx <- fitslope(fxp, kmin = kmin)
   return(sx)

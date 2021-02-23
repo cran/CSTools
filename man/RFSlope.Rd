@@ -4,7 +4,14 @@
 \alias{RFSlope}
 \title{RainFARM spectral slopes from an array (reduced version)}
 \usage{
-RFSlope(data, kmin = 1, time_dim = NULL, lon_dim = "lon", lat_dim = "lat")
+RFSlope(
+  data,
+  kmin = 1,
+  time_dim = NULL,
+  lon_dim = "lon",
+  lat_dim = "lat",
+  ncores = 1
+)
 }
 \arguments{
 \item{data}{Array containing the spatial precipitation fields to downscale.
@@ -25,6 +32,8 @@ with more than one element is chosen.}
 \item{lon_dim}{Name of lon dimension ("lon" by default).}
 
 \item{lat_dim}{Name of lat dimension ("lat" by default).}
+
+\item{ncores}{is an integer that indicates the number of cores for parallel computations using multiApply function. The default value is one.}
 }
 \value{
 RFSlope() returns spectral slopes using the RainFARM convention

@@ -14,6 +14,10 @@
 #'  to combining.
 #' @param nsigma (optional) A numeric value for setting the limits of X axis. 
 #' (Default nsigma = 3). 
+#' @param legendPos (optional) A character value for setting the position of the
+#' legend ("bottom", "top", "right" or "left")(Default 'bottom'). 
+#' @param legendSize (optional) A numeric value for setting the size of the 
+#' legend text. (Default 1.0). 
 #' @param plotfile (optional) A filename where the plot will be saved. 
 #' (Default: the plot is not saved).
 #' @param width (optional) A numeric value indicating the plot width in 
@@ -40,12 +44,26 @@
 #' 
 #' PlotPDFsOLE(pdf_1, pdf_2)
 #' 
+#' # Example 2
+#' Glosea5PDF <- c(2.25, 0.67)
+#' attr(Glosea5PDF, "name") <- "Glosea5"
+#' dim(Glosea5PDF) <-  c(statistic = 2)
+#' ECMWFPDF <- c(2.38, 0.61)
+#' attr(ECMWFPDF, "name") <- "ECMWF"
+#' dim(ECMWFPDF) <-  c(statistic = 2)
+#' MFPDF <- c(4.52, 0.34)
+#' attr(MFPDF, "name") <- "MF"
+#' dim(MFPDF) <-  c(statistic = 2)
+#' PlotPDFsOLE(pdf_1 = Glosea5PDF, pdf_2 = ECMWFPDF, legendPos = 'left')
+#' PlotPDFsOLE(pdf_1 = Glosea5PDF, pdf_2 = MFPDF, legendPos = 'top')
+#' PlotPDFsOLE(pdf_1 = ECMWFPDF, pdf_2 = MFPDF, legendSize = 1.2)
+
 #'@export
-PlotPDFsOLE <- function(pdf_1, pdf_2, nsigma = 3, plotfile = NULL, 
-                        width = 30, height = 15, 
-                        units = "cm", dpi = 300) {
+PlotPDFsOLE <- function(pdf_1, pdf_2, nsigma = 3, legendPos = 'bottom', 
+                        legendSize = 1.0, plotfile = NULL, width = 30, 
+                        height = 15, units = "cm", dpi = 300) {
   y <- type <- NULL
-  
+
   if(!is.null(plotfile)){
     if (!is.numeric(dpi)) {
       stop("Parameter 'dpi' must be numeric.")
@@ -86,6 +104,15 @@ PlotPDFsOLE <- function(pdf_1, pdf_2, nsigma = 3, plotfile = NULL,
       stop("Parameter 'plotfile' must be a character string ",
            "indicating the path and name of output png file.")
     }
+  }
+  if (!is.character(legendPos)) {
+    stop("Parameter 'legendPos' must be character")
+  }
+  if(!(legendPos %in% c("bottom", "top", "right", "left"))) {
+    stop("Parameter 'legendPos' must be equal to 'bottom', 'top', 'right' or 'left'.")
+  }
+  if (!is.numeric(legendSize)) {
+    stop("Parameter 'legendSize' must be numeric.")
   }
   if (!is.numeric(nsigma)) {
     stop("Parameter 'nsigma' must be numeric.")
@@ -196,14 +223,16 @@ PlotPDFsOLE <- function(pdf_1, pdf_2, nsigma = 3, plotfile = NULL,
   g <- g + scale_colour_manual(values = cols, 
                                 limits = c(name1, name2, nameBest), 
                                 labels = c(label1, label2, labelBest))
+  
   g <- g + theme(plot.title=element_text(size=rel(1.1), colour="black", 
                                          face= "bold"), 
                  axis.text.x = element_text(size=rel(1.2)),
                  axis.text.y = element_text(size=rel(1.2)),
                  axis.title.x = element_blank(),
                  legend.title = element_blank(),
-                 legend.position = c(1,1), legend.justification = c(1,1),
-                 legend.text = element_text(face = "bold"))
+                 legend.position = legendPos, 
+                 legend.text = element_text(face = "bold", size=rel(legendSize)))
+  
   g <- g + ggtitle(graphicTitle)
   g <- g + labs(y="probability", size=rel(1.9))
   g <- g + stat_function(fun = dnorm_limit, args = list(mean=mean1, sd=sigma1),

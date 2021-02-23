@@ -57,7 +57,7 @@ a <- CST_MultivarRMSE(exp = ano_exp, obs = ano_obs, weight = weight)
 str(a)
 }
 \seealso{
-\code{\link[s2dverification]{RMS}} and \code{\link{CST_Load}}
+\code{\link[s2dv]{RMS}} and \code{\link{CST_Load}}
 }
 \author{
 Deborah Verfaillie, \email{deborah.verfaillie@bsc.es}

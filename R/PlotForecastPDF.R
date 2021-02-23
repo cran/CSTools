@@ -23,8 +23,7 @@
 #'@importFrom reshape2 melt
 #'@importFrom plyr .
 #'@importFrom plyr dlply
-#'@import s2dverification
-#'
+#'@importFrom s2dv InsertDim
 #'@examples
 #'fcsts <- data.frame(fcst1 = rnorm(10), fcst2 = rnorm(10, 0.5, 1.2), 
 #'                    fcst3 = rnorm(10, -0.5, 0.9))
@@ -49,23 +48,23 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     #------------------------
     color.set <- match.arg(color.set)
     if (color.set == "s2s4e") {
-        colorFill <- rev(c("#FF764D", "#b5b5b5", "#33BFD1"))
-        colorHatch <- c("deepskyblue3", "indianred3")
+        colorFill <- c("#FF764D", "#b5b5b5", "#33BFD1") # AN, N, BN fill colors
+        colorHatch <- c("indianred3", "deepskyblue3") # AP90, BP10 line colors
         colorMember <- c("#ffff7f")
         colorObs <- "purple"
-        colorLab <- c("blue", "red")
+        colorLab <- c("red", "blue") # AP90, BP10 text colors
     } else if (color.set == "hydro") {
-        colorFill <- rev(c("#41CBC9", "#b5b5b5", "#FFAB38"))
-        colorHatch <- c("darkorange1", "deepskyblue3")
+        colorFill <- c("#41CBC9", "#b5b5b5", "#FFAB38")
+        colorHatch <- c("deepskyblue3", "darkorange1")
         colorMember <- c("#ffff7f")
         colorObs <- "purple"
-        colorLab <- c("darkorange3", "blue")
+        colorLab <- c("blue", "darkorange3")
     } else if (color.set == "ggplot") {
-        colorFill <- rev(ggColorHue(3))
-        colorHatch <- c("deepskyblue3", "indianred1")
+        colorFill <- ggColorHue(3)
+        colorHatch <- c("indianred3", "deepskyblue3")
         colorMember <- c("#ffff7f")
         colorObs <- "purple"
-        colorLab <- c("blue", "red")
+        colorLab <- c("red", "blue")
     } else {
         stop("Parameter 'color.set' should be one of ggplot/s2s4e/hydro")
     }
@@ -109,7 +108,7 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
         if (length(tercile.limits) != 2) {
             stop("Provide two tercile limits")
         } 
-        tercile.limits <- InsertDim(tercile.limits, 1, npanels)
+        tercile.limits <- InsertDim(tercile.limits, 1, npanels, name = "new")
     } else if (is.array(tercile.limits)) {
         if (length(dim(tercile.limits)) == 2) {
             if (dim(tercile.limits)[2] != 2) {
@@ -136,7 +135,7 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
             if (length(extreme.limits) != 2) {
                 stop("Provide two extreme limits")
             } 
-            extreme.limits <- InsertDim(extreme.limits, 1, npanels)
+            extreme.limits <- InsertDim(extreme.limits, 1, npanels, name = "new")
         } else if (is.array(extreme.limits)) {
             if (length(dim(extreme.limits)) == 2) {
                 if (dim(extreme.limits)[2] != 2) {
@@ -171,10 +170,11 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     #------------------------
     # Produce a first plot with the pdf for each init in a panel
     #------------------------
-    melt.df <- melt(fcst.df, variable.name = "init", id.vars = NULL)
-    plot <- ggplot(melt.df, aes(x = value)) + geom_density(alpha = 1, na.rm = T) + 
-        coord_flip() + facet_wrap(~init, strip.position = "top", nrow = 1) + xlim(range(c(obs, 
-        density(melt.df$value, na.rm = T)$x)))
+    melt.df <- reshape2::melt(fcst.df, variable.name = "init", id.vars = NULL)
+    plot <- ggplot(melt.df, aes(x = value)) + 
+            geom_density(alpha = 1, na.rm = T) + 
+            coord_flip() + facet_wrap(~init, strip.position = "top", nrow = 1) +
+            xlim(range(c(obs, density(melt.df$value, na.rm = T)$x)))
     ggp <- ggplot_build(plot)
     #------------------------
     # Gather the coordinates of the plots together with init and corresponding
@@ -188,9 +188,10 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     } else {
         stop("Cannot find PANELS in ggp object")
     }
-    tmp.df$tercile <- factor(ifelse(tmp.df$x < tercile.limits[tmp.df$PANEL, 1], "Below normal", 
-        ifelse(tmp.df$x < tercile.limits[tmp.df$PANEL, 2], "Normal", "Above normal")), levels = c("Below normal", 
-        "Normal", "Above normal"))
+    tmp.df$tercile <- factor(ifelse(tmp.df$x < tercile.limits[tmp.df$PANEL, 1], 
+        "Below normal", ifelse(tmp.df$x < tercile.limits[tmp.df$PANEL, 2], 
+        "Normal", "Above normal")), 
+        levels = c("Above normal", "Normal", "Below normal"))
     #------------------------
     # Get the height and width of a panel
     #------------------------
@@ -201,9 +202,10 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     # Compute hatch coordinates for extremes
     #------------------------
     if (!is.null(extreme.limits)) {
-        tmp.df$extremes <- factor(ifelse(tmp.df$x < extreme.limits[tmp.df$PANEL, 1], "Below P10", 
-            ifelse(tmp.df$x < extreme.limits[tmp.df$PANEL, 2], "Normal", "Above P90")), levels = c("Below P10", 
-            "Normal", "Above P90"))
+        tmp.df$extremes <- factor(ifelse(tmp.df$x < extreme.limits[tmp.df$PANEL, 1], 
+            "Below P10", ifelse(tmp.df$x < extreme.limits[tmp.df$PANEL, 2], 
+            "Normal", "Above P90")), 
+            levels = c("Above P90", "Normal", "Below P10"))
         hatch.ls <- dlply(tmp.df, .(init, extremes), function(x) {
             # close the polygon
             tmp.df2 <- data.frame(x = c(x$x, max(x$x), min(x$x)), y = c(x$ymax, 0, 
@@ -237,10 +239,10 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     # Compute jitter space for ensemble members
     #------------------------
     if (add.ensmemb != "no") {
-        jitter.df <- melt(data.frame(dlply(melt.df, .(init), function(x) {
-            .jitter.ensmemb(sort(x$value, na.last = T), pan.width/100)
+        jitter.df <- reshape2::melt(data.frame(dlply(melt.df, .(init), function(x) {
+            .jitter.ensmemb(sort(x$value, na.last = T), pan.width / 100)
         }), check.names = F), value.name = "yjitter", variable.name = "init", id.vars = NULL)
-        jitter.df$x <- melt(data.frame(dlply(melt.df, .(init), function(x) {
+        jitter.df$x <- reshape2::melt(data.frame(dlply(melt.df, .(init), function(x) {
             sort(x$value, na.last = T)
         })), value.name = "x", id.vars = NULL)$x
     }
@@ -258,8 +260,10 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     #------------------------
     # Fill each pdf with different colors for the terciles
     #------------------------
-    plot <- plot + geom_ribbon(data = tmp.df, aes(x = x, ymin = ymin, ymax = ymax, 
-        fill = tercile), alpha = 0.7)
+    plot <- plot + 
+        geom_ribbon(data = tmp.df, 
+                    aes(x = x, ymin = ymin, ymax = ymax, fill = tercile),
+                    alpha = 0.7)
     #------------------------
     # Add hatches for extremes
     #------------------------
@@ -268,37 +272,55 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
             warning("The provided extreme categories are outside the plot bounds. The extremes will not be drawn.")
             extreme.limits <- NULL
         } else {
-            plot <- plot + geom_segment(data = hatch.df[hatch.df$extremes != "Normal", 
-                ], aes(x = x, y = y, xend = xend, yend = yend, color = extremes))
+            plot <- plot + 
+                geom_segment(data = hatch.df[hatch.df$extremes != "Normal", ],
+                             aes(x = x, y = y, 
+                                 xend = xend, yend = yend, color = extremes))
         }
     }
     #------------------------
     # Add obs line
     #------------------------
     if (!is.null(obs)) {
-        plot <- plot + geom_vline(data = obs.dt, aes(xintercept = value), linetype = "dashed", 
-            color = colorObs)
+        plot <- plot + 
+            geom_vline(data = obs.dt, 
+                       aes(xintercept = value),
+                       linetype = "dashed", color = colorObs)
     }
     #------------------------
     # Add ensemble members
     #------------------------
     if (add.ensmemb == "below") {
-        plot <- plot + # this adds a grey box for ensmembers
-        geom_rect(aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = -pan.height/10), 
-            fill = "gray95", color = "black", width = 0.2) + # this adds the ensemble members
-        geom_point(data = jitter.df, color = "black", fill = colorMember, alpha = 1, 
-            aes(x = x, y = -pan.height/10 - magic.ratio * yjitter, shape = "Ensemble members"))
+        plot <- plot + 
+            # this adds a grey box for ensmembers
+            geom_rect(aes(xmin = -Inf, xmax = Inf, 
+                          ymin = -Inf, ymax = -pan.height / 10), 
+                      fill = "gray95", color = "black", width = 0.2) + 
+            # this adds the ensemble members
+            geom_point(data = jitter.df,
+                       aes(x = x, 
+                           y = -pan.height / 10 - magic.ratio * yjitter, 
+                           shape = "Ensemble members"),
+                       color = "black", fill = colorMember, alpha = 1)
+            
     } else if (add.ensmemb == "above") {
-        plot <- plot + geom_point(data = jitter.df, color = "black", fill = colorMember, 
-            alpha = 1, aes(x = x, y = 0.7 * magic.ratio * yjitter, shape = "Ensemble members"))
+        plot <- plot + 
+            geom_point(data = jitter.df,
+                       aes(x = x, 
+                           y = 0.7 * magic.ratio * yjitter, 
+                           shape = "Ensemble members"),
+                       color = "black", fill = colorMember, alpha = 1)
+            
     }
     #------------------------
     # Add obs diamond
     #------------------------
     if (!is.null(obs)) {
-        plot <- plot + # this adds the obs diamond
-        geom_point(data = obs.xy, aes(x = x, y = ymax, size = "Observation"), shape = 23, 
-            color = "black", fill = colorObs)
+        plot <- plot + 
+            # this adds the obs diamond
+            geom_point(data = obs.xy,
+                       aes(x = x, y = ymax, size = "Observation"),
+                       shape = 23, color = "black", fill = colorObs)
     }
     #------------------------
     # Compute probability for each tercile and identify MLT
@@ -306,26 +328,36 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     tmp.dt <- data.table(tmp.df)
     pct <- tmp.dt[, .(pct = integrate(approxfun(x, ymax), lower = min(x), upper = max(x))$value), 
         by = .(init, tercile)]
+    # include potentially missing groups
+    pct <- merge(pct, CJ(init = factor(levels(pct$init), levels = levels(pct$init)), 
+                         tercile = factor(c("Below normal", "Normal", "Above normal"), 
+                         levels = c("Above normal", "Normal", "Below normal"))),
+                 by = c("init", "tercile"), all.y = T)
+    pct[is.na(pct),"pct"] <- 0
     tot <- pct[, .(tot = sum(pct)), by = init]
     pct <- merge(pct, tot, by = "init")
-    pct$pct <- round(100 * pct$pct/pct$tot, 0)
+    pct$pct <- round(100 * pct$pct / pct$tot, 0)
     pct$MLT <- pct[, .(MLT = pct == max(pct)), by = init]$MLT
-    pct$lab.pos <- as.vector(apply(tercile.limits, 1, function(x) {c(min(x), mean(x), max(x))}))
+    pct <- pct[order(init, tercile)]
+    pct$lab.pos <- as.vector(apply(tercile.limits, 1, function(x) {c(max(x), mean(x), min(x))}))
     #------------------------
     # Compute probability for extremes
     #------------------------
     if (!is.null(extreme.limits)) {
         pct2 <- tmp.dt[, .(pct = integrate(approxfun(x, ymax), lower = min(x), upper = max(x))$value), 
             by = .(init, extremes)]
+        # include potentially missing groups
+        pct2 <- merge(pct2, CJ(init = factor(levels(pct2$init), levels = levels(pct2$init)), 
+                               extremes = factor(c("Below P10", "Normal", "Above P90"),
+                               levels = c("Above P90", "Normal", "Below P10"))),
+                      by = c("init", "extremes"), all.y=T)
+        pct2[is.na(pct),"pct"] <- 0
         tot2 <- pct2[, .(tot = sum(pct)), by = init]
         pct2 <- merge(pct2, tot2, by = "init")
-        pct2$pct <- round(100 * pct2$pct/pct2$tot, 0)
-        pct2$lab.pos <-  as.vector(apply(extreme.limits, 1, function(x) {c(x[1], NA, x[2])}))
-        pct2 <- merge(pct2, max.df, by = c("init", "extremes"))
-        # include potentially missing groups
-        pct2 <- pct2[CJ(factor(levels(pct2$init), levels = levels(pct2$init)), 
-            factor(c("Below P10", "Normal", "Above P90"), 
-            levels = c("Below P10", "Normal", "Above P90"))), ]
+        pct2$pct <- round(100 * pct2$pct / pct2$tot, 0)
+        pct2 <- pct2[order(init, extremes)]
+        pct2$lab.pos <-  as.vector(apply(extreme.limits, 1, function(x) {c(x[2], NA, x[1])}))
+        pct2 <- merge(pct2, max.df, by = c("init", "extremes"), all.x = T)
     }
     #------------------------
     # Add probability labels for terciles
@@ -337,35 +369,53 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
         labpos <- 0
         vjust <- -0.5
     }
-    plot <- plot + geom_text(data = pct, aes(x = lab.pos, y = labpos, 
-        label = paste0(pct, "%"), hjust = as.integer(tercile) * 1.5 - 2.5), vjust = vjust, 
-        angle = -90, size = 3.2) + geom_text(data = pct[MLT == T, ], aes(x = lab.pos, 
-        y = labpos, label = "*", hjust = as.integer(tercile) * 3.5 - 5), vjust = 0.1, 
-        angle = -90, size = 7, color = "black")
+    plot <- plot + 
+        geom_text(data = pct,
+                  aes(x = lab.pos, y = labpos, label = paste0(pct, "%"),
+                      hjust = as.integer(tercile) * -1.5 + 3.5), 
+                  vjust = vjust, angle = -90, size = 3.2) + 
+        geom_text(data = pct[MLT == T, ],
+                  aes(x = lab.pos, y = labpos, label = "*",
+                      hjust = as.integer(tercile) * -3.5 + 9),
+                  vjust = 0.1, angle = -90, size = 7, color = "black")
     #------------------------
     # Add probability labels for extremes
     #------------------------
     if (!is.null(extreme.limits)) {
-        plot <- plot + geom_text(data = pct2[extremes != "Normal", ], aes(x = lab.pos, 
-            y = 0.9 * y, label = paste0(pct, "%"), hjust = as.integer(extremes) * 
-                1.5 - 2.5), vjust = -0.5, angle = -90, size = 3.2, color = rep(colorLab, 
-            dim(fcst.df)[2]))
+        plot <- plot + 
+            geom_text(data = pct2[extremes != "Normal", ],
+                      aes(x = lab.pos, y = 0.9 * y, label = paste0(pct, "%"),
+                          hjust = as.integer(extremes) * -1.5 + 3.5),
+                      vjust = -0.5, angle = -90, size = 3.2, 
+                      color = rep(colorLab, dim(fcst.df)[2]))
     }
     #------------------------
     # Finish all theme and legend details
     #------------------------
-    plot <- plot + theme_minimal() + scale_fill_manual(name = "Probability of\nterciles", 
-        breaks = c("Above normal", "Normal", "Below normal"), values = colorFill, 
-        drop = F) + scale_color_manual(name = "Probability of\nextremes", values = colorHatch) + 
-        scale_shape_manual(name = "Ensemble\nmembers", values = c(21)) + scale_size_manual(name = "Observation", 
-        values = c(3)) + labs(x = var.name, y = "Probability density\n(total area=1)", 
-        title = title) + theme(axis.text.x = element_blank(), panel.grid.minor.x = element_blank(), 
-        legend.key.size = unit(0.3, "in"), panel.border = element_rect(fill = NA, 
-            color = "black"), strip.background = element_rect(colour = "black", fill = "gray80"), 
-        panel.spacing = unit(0.2, "in"), panel.grid.major.x = element_line(color = "grey93")) + 
-        guides(fill = guide_legend(order = 1), color = guide_legend(order = 2, reverse = T), 
-            shape = guide_legend(order = 3, label = F), size = guide_legend(order = 4, 
-                label = F))
+    plot <- plot + 
+        theme_minimal() + 
+        scale_fill_manual(name = "Probability of\nterciles", 
+                          values = colorFill, drop = F) + 
+        scale_color_manual(name = "Probability of\nextremes", 
+                           values = colorHatch) + 
+        scale_shape_manual(name = "Ensemble\nmembers", 
+                           values = c(21)) + 
+        scale_size_manual(name = "Observation", 
+                          values = c(3)) + 
+        labs(x = var.name, 
+             y = "Probability density\n(total area=1)",
+             title = title) +
+        theme(axis.text.x = element_blank(),
+              panel.grid.minor.x = element_blank(), 
+              legend.key.size = unit(0.3, "in"),
+              panel.border = element_rect(fill = NA, color = "black"),
+              strip.background = element_rect(colour = "black", fill = "gray80"), 
+              panel.spacing = unit(0.2, "in"), 
+              panel.grid.major.x = element_line(color = "grey93")) + 
+        guides(fill = guide_legend(order = 1), 
+               color = guide_legend(order = 2), 
+               shape = guide_legend(order = 3, label = F),
+               size = guide_legend(order = 4, label = F))
     #------------------------
     # Save to plotfile if needed, and return plot
     #------------------------

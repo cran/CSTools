@@ -55,7 +55,7 @@
 #'@references Robertson, A. W., Lall, U., Zebiak, S. E., & Goddard, L. (2004). Improved combination of multiple atmospheric GCM ensembles for seasonal prediction. Monthly Weather Review, 132(12), 2732-2744.
 #'@references Van Schaeybroeck, B., & Vannitsem, S. (2019). Postprocessing of Long-Range Forecasts. In Statistical Postprocessing of Ensemble Forecasts (pp. 267-290).
 #'
-#'@import s2dverification
+#'@importFrom s2dv InsertDim
 #'@import abind
 #'@examples 
 #'
@@ -86,19 +86,45 @@ CST_CategoricalEnsCombination <- function(exp, obs, cat.method = "pool", eval.me
          "of the parameter 'obs' must be equal to 1.")
   }
   names.dim.tmp <- names(dim(exp$data))
-  exp$data <- .CategoricalEnsCombination.wrap(fc = exp$data, obs = obs$data, cat.method = cat.method, eval.method = eval.method, amt.cat = amt.cat, ...)
+  exp$data <- CategoricalEnsCombination(fc = exp$data, obs = obs$data, cat.method = cat.method,
+                                        eval.method = eval.method, amt.cat = amt.cat, ...)
   names.dim.tmp[which(names.dim.tmp == "member")] <- "category"
   names(dim(exp$data)) <- names.dim.tmp
-  exp$data <- InsertDim(var = exp$data, lendim = 1, posdim = 2)
+  exp$data <- suppressWarnings(InsertDim(exp$data, lendim = 1, posdim = 2))
   names(dim(exp$data))[2] <- "member"
   exp$Datasets <- c(exp$Datasets, obs$Datasets)
   exp$source_files <- c(exp$source_files, obs$source_files)
   return(exp)
 }
 
+#' Make categorical forecast based on a multi-model forecast with potential for calibrate
+#'
+#'@author Bert Van Schaeybroeck, \email{bertvs@meteo.be}
+#'@description This function converts a multi-model ensemble forecast 
+#' into a categorical forecast by giving the probability
+#' for each category. Different methods are available to combine 
+#' the different ensemble forecasting models into 
+#' probabilistic categorical forecasts. 
+#'
+#' See details in ?CST_CategoricalEnsCombination
+#'@param fc a multi-dimensional array with named dimensions containing the seasonal forecast experiment data in the element named \code{$data}. The amount of forecasting models is equal to the size of the \code{dataset} dimension of the data array. The amount of members per model may be different. The  size of the \code{member} dimension of the data array is equal to the maximum of the ensemble members among the models. Models with smaller ensemble sizes have residual indices of \code{member} dimension in the data array filled with NA values.
+#'@param obs a multidimensional array with named dimensions containing the observed data in the element named \code{$data}.
+#'@param amt.cat is the amount of categories. Equally-sized quantiles will be calculated based on the amount of categories.
+#'@param cat.method method used to produce the categorical forecast, can be either \code{pool}, \code{comb}, \code{mmw} or \code{obs}. The method pool assumes equal weight for all ensemble members while the method comb assumes equal weight for each model. The weighting method is descirbed in Rajagopalan et al. (2002), Robertson et al. (2004) and Van Schaeybroeck and Vannitsem (2019). Finally, the \code{obs} method classifies the observations into the different categories and therefore contains only 0 and 1 values. 
+#'@param eval.method is the sampling method used, can be either \code{"in-sample"} or \code{"leave-one-out"}. Default value is the \code{"leave-one-out"} cross validation. 
+#'@param ... other parameters to be passed on to the calibration procedure.
+#'
+#'@return an array containing the categorical forecasts in the element called \code{$data}. The first two dimensions of the returned object are named dataset and member and are both of size one. An additional dimension named category is introduced and is of size amt.cat.
+#'
+#'@references Rajagopalan, B., Lall, U., & Zebiak, S. E. (2002). Categorical climate forecasts through regularization and optimal combination of multiple GCM ensembles. Monthly Weather Review, 130(7), 1792-1811.
+#'@references Robertson, A. W., Lall, U., Zebiak, S. E., & Goddard, L. (2004). Improved combination of multiple atmospheric GCM ensembles for seasonal prediction. Monthly Weather Review, 132(12), 2732-2744.
+#'@references Van Schaeybroeck, B., & Vannitsem, S. (2019). Postprocessing of Long-Range Forecasts. In Statistical Postprocessing of Ensemble Forecasts (pp. 267-290).
+#'
+#'@importFrom s2dv InsertDim
+#'@import abind
+#'@export
 
-
-.CategoricalEnsCombination.wrap <- function (fc, obs, cat.method, eval.method, amt.cat, ...) {
+CategoricalEnsCombination <- function (fc, obs, cat.method, eval.method, amt.cat, ...) {
   
   if (!all(c("member", "sdate") %in% names(dim(fc)))) {
     stop("Parameter 'exp' must have the dimensions 'member' and 'sdate'.")
@@ -276,10 +302,10 @@ comb.dims <- function(arr.in, dims.to.combine){
       optim.tmp <- constrOptim(theta = init.par, f = .funct.optim, grad = .funct.optim.grad, 
                           ui = constr.mtrx, ci = constr.vec,
                           freq.per.mdl.at.obs = freq.per.mdl.at.obs) 
-      init.par <- optim.tmp$par * (1 - abs(rnorm(amt.coeff, 0, 0.01)))          
-      var.cat.fc[ , eval.dexes] <- apply(InsertDim(var = 
-        InsertDim(var = optim.tmp$par, lendim = amt.cat, posdim = 2),
-        lendim =  amt.sdate.ev, posdim = 3) *
+      init.par <- optim.tmp$par * (1 - abs(rnorm(amt.coeff, 0, 0.01)))
+      var.cat.fc[ , eval.dexes] <- apply(suppressWarnings(InsertDim( 
+        InsertDim(optim.tmp$par, lendim = amt.cat, posdim = 2),
+        lendim =  amt.sdate.ev, posdim = 3)) *
         freq.per.mdl.ev[ , , , drop = FALSE], c(2,3), sum, na.rm = TRUE)
     } else if (cat.method == "comb") {
       freq.per.mdl.ev <- .calc.freq.per.mdl(cat.fc = cat.fc.ev, mdl.feat = mdl.feat, amt.cat = amt.cat)
@@ -363,8 +389,12 @@ comb.dims <- function(arr.in, dims.to.combine){
 
 .funct.optim.grad <- function(par, freq.per.mdl.at.obs){
   amt.model <- dim(freq.per.mdl.at.obs)[1]
-  return(-apply(freq.per.mdl.at.obs/InsertDim(var = drop(par %*% freq.per.mdl.at.obs),
-   lendim = amt.model, posdim = 1), c(1), mean, na.rm = TRUE))
+  preprocess <- drop(par %*% freq.per.mdl.at.obs)
+  if (is.null(dim(preprocess))) {
+    dim(preprocess) <- c(dim = length(preprocess))
+  }
+  return(-apply(freq.per.mdl.at.obs/suppressWarnings(InsertDim(preprocess,
+          lendim = as.numeric(amt.model), posdim = 1)), c(1), mean, na.rm = TRUE))
 }
 
 .calc.freq.per.mdl.at.obs <- function(cat.obs, cat.fc, amt.cat, mdl.feat){
@@ -373,7 +403,7 @@ comb.dims <- function(arr.in, dims.to.combine){
   amt.mdl <- mdl.feat$amt.mdl
   mdl.msk.tmp <- mdl.feat$mdl.msk
   amt.coeff <- amt.mdl + 1
-  msk.fc.obs <- (cat.fc == InsertDim(var = cat.obs, posdim = 1, lendim = amt.mbr))
+  msk.fc.obs <- (cat.fc == InsertDim(cat.obs, posdim = 1, lendim = amt.mbr))
   freq.per.mdl.at.obs <- array(NA, c(amt.coeff, amt.sdate))
   for (i.mdl in seq(1, amt.mdl)){
     freq.per.mdl.at.obs[i.mdl, ] <- apply(msk.fc.obs[mdl.msk.tmp[i.mdl, ], , drop = FALSE],

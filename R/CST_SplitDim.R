@@ -8,9 +8,12 @@
 #'@param split_dim a character string indicating the name of the dimension to split
 #'@param indices a vector of numeric indices or dates. If left at NULL, the dates provided in the s2dv_cube object (element Dates) will be used.
 #'@param freq a character string indicating the frequency: by 'day', 'month' and 'year' or 'monthly' (by default). 'month' identifies months between 1 and 12 independently of the year they belong to, while 'monthly' differenciates months from different years.
+#'@param new_dim_name a character string indicating the name of the new dimension.
+#'@param insert_ftime an integer indicating the number of time steps to add at the begining of the time series.
 #'
+#'@details Parameter 'insert_ftime' has been included for the case of using daily data, requiring split the temporal dimensions by months (or similar) and the first lead time doesn't correspondt to the 1st day of the month. In this case, the insert_ftime could be used, to get a final output correctly organized. E.g.: leadtime 1 is the 2nd of November and the input time series extend to the 31st of December. When requiring split by month with \code{inset_ftime = 1}, the 'monthly' dimension of length two will indicate the month (position 1 for November and position 2 for December), dimension 'time' will be length 31. For November, the position 1 and 31 will be NAs, while from positon 2 to 30 will be filled with the data provided. This allows to select correctly days trhough time dimension.
 #'@import abind
-#'@import s2dverification
+#'@importFrom s2dverification Subset
 #'@examples
 #'
 #'data <- 1 : 20
@@ -34,12 +37,46 @@
 #'dim(new_data$data)
 #'@export
 CST_SplitDim <- function(data, split_dim = 'time', indices = NULL,
-                         freq = 'monthly') {
+                         freq = 'monthly', new_dim_name = NULL, insert_ftime = NULL) {
     if (!inherits(data, 's2dv_cube')) {
-    stop("Parameter 'data' must be of the class 's2dv_cube', ",
-         "as output by CSTools::CST_Load.")
+      stop("Parameter 'data' must be of the class 's2dv_cube', ",
+           "as output by CSTools::CST_Load.")
     }
+    if (!is.null(insert_ftime)) {
+      if (!is.numeric(insert_ftime)) {
+         stop("Parameter 'insert_ftime' should be an integer.")
+      } else {
+        if (length(insert_ftime) > 1) {
+          warning("Parameter 'insert_ftime' must be of length 1, and only the",
+                  " first element will be used.")
+          insert_ftime <- insert_ftime[1]
+        }
+        # adding NAs at the begining of the data in ftime dim
+        ftimedim <- which(names(dim(data$data)) == 'ftime')
+        dims <- dim(data$data)
+        dims[ftimedim] <- insert_ftime
+        empty_array <- array(NA, dims)
+        data$data <- abind(empty_array, data$data, along = ftimedim)
+        names(dim(data$data)) <- names(dims)
+        # adding dates to Dates for the new NAs introduced
+        if ((data$Dates[[1]][2] - data$Dates[[1]][1]) == 1) {
+            timefreq <- 'days'
+        } else {
+            timefreq <- 'months'
+            warning("Time frequency of forecast time is considered monthly.")
+        }
+        start <- data$Dates[[1]]
+        dim(start) <- c(ftime = length(start)/dims['sdate'], sdate = dims['sdate'])
+        #new <- array(NA, prod(dim(data$data)[c('ftime', 'sdate')]))
+        # Pending fix transform to UTC when concatenaiting
+        data$Dates$start <- do.call(c, lapply(1:dim(start)[2], function(x) {
+                               seq(start[1,x] - as.difftime(insert_ftime, 
+                               units = timefreq),
+                               start[dim(start)[1],x], by = timefreq, tz = "UTC")}))
+      }
+    } 
     if (is.null(indices)) {
+      if (any(split_dim %in% c('ftime', 'time', 'sdate'))) {
         if (is.list(data$Dates)) {
             indices <- data$Dates[[1]]
         } else {
@@ -53,9 +90,10 @@ CST_SplitDim <- function(data, split_dim = 'time', indices = NULL,
             indices <- indices[1 : dim(data$data)[which(names(dim(data$data)) ==
                                                         split_dim)]]     
         }
+      }
     }
     data$data <- SplitDim(data$data, split_dim = split_dim, indices = indices,
-                        freq = freq)
+                        freq = freq, new_dim_name = new_dim_name)
     return(data)
 }
 #'Function to Split Dimension
@@ -67,10 +105,10 @@ CST_SplitDim <- function(data, split_dim = 'time', indices = NULL,
 #'@param data an n-dimensional array with named dimensions
 #'@param split_dim a character string indicating the name of the dimension to split
 #'@param indices a vector of numeric indices or dates
-#'@param freq a character string indicating the frequency: by 'day', 'month' and 'year' or 'monthly' (by default). 'month' identifies months between 1 and 12 independetly of the year they belong to, while 'monthly' differenciates months from different years. Parameter 'freq' can also be numeric indicating the length in which to subset the dimension
-#'
+#'@param freq a character string indicating the frequency: by 'day', 'month' and 'year' or 'monthly' (by default). 'month' identifies months between 1 and 12 independetly of the year they belong to, while 'monthly' differenciates months from different years. Parameter 'freq' can also be numeric indicating the length in which to subset the dimension.
+#'@param new_dim_name a character string indicating the name of the new dimension.
 #'@import abind
-#'@import s2dverification
+#'@importFrom s2dverification Subset
 #'@examples
 #'
 #'data <- 1 : 20
@@ -85,7 +123,8 @@ CST_SplitDim <- function(data, split_dim = 'time', indices = NULL,
 #'new_data <- SplitDim(data, indices = time, freq = 'month')
 #'new_data <- SplitDim(data, indices = time, freq = 'year')
 #'@export
-SplitDim <- function(data, split_dim = 'time', indices, freq = 'monthly') {
+SplitDim <- function(data, split_dim = 'time', indices, freq = 'monthly',
+                     new_dim_name = NULL) {
     # check data
     if (is.null(data)) {
         stop("Parameter 'data' cannot be NULL.")
@@ -123,6 +162,7 @@ SplitDim <- function(data, split_dim = 'time', indices, freq = 'monthly') {
             }
             indices <- rep(1 : (dims[pos_split] / freq), freq)
             indices <- sort(indices)
+            repited <- sort(unique(indices))
         }
     } else if (is.numeric(indices)) {
         if (!is.null(freq)) {
@@ -131,6 +171,7 @@ SplitDim <- function(data, split_dim = 'time', indices, freq = 'monthly') {
                         "parameter 'indices' is numeric.")
            }
         }
+        repited <- sort(unique(indices))
     } else {
         # Indices should be Dates and freq character
         if (!is.character(freq)) {
@@ -161,19 +202,33 @@ SplitDim <- function(data, split_dim = 'time', indices, freq = 'monthly') {
     if (!is.numeric(indices)) {
         if (freq == 'day') {
             indices <- as.numeric(strftime(indices, format = "%d"))
+            repited <- unique(indices)
         } else if (freq == 'month') {
             indices <- as.numeric(strftime(indices, format = "%m"))
+            repited <- unique(indices)
         } else if (freq == 'year') {
             indices <- as.numeric(strftime(indices, format = "%Y"))
+            repited <- unique(indices)
         } else if (freq == 'monthly' ) {
             indices <- as.numeric(strftime(indices, format = "%m%Y"))
+            repited <- unique(indices)
         } else {
             stop("Parameter 'freq' must be numeric or a character: ",
              "by 'day', 'month', 'year' or 'monthly' (for ",
              "distinguishable month).")
        }
     }
-    repited <- unique(indices)
+    # check new_dim_name
+    if (!is.null(new_dim_name)) {
+        if (!is.character(new_dim_name)) {
+            stop("Parameter 'new_dim_name' must be character string")
+        }
+        if (length(new_dim_name) > 1) {
+            new_dim_name <- new_dim_name[1]
+            warning("Parameter 'new_dim_name' has length greater than 1 ",
+                    "and only the first elemenst is used.")
+        }
+    }
     max_times <- max(unlist(lapply(repited, 
                              function(x){sum(indices == x)})))
     data <- lapply(repited, function(x) {rebuild(x, data, along = split_dim,
@@ -183,6 +238,9 @@ SplitDim <- function(data, split_dim = 'time', indices, freq = 'monthly') {
         names(dim(data)) <- c(names(dims), freq)
     } else {
         names(dim(data)) <- c(names(dims), 'index')
+    }
+    if (!is.null(new_dim_name)) {
+        names(dim(data)) <- c(names(dims), new_dim_name)
     }
 return(data)
 }
@@ -200,3 +258,4 @@ rebuild <- function(x, data, along, indices, max_times) {
     }
     return(a)
 }
+

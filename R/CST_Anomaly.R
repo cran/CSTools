@@ -18,7 +18,8 @@
 #'
 #' @return A list with two S3 objects, 'exp' and 'obs', of the class 's2dv_cube', containing experimental and date-corresponding observational anomalies, respectively. These 's2dv_cube's can be ingested by other functions in CSTools.
 #'
-#'@import s2dverification
+#'@importFrom s2dverification Clim Ano_CrossValid
+#'@importFrom s2dv InsertDim
 #'
 #'@examples
 #'# Example 1:

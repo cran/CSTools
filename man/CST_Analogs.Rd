@@ -7,11 +7,16 @@
 CST_Analogs(
   expL,
   obsL,
-  time_obsL,
   expVar = NULL,
   obsVar = NULL,
   region = NULL,
-  criteria = "Large_dist"
+  criteria = "Large_dist",
+  excludeTime = NULL,
+  time_expL = NULL,
+  time_obsL = NULL,
+  nAnalogs = NULL,
+  AnalogsInfo = FALSE,
+  ncores = 1
 )
 }
 \arguments{
@@ -27,9 +32,6 @@ large scale. The element 'data' in the 's2dv_cube' object must have the same
 latitudinal and longitudinal dimensions as parameter 'expL' and a temporal 
 dimension with the maximum number of available observations.}
 
-\item{time_obsL}{a character string indicating the date of the observations 
-in the format "dd/mm/yyyy"}
-
 \item{expVar}{an 's2dv_cube' object containing the experimental field on the
 local scale, usually a different variable to the parameter 'expL'. If it is 
 not NULL (by default, NULL), the returned field by this function will be the 
@@ -38,56 +40,103 @@ analog of parameter 'expVar'.}
 \item{obsVar}{an 's2dv_cube' containing the field of the same variable as the 
 passed in parameter 'expVar' for the same region.}
 
-\item{region}{a vector of length four indicating the minimum longitude, the 
-maximum longitude, the minimum latitude and the maximum latitude.}
+\item{region}{a vector of length four indicating the minimum longitude, 
+the maximum longitude, the minimum latitude and the maximum latitude.}
 
-\item{criteria}{a character string indicating the criteria to be used for the 
+\item{criteria}{a character string indicating the criteria to be used for the
 selection of analogs:
 \itemize{
-\item{Large_dist} minimal distance in the large scale pattern;
-\item{Local_dist} minimal distance in the large scale pattern and minimal 
-distance in the local scale pattern; and
-\item{Local_cor} minimal distance in the large scale pattern, minimal 
-distance in the local scale pattern and maxima correlation in the 
-local variable to downscale.}}
+\item{Large_dist} minimum Euclidean distance in the large scale pattern; 
+\item{Local_dist} minimum Euclidean distance in the large scale pattern 
+and minimum Euclidean distance in the local scale pattern; and
+\item{Local_cor} minimum Euclidean distance in the large scale pattern, 
+minimum Euclidean distance in the local scale pattern and highest 
+correlation in the local variable to downscale.}
+Criteria 'Large_dist' is recommended for CST_Analogs, for an advanced use of 
+the criterias 'Local_dist' and 'Local_cor' use 'Analogs' function.}
+
+\item{excludeTime}{an array of N named dimensions (coinciding with time 
+dimensions in expL)of character string(s) indicating the date(s) of the 
+observations in the format "dd/mm/yyyy" to be excluded during the search of 
+analogs. It can be NULL but if expL is not a forecast (time_expL contained in
+time_obsL), by default time_expL will be removed during the search of analogs.}
+
+\item{time_expL}{a character string indicating the date of the experiment 
+in the same format than time_obsL (i.e. "yyyy-mm-dd"). By default it is NULL 
+and dates are taken from element \code{$Dates$start} from expL.}
+
+\item{time_obsL}{a character string indicating the date of the observations 
+in the date format (i.e. "yyyy-mm-dd"). By default it is NULL and dates are 
+taken from element \code{$Dates$start} from obsL.}
+
+\item{nAnalogs}{number of Analogs to be selected to apply the criterias 
+'Local_dist' or 'Local_cor'. This is not the necessary the number of analogs 
+that the user can get, but the number of events with minimum distance in 
+which perform the search of the best Analog. The default value for the 
+'Large_dist' criteria is 1, for 'Local_dist' and 'Local_cor' criterias must
+be greater than 1 in order to match with the first criteria, if nAnalogs is
+NULL for 'Local_dist' and 'Local_cor' the default value will be set at the 
+length of 'time_obsL'. If AnalogsInfo is FALSE the function returns just 
+the best analog.}
+
+\item{AnalogsInfo}{TRUE to get a list with two elements: 1) the downscaled 
+field and 2) the AnalogsInfo which contains: a) the number of the best 
+analogs, b) the corresponding value of the metric used in the selected 
+criteria (distance values for Large_dist and Local_dist,correlation values 
+for Local_cor), c)dates of the analogs). The analogs are listed in decreasing
+order, the first one is the best analog (i.e if the selected criteria is 
+Local_cor the best analog will be the one with highest correlation, while for
+Large_dist criteria the best analog will be the day with minimum Euclidean 
+distance). Set to FALSE to get a single analog, the best analog, for instance
+for downscaling.}
+
+\item{ncores}{The number of cores to use in parallel computation}
 }
 \value{
-An 's2dv_cube' object containing the dowscaled values of the best 
-analogs in the criteria selected.
+An 'array' object containing the dowscaled values of the best 
+analogs.
 }
 \description{
 This function perform a downscaling using Analogs. To compute 
 the analogs, the function search for days with similar large scale conditions
-to downscaled fields in the local scale. The large scale and the local scale 
+to downscaled fields to a local scale. The large scale and the local scale 
 regions are defined by the user. The large scale is usually given by 
 atmospheric circulation as sea level pressure or geopotential height 
 (Yiou et al, 2013) but the function gives the possibility to use another 
 field. The local scale will be usually given by precipitation or temperature 
 fields, but might be another variable.The analogs function will find the best
-analogs based in three criterias:
-(1) Minimal distance in the large scale pattern (i.e. SLP)
-(2) Minimal distance in the large scale pattern (i.e. SLP) and minimal 
-distance in the local scale pattern (i.e. SLP). 
-(3) Minimal distance in the large scale pattern (i.e. SLP), minimal 
-distance in the local scale pattern (i.e. SLP) and maxima correlation in the 
-local variable to downscale (i.e Precipitation).
+analogs based in Minimum Euclidean distance in the large scale pattern
+(i.e.SLP).
+
 The search of analogs must be done in the longest dataset posible. This is 
 important since it is necessary to have a good representation of the 
 possible states of the field in the past, and therefore, to get better 
-analogs. Once the search of the analogs is complete, and in order to used 
-the three criterias the user can select a number of analogs, using parameter
-'nAnalogs' to restrict the selection of the best analogs in a short number 
-of posibilities, the best ones.
+analogs. 
 This function has not constrains of specific regions, variables to downscale,
 or data to be used (seasonal forecast data, climate projections data, 
 reanalyses data). The regrid into a finner scale is done interpolating with 
 CST_Load. Then, this interpolation is corrected selecting the analogs in the 
 large and local scale in based of the observations. The function is an 
-adapted version of the method of Yiou et al 2013.
+adapted version of the method of Yiou et al 2013. For an advanced search of 
+Analogs (multiple Analogs, different criterias, further information from the
+metrics and date of the selected Analogs) use the'Analog'
+function within 'CSTools' package.
 }
 \examples{
-res <- CST_Analogs(expL = lonlat_data$exp, obsL = lonlat_data$obs)
-
+expL <- rnorm(1:200)
+dim(expL) <- c(member=10,lat = 4, lon = 5)
+obsL <- c(rnorm(1:180),expL[1,,]*1.2)
+dim(obsL) <- c(time = 10,lat = 4, lon = 5)
+time_obsL <- paste(rep("01", 10), rep("01", 10), 1994 : 2003, sep = "-")
+time_expL <- time_obsL[1]
+lon <- seq(-1,5,1.5)
+lat <- seq(30,35,1.5)
+expL <- s2dv_cube(data = expL, lat = lat, lon = lon, 
+                 Dates = list(start = time_expL, end = time_expL))
+obsL <- s2dv_cube(data = obsL, lat = lat, lon = lon,
+                 Dates = list(start = time_obsL, end = time_obsL))
+region <- c(min(lon), max(lon), min(lat), max(lat))
+downscaled_field <- CST_Analogs(expL = expL, obsL = obsL, region = region)
 }
 \references{
 Yiou, P., T. Salameh, P. Drobinski, L. Menut, R. Vautard,
@@ -101,6 +150,10 @@ code{\link{CST_Load}}, \code{\link[s2dverification]{Load}} and
 }
 \author{
 M. Carmen Alvarez-Castro, \email{carmen.alvarez-castro@cmcc.it}
+
+Maria M. Chaves-Montero, \email{mariadm.chaves@cmcc.it}
+
+Veronica Torralba, \email{veronica.torralba@cmcc.it}
 
 Nuria Perez-Zanon \email{nuria.perez@bsc.es}
 }
