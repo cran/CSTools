@@ -5,7 +5,7 @@
 \title{Save CSTools objects of class 's2dv_cube' containing experiments or observed 
 data in NetCDF format}
 \usage{
-CST_SaveExp(data, destination = "./CST_Data")
+CST_SaveExp(data, destination = "./CST_Data", extra_string = NULL)
 }
 \arguments{
 \item{data}{an object of class \code{s2dv_cube}.}
@@ -15,6 +15,8 @@ to save the data. NetCDF file for each starting date are saved into the
 folder tree: destination/experiment/variable/. By default the function 
 creates and saves the data into the folder "CST_Data" in the working 
 directory.}
+
+\item{extra_string}{a character string to be include as part of the file name, for instance, to identify member or realization. It would be added to the file name between underscore characters.}
 }
 \description{
 This function allows to divide and save a object of class 

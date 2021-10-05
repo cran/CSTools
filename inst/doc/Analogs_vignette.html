@@ -300,7 +300,7 @@ dateseq &lt;- format(seq(start, end, by = &quot;year&quot;), &quot;%Y%m%d&quot;)
 <p>Using the <code>CST_Load</code> function from <strong>CSTool package</strong>, the data available in our
 data store can be loaded. The following lines show how this function can be 
 used. The experimental datasets are interpolated to the ERA5 grid by specifying the &#39;grid&#39; parameter while ERA5 doesn&#39;t need to be interpolated. While parameter leadtimemax is set to 1 for the experimental dataset, it is set to 31 for the observations, returning the daily observations for October for the years requested in &#39;sdate&#39; (2000-2006).
-Download the data to run the recipe in the link  <a href="https://downloads.cmcc.bo.it/d_chaves/ANALOGS/data_for_Analogs.Rdat">https://downloads.cmcc.bo.it/d_chaves/ANALOGS/data_for_Analogs.Rdat</a> or ask carmen.alvarez-castro at cmcc.it or nuria.perez at bsc.es.</p>
+Download the data to run the recipe under the HTTPS: downloads.cmcc.bo.it/d_chaves/ANALOGS/data_for_Analogs.Rdat or ask carmen.alvarez-castro at cmcc.it or nuria.perez at bsc.es.</p>
 
 <pre><code>exp &lt;- list(name = &#39;ECMWF_system4_m1&#39;,
             path = file.path(&quot;/esarchive/exp/ecmwf/system4_m1/&quot;, 

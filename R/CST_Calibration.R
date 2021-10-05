@@ -72,7 +72,7 @@ CST_Calibration <- function(exp, obs, cal.method = "mse_min",
 #'
 #'@author Verónica Torralba, \email{veronica.torralba@bsc.es} 
 #'@author Bert Van Schaeybroeck, \email{bertvs@meteo.be}
-#'@description Four types of member-by-member bias correction can be performed. The \code{"bias"} method corrects the bias only, the \code{"evmos"} method applies a variance inflation technique to ensure the correction of the bias and the correspondence of variance between forecast and observation (Van Schaeybroeck and Vannitsem, 2011). The ensemble calibration methods \code{"mse_min"} and \code{"crps_min"} correct the bias, the overall forecast variance and the ensemble spread as described in Doblas-Reyes et al. (2005) and Van Schaeybroeck and Vannitsem (2015), respectively. While the \code{"mse_min"} method minimizes a constrained mean-squared error using three parameters, the \code{"crps_min"} method features four parameters and minimizes the Continuous Ranked Probability Score (CRPS). The \code{"rpc-based"} method adjusts the forecast variance ensuring that the ratio of predictable components (RPC) is equal to one, as in Eade et al. (2014).
+#'@description Five types of member-by-member bias correction can be performed. The \code{"bias"} method corrects the bias only, the \code{"evmos"} method applies a variance inflation technique to ensure the correction of the bias and the correspondence of variance between forecast and observation (Van Schaeybroeck and Vannitsem, 2011). The ensemble calibration methods \code{"mse_min"} and \code{"crps_min"} correct the bias, the overall forecast variance and the ensemble spread as described in Doblas-Reyes et al. (2005) and Van Schaeybroeck and Vannitsem (2015), respectively. While the \code{"mse_min"} method minimizes a constrained mean-squared error using three parameters, the \code{"crps_min"} method features four parameters and minimizes the Continuous Ranked Probability Score (CRPS). The \code{"rpc-based"} method adjusts the forecast variance ensuring that the ratio of predictable components (RPC) is equal to one, as in Eade et al. (2014).
 #'@description Both in-sample or our out-of-sample (leave-one-out cross validation) calibration are possible.
 #'@references Doblas-Reyes F.J, Hagedorn R, Palmer T.N. The rationale behind the success of multi-model ensembles in seasonal forecasting-II calibration and combination. Tellus A. 2005;57:234-252. doi:10.1111/j.1600-0870.2005.00104.x
 #'@references Eade, R., Smith, D., Scaife, A., Wallace, E., Dunstone, N., Hermanson, L., & Robinson, N. (2014). Do seasonal-to-decadal climate predictions underestimate the predictability of the read world? Geophysical Research Letters, 41(15), 5620-5628. doi: 10.1002/2014GL061146
@@ -300,8 +300,8 @@ Calibration <- function(exp, obs, cal.method = "mse_min",
 	    #correct evaluation subset
       var.cor.fc[ , eval.dexes] <- .correct.crps.min.fc(fc.ev , mbm.par, na.rm = na.rm)
     } else if (cal.method == 'rpc-based') {
-      ens_mean.ev <- s2dv::MeanDims(data = fc.ev, dims = names(amt.mbr), na.rm = na.rm)
-      ens_mean.tr <- s2dv::MeanDims(data = fc.tr, dims = names(amt.mbr), na.rm = na.rm) ## Ensemble mean
+      ens_mean.ev <- multiApply::Apply(data = fc.ev, target_dims = names(amt.mbr), fun = mean, na.rm = na.rm)$output1 ## Ensemble mean
+      ens_mean.tr <- multiApply::Apply(data = fc.tr, target_dims = names(amt.mbr), fun = mean, na.rm = na.rm)$output1 ## Ensemble mean
       ens_spread.tr <- multiApply::Apply(data = list(fc.tr, ens_mean.tr), target_dims = names(amt.sdate), fun = "-")$output1 ## Ensemble spread
       exp_mean.tr <- mean(fc.tr, na.rm = na.rm) ## Mean (climatology)
       var_signal.tr <- var(ens_mean.tr, na.rm = na.rm) ## Ensemble mean variance
@@ -314,7 +314,7 @@ Calibration <- function(exp, obs, cal.method = "mse_min",
                                                    order = names(dims.fc))
         dim(var.cor.fc) <- dims.fc
       } else { ## no significant -> replacing with observed climatology
-        var.cor.fc[ , eval.dexes] <- array(data = mean(obs.tr, na.rm = na.rm), dim = dim(fc.tr))
+        var.cor.fc[ , eval.dexes] <- array(data = mean(obs.tr, na.rm = na.rm), dim = dim(fc.ev))
       }
     } else {
 	    stop("unknown calibration method: ",cal.method)
@@ -416,7 +416,7 @@ Calibration <- function(exp, obs, cal.method = "mse_min",
   } else {
     par.out[3] <- with(quant.obs.fc, obs.sd * sqrt(1. - cor.obs.fc^2) / fc.dev.sd)
   }
-  par.out[2] <- with(quant.obs.fc, cor.obs.fc * obs.sd / fc.ens.av.sd)
+  par.out[2] <- with(quant.obs.fc, abs(cor.obs.fc) * obs.sd / fc.ens.av.sd)
   par.out[1] <- with(quant.obs.fc, obs.av - par.out[2] * fc.ens.av.av, na.rm = na.rm)
   
   return(par.out)

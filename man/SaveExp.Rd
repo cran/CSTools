@@ -15,7 +15,8 @@ SaveExp(
   Dates,
   cdo_grid_name,
   projection,
-  destination
+  destination,
+  extra_string = NULL
 )
 }
 \arguments{
@@ -40,9 +41,11 @@ SaveExp(
 \item{projection}{a character string indicating the projection name}
 
 \item{destination}{a character string indicating the path where to store the NetCDF files}
+
+\item{extra_string}{a character string to be include as part of the file name, for instance, to identify member or realization.}
 }
 \value{
-the function creates as many files as sdates per dataset. Each file could contain multiple members
+the function creates as many files as sdates per dataset. Each file could contain multiple members. It would be added to the file name between underscore characters.
 The path will be created with the name of the variable and each Datasets.
 }
 \description{

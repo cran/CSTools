@@ -13,6 +13,7 @@
 #'folder tree: destination/experiment/variable/. By default the function 
 #'creates and saves the data into the folder "CST_Data" in the working 
 #'directory.
+#'@param extra_string a character string to be include as part of the file name, for instance, to identify member or realization. It would be added to the file name between underscore characters.
 #'
 #'@seealso \code{\link{CST_Load}}, \code{\link{as.s2dv_cube}} and \code{\link{s2dv_cube}}
 #'
@@ -29,7 +30,7 @@
 #'}
 #'
 #'@export
-CST_SaveExp <- function(data, destination = "./CST_Data") {
+CST_SaveExp <- function(data, destination = "./CST_Data", extra_string = NULL) {
   if (!is.character(destination) & length(destination) > 1) {
     stop("Parameter 'destination' must be a character string of one element ",
          "indicating the name of the file (including the folder if needed) ",
@@ -55,7 +56,8 @@ CST_SaveExp <- function(data, destination = "./CST_Data") {
   SaveExp(data = data$data, lon = data$lon, lat = data$lat,
           Dataset = names(data$Datasets), var_name = var_name,
           units = units, cdo_grid_name = cdo_grid_name, projection = projection,
-          startdates = sdates, Dates = time_values, destination) 
+          startdates = sdates, Dates = time_values, destination, 
+          extra_string = extra_string) 
 } 
 #'Save an experiment in a format compatible with CST_Load
 #'@description This function is created for compatibility with CST_Load/Load for saving post-processed datasets such as those calibrated of downscaled with CSTools functions
@@ -73,8 +75,9 @@ CST_SaveExp <- function(data, destination = "./CST_Data") {
 #'@param cdo_grid_name a character string indicating the name of the grid e.g.: 'r360x181'
 #'@param projection a character string indicating the projection name
 #'@param destination a character string indicating the path where to store the NetCDF files
+#'@param extra_string a character string to be include as part of the file name, for instance, to identify member or realization.
 #'
-#'@return the function creates as many files as sdates per dataset. Each file could contain multiple members
+#'@return the function creates as many files as sdates per dataset. Each file could contain multiple members. It would be added to the file name between underscore characters.
 #' The path will be created with the name of the variable and each Datasets.
 #' 
 #'@import ncdf4
@@ -102,7 +105,8 @@ CST_SaveExp <- function(data, destination = "./CST_Data") {
 #'}
 #'@export
 SaveExp <- function(data, lon, lat, Dataset, var_name, units, startdates, Dates,
-                    cdo_grid_name, projection, destination) {  
+                    cdo_grid_name, projection, destination, 
+                    extra_string = NULL) {  
   dimname <- names(dim(data))
   if (any(dimname == "ftime")) {
     dimname[which(dimname == "ftime")] <- "time"
@@ -136,7 +140,11 @@ SaveExp <- function(data, lon, lat, Dataset, var_name, units, startdates, Dates,
     stop("Element 'data' in parameter 'data' has more than one 'sdate'",
          " dimension.")
   }
-
+  if (!is.null(extra_string)) {
+    if (!is.character(extra_string)) {
+      stop("Parameter 'extra_string' must be a character string.")
+    }
+  }
   dataset_pos <- which(dimname == "dataset" | dimname == "dat")
   dims <- dim(data)
   if (length(dataset_pos) == 0) {
@@ -227,7 +235,7 @@ SaveExp <- function(data, lon, lat, Dataset, var_name, units, startdates, Dates,
                              NULL, 'time'),
           fun = .saveExp, var_name = var_name, units = units,
           dims_var = dims_var, cdo_grid_name = cdo_grid_name, projection = projection,
-          destination = path)
+          destination = path, extra_string = extra_string)
   }
 }
 
@@ -252,7 +260,7 @@ SaveExp <- function(data, lon, lat, Dataset, var_name, units, startdates, Dates,
 #Dates <- as.Date(c("1900-11-01", "1900-12-01", "1901-01-01", "1901-02-01", "1901-03-01"))
 #.saveExp(data, sdate, Dates, var_name, units, dims_var, cdo_grid_name = 'r360x181', projection = 'none', destination)
 .saveExp <- function(data, sdate, Dates, var_name, units, dims_var, 
-                     cdo_grid_name, projection, destination) {
+                     cdo_grid_name, projection, destination, extra_string) {
   dim_names <- names(dim(data))
   if (any(dim_names != c('longitude', 'latitude', 'member', 'time'))) {
     data <- Reorder(data, c('longitude', 'latitude', 'member', 'time'))
@@ -266,7 +274,11 @@ SaveExp <- function(data, lon, lat, Dataset, var_name, units, startdates, Dates,
   datanc  <- ncvar_def(name = var_name,
                        units = units,
                        dim = dims_var, missval = -99999)
-  file_name <- paste0(var_name, "_", sdate, ".nc")
+  if (is.null(extra_string)) {
+    file_name <- paste0(var_name, "_", sdate, ".nc")
+  } else {
+    file_name <- paste0(var_name, "_", extra_string, "_", sdate, ".nc")
+  }
   full_filename <- file.path(destination, file_name)
   file_nc <- nc_create(full_filename, datanc)
   ncvar_put(file_nc, datanc, data)

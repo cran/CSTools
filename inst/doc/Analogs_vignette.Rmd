@@ -156,7 +156,7 @@ dateseq <- format(seq(start, end, by = "year"), "%Y%m%d")
 Using the `CST_Load` function from **CSTool package**, the data available in our
 data store can be loaded. The following lines show how this function can be 
 used. The experimental datasets are interpolated to the ERA5 grid by specifying the 'grid' parameter while ERA5 doesn't need to be interpolated. While parameter leadtimemax is set to 1 for the experimental dataset, it is set to 31 for the observations, returning the daily observations for October for the years requested in 'sdate' (2000-2006).
-Download the data to run the recipe in the link  https://downloads.cmcc.bo.it/d_chaves/ANALOGS/data_for_Analogs.Rdat or ask carmen.alvarez-castro at cmcc.it or nuria.perez at bsc.es.
+Download the data to run the recipe under the HTTPS: downloads.cmcc.bo.it/d_chaves/ANALOGS/data_for_Analogs.Rdat or ask carmen.alvarez-castro at cmcc.it or nuria.perez at bsc.es.
 
 ```
 exp <- list(name = 'ECMWF_system4_m1',

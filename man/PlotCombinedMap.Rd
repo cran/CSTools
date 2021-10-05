@@ -16,8 +16,10 @@ PlotCombinedMap(
   col_unknown_map = "white",
   mask = NULL,
   col_mask = "grey",
+  dots = NULL,
   bar_titles = NULL,
   legend_scale = 1,
+  cex_bar_titles = 1.5,
   fileout = NULL,
   width = 8,
   height = 5,
@@ -49,9 +51,18 @@ PlotCombinedMap(
 
 \item{col_mask}{Colour to be used for the superimposed mask (if specified in 'mask'). Takes the value 'grey' by default.}
 
+\item{dots}{Array of same dimensions as 'var' or with dimensions 
+c(n, dim(var)), where n is the number of dot/symbol layers to add to the 
+plot. A value of TRUE at a grid cell will draw a dot/symbol on the 
+corresponding square of the plot. By default all layers provided in 'dots' 
+are plotted with dots, but a symbol can be specified for each of the 
+layers via the parameter 'dot_symbol'.}
+
 \item{bar_titles}{Optional vector of character strings providing the titles to be shown on top of each of the colour bars.}
 
 \item{legend_scale}{Scale factor for the size of the colour bar labels. Takes 1 by default.}
+
+\item{cex_bar_titles}{Scale factor for the sizes of the bar titles. Takes 1.5 by default.}
 
 \item{fileout}{File where to save the plot. If not specified (default) a graphics device will pop up. Extensions allowed: eps/ps, jpeg, png, pdf, bmp and tiff}
 

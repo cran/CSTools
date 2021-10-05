@@ -1,5 +1,22 @@
+### CSTools 4.0.1
+**Submission date to CRAN: XX-06-2021**
+
+- New features:
+    + Dynamical Bias Correction method: `CST_ProxiesAttractors` and `CST_DynBiasCorrection` 
+      (optionally `Predictability`)
+    + CST_BiasCorrection and BiasCorrection allows to calibrate a forecast given the calibration in the hindcast by using parameter 'exp_cor'.
+    + Use cases
+    + CST_SaveExp includes parameter extra_string
+    + PlotCombinedMap includes parameter cex_bar_titles
+
+- Fixes:
+    + Calibration retains correlation absolute value 
+    + Calibration fixed when cal.methodi == rpc-based, apply_to == sign, 
+        eval.method == 'leave-one-out' and the correlation is not significant
+    + PlotMostLikelyQuantileMap reoder latitudes of an array provided in 'dots' parameter.
+
 ### CSTools 4.0.0 
-**Submission date to CRAN: XX-12-2020**
+**Submission date to CRAN: 23-02-2021**
 
 - New features:
     + ADAMONT downscaling method: requires CST_AdamontAnalogs and CST_AdamontQQCor functions

@@ -9,6 +9,8 @@ Analogs(
   obsL,
   time_obsL,
   time_expL = NULL,
+  lonL = NULL,
+  latL = NULL,
   expVar = NULL,
   obsVar = NULL,
   criteria = "Large_dist",
@@ -40,6 +42,10 @@ in the format "dd/mm/yyyy". Reference time to search for analogs.}
 \item{time_expL}{an array of N named dimensions (coinciding with time 
 dimensions in expL) of character string(s) indicating the date(s) of the 
 experiment in the format "dd/mm/yyyy". Time(s) to find the analogs.}
+
+\item{lonL}{a vector containing the longitude of parameter 'expL'.}
+
+\item{latL}{a vector containing the latitude of parameter 'expL'.}
 
 \item{expVar}{an array of N named dimensions containing the experimental 
 field on the local scale, usually a different variable to the parameter 
@@ -167,21 +173,21 @@ downscale_field <- Analogs(expL = expSLP, obsL = obsSLP, obsVar = obs.pr,
 region=c(lonmin = -1 ,lonmax = 2, latmin = 30, latmax = 33)
 Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
                       obsVar = obs.pr, criteria = "Local_dist", 
-                      lonVar = seq(-1, 5, 1.5),latVar = seq(30, 35, 1.5), 
+                      lonL = seq(-1, 5, 1.5),latL = seq(30, 35, 1.5), 
                       region = region,time_expL = "01-10-2000", 
                       nAnalogs = 10, AnalogsInfo = TRUE)
 
 # Example 6: list of best analogs using criteria 'Local_dist' and 2 
 Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
-                      criteria = "Local_dist", lonVar = seq(-1, 5, 1.5),
-                      latVar = seq(30, 35, 1.5), region = region,
+                      criteria = "Local_dist", lonL = seq(-1, 5, 1.5),
+                      latL = seq(30, 35, 1.5), region = region,
                       time_expL = "01-10-2000", nAnalogs = 5, 
                       AnalogsInfo = TRUE)
 
 # Example 7: Downscaling using Local_dist criteria
 Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
-                      criteria = "Local_dist", lonVar = seq(-1, 5, 1.5),
-                      latVar = seq(30, 35, 1.5), region = region, 
+                      criteria = "Local_dist", lonL = seq(-1, 5, 1.5),
+                      latL = seq(30, 35, 1.5), region = region, 
                       time_expL = "01-10-2000",
                       nAnalogs = 10, AnalogsInfo = FALSE)
 
@@ -190,14 +196,16 @@ exp.pr <- c(rnorm(1:20) * 0.001)
 dim(exp.pr) <- dim(expSLP)
 Local_scalecor <- Analogs(expL = expSLP, obsL = obsSLP,time_obsL = time_obsSLP,
                          obsVar = obs.pr, expVar = exp.pr,
-                         criteria = "Local_cor", lonVar = seq(-1, 5, 1.5),
-                         time_expL = "01-10-2000", latVar = seq(30, 35, 1.5),
+                         criteria = "Local_cor", lonL = seq(-1, 5, 1.5),
+                         time_expL = "01-10-2000", latL = seq(30, 35, 1.5),
+                         lonVar = seq(-1, 5, 1.5), latVar = seq(30, 35, 1.5), 
                          nAnalogs = 8, region = region, AnalogsInfo = FALSE)
 # same but without imposing nAnalogs,so nAnalogs will be set by default as 10 
 Local_scalecor <- Analogs(expL = expSLP, obsL = obsSLP,time_obsL = time_obsSLP,
                          obsVar = obs.pr, expVar = exp.pr,
-                         criteria = "Local_cor", lonVar = seq(-1,5,1.5),
-                         time_expL = "01-10-2000", latVar=seq(30, 35, 1.5), 
+                         lonVar = seq(-1, 5, 1.5), latVar = seq(30, 35, 1.5),
+                         criteria = "Local_cor", lonL = seq(-1,5,1.5),
+                         time_expL = "01-10-2000", latL =seq(30, 35, 1.5), 
                          region = region, AnalogsInfo = TRUE)
 
 #'Example 9: List of best analogs in the three criterias Large_dist, 
@@ -206,11 +214,12 @@ Large_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
                       nAnalogs = 7, AnalogsInfo = TRUE)
 Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
                       time_expL = "01-10-2000", criteria = "Local_dist",
-                      lonVar = seq(-1, 5, 1.5), latVar = seq(30, 35, 1.5), 
+                      lonL = seq(-1, 5, 1.5), latL = seq(30, 35, 1.5), 
                       nAnalogs = 7,region = region, AnalogsInfo = TRUE)
 Local_scalecor <- Analogs(expL = expSLP, obsL = obsSLP,time_obsL = time_obsSLP,
                          obsVar = obsSLP, expVar = expSLP, 
                          time_expL = "01-10-2000",criteria = "Local_cor", 
+                         lonL = seq(-1, 5, 1.5), latL = seq(30, 35, 1.5),
                          lonVar = seq(-1, 5, 1.5), latVar = seq(30, 35, 1.5),
                          nAnalogs = 7,region = region, 
                          AnalogsInfo = TRUE)

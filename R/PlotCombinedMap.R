@@ -14,8 +14,15 @@
 #'@param col_unknown_map Colour to use to paint the grid cells for which a map is not possible to be chosen according to 'map_select_fun' or for those values that go beyond 'display_range'. Takes the value 'white' by default.
 #'@param mask Optional numeric array with dimensions (latitude, longitude), with values in the range [0, 1], indicating the opacity of the mask over each grid point. Cells with a 0 will result in no mask, whereas cells with a 1 will result in a totally opaque superimposed pixel coloured in 'col_mask'.
 #'@param col_mask Colour to be used for the superimposed mask (if specified in 'mask'). Takes the value 'grey' by default.
+#'@param dots Array of same dimensions as 'var' or with dimensions 
+#'  c(n, dim(var)), where n is the number of dot/symbol layers to add to the 
+#'  plot. A value of TRUE at a grid cell will draw a dot/symbol on the 
+#'  corresponding square of the plot. By default all layers provided in 'dots' 
+#'  are plotted with dots, but a symbol can be specified for each of the 
+#'  layers via the parameter 'dot_symbol'.
 #'@param bar_titles Optional vector of character strings providing the titles to be shown on top of each of the colour bars.
 #'@param legend_scale Scale factor for the size of the colour bar labels. Takes 1 by default.
+#'@param cex_bar_titles Scale factor for the sizes of the bar titles. Takes 1.5 by default.
 #'@param fileout File where to save the plot. If not specified (default) a graphics device will pop up. Extensions allowed: eps/ps, jpeg, png, pdf, bmp and tiff
 #'@param width File width, in the units specified in the parameter size_units (inches by default). Takes 8 by default.
 #'@param height File height, in the units specified in the parameter size_units (inches by default). Takes 5 by default.
@@ -61,7 +68,9 @@ PlotCombinedMap <- function(maps, lon, lat,
                             brks = NULL, cols = NULL,  
                             col_unknown_map = 'white',
                             mask = NULL, col_mask = 'grey',
+                            dots = NULL,
                             bar_titles = NULL, legend_scale = 1,
+                            cex_bar_titles = 1.5,
                             fileout = NULL, width = 8, height = 5, 
                             size_units = 'in', res = 100, 
                             ...) {
@@ -280,7 +289,17 @@ PlotCombinedMap <- function(maps, lon, lat,
       stop("Parameter 'mask' must have dimensions c(lat, lon).")
     }
   }
-  
+  # Check dots
+  if (!is.null(dots)) {
+    if (length(dim(dots)) != 2) {
+      stop("Parameter 'mask' must have two dimensions.")
+    }
+    if ((dim(dots)[1] != dim(maps)[lat_dim]) ||
+        (dim(dots)[2] != dim(maps)[lon_dim])) {
+      stop("Parameter 'mask' must have dimensions c(lat, lon).")
+    }
+  }
+ 
   #----------------------
   # Identify the most likely map
   #----------------------
@@ -327,6 +346,9 @@ PlotCombinedMap <- function(maps, lon, lat,
     if (!is.null(mask)){
       mask <- mask[nlat:1, ]
     }
+    if (!is.null(dots)){
+      dots <- dots[nlat:1,]
+    }
   }
   
   #----------------------
@@ -353,7 +375,7 @@ PlotCombinedMap <- function(maps, lon, lat,
   tbrks <- c(-1, brks_norm + rep(1:nmap, each = length(brks)))
   PlotEquiMap(var = ml_map, lon = lon, lat = lat, 
               brks = tbrks, cols = tcols, drawleg = FALSE, 
-              filled.continents = FALSE, ...)
+              filled.continents = FALSE, dots = dots, ...)
   
   #----------------------
   # Add overplot on top
@@ -402,7 +424,7 @@ PlotCombinedMap <- function(maps, lon, lat,
              draw_separators = TRUE, extra_margin = c(2, 0, 2, 0), 
              label_scale = legend_scale * 1.5)
     if (!is.null(bar_titles)) {
-      mtext(bar_titles[[k]], 3, line = -3, cex = 1.5)
+      mtext(bar_titles[[k]], 3, line = -3, cex = cex_bar_titles)
     }
   }
   

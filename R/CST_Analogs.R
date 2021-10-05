@@ -170,7 +170,8 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
     time_obsL <- obsL$Dates$start
   }
   res <- Analogs(expL$data, obsL$data, time_obsL = time_obsL, 
-                 time_expL = time_expL, expVar = expVar$data,
+                 time_expL = time_expL, lonL = expL$lon,
+                 latL = expL$lat, expVar = expVar$data,
                  obsVar = obsVar$data, criteria = criteria, 
                  excludeTime = excludeTime, region = region,
                  lonVar = as.vector(obsVar$lon), latVar = as.vector(obsVar$lat),
@@ -253,6 +254,8 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
 #'@param time_expL an array of N named dimensions (coinciding with time 
 #'dimensions in expL) of character string(s) indicating the date(s) of the 
 #'experiment in the format "dd/mm/yyyy". Time(s) to find the analogs.
+#'@param lonL a vector containing the longitude of parameter 'expL'.
+#'@param latL a vector containing the latitude of parameter 'expL'.
 #'@param excludeTime an array of N named dimensions (coinciding with time 
 #'dimensions in expL) of character string(s) indicating the date(s) of the 
 #'observations in the format "dd/mm/yyyy" to be excluded during the search of 
@@ -343,21 +346,21 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
 #'region=c(lonmin = -1 ,lonmax = 2, latmin = 30, latmax = 33)
 #'Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
 #'                       obsVar = obs.pr, criteria = "Local_dist", 
-#'                       lonVar = seq(-1, 5, 1.5),latVar = seq(30, 35, 1.5), 
+#'                       lonL = seq(-1, 5, 1.5),latL = seq(30, 35, 1.5), 
 #'                       region = region,time_expL = "01-10-2000", 
 #'                       nAnalogs = 10, AnalogsInfo = TRUE)
 #'
 #'# Example 6: list of best analogs using criteria 'Local_dist' and 2 
 #'Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
-#'                       criteria = "Local_dist", lonVar = seq(-1, 5, 1.5),
-#'                       latVar = seq(30, 35, 1.5), region = region,
+#'                       criteria = "Local_dist", lonL = seq(-1, 5, 1.5),
+#'                       latL = seq(30, 35, 1.5), region = region,
 #'                       time_expL = "01-10-2000", nAnalogs = 5, 
 #'                       AnalogsInfo = TRUE)
 #'
 #'# Example 7: Downscaling using Local_dist criteria
 #'Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
-#'                       criteria = "Local_dist", lonVar = seq(-1, 5, 1.5),
-#'                       latVar = seq(30, 35, 1.5), region = region, 
+#'                       criteria = "Local_dist", lonL = seq(-1, 5, 1.5),
+#'                       latL = seq(30, 35, 1.5), region = region, 
 #'                       time_expL = "01-10-2000",
 #'                       nAnalogs = 10, AnalogsInfo = FALSE)
 #'
@@ -366,14 +369,16 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
 #'dim(exp.pr) <- dim(expSLP)
 #'Local_scalecor <- Analogs(expL = expSLP, obsL = obsSLP,time_obsL = time_obsSLP,
 #'                          obsVar = obs.pr, expVar = exp.pr,
-#'                          criteria = "Local_cor", lonVar = seq(-1, 5, 1.5),
-#'                          time_expL = "01-10-2000", latVar = seq(30, 35, 1.5),
+#'                          criteria = "Local_cor", lonL = seq(-1, 5, 1.5),
+#'                          time_expL = "01-10-2000", latL = seq(30, 35, 1.5),
+#'                          lonVar = seq(-1, 5, 1.5), latVar = seq(30, 35, 1.5), 
 #'                          nAnalogs = 8, region = region, AnalogsInfo = FALSE)
 #'# same but without imposing nAnalogs,so nAnalogs will be set by default as 10 
 #'Local_scalecor <- Analogs(expL = expSLP, obsL = obsSLP,time_obsL = time_obsSLP,
 #'                          obsVar = obs.pr, expVar = exp.pr,
-#'                          criteria = "Local_cor", lonVar = seq(-1,5,1.5),
-#'                          time_expL = "01-10-2000", latVar=seq(30, 35, 1.5), 
+#'                          lonVar = seq(-1, 5, 1.5), latVar = seq(30, 35, 1.5),
+#'                          criteria = "Local_cor", lonL = seq(-1,5,1.5),
+#'                          time_expL = "01-10-2000", latL =seq(30, 35, 1.5), 
 #'                          region = region, AnalogsInfo = TRUE)
 #'
 #'#'Example 9: List of best analogs in the three criterias Large_dist, 
@@ -382,11 +387,12 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
 #'                       nAnalogs = 7, AnalogsInfo = TRUE)
 #'Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
 #'                       time_expL = "01-10-2000", criteria = "Local_dist",
-#'                       lonVar = seq(-1, 5, 1.5), latVar = seq(30, 35, 1.5), 
+#'                       lonL = seq(-1, 5, 1.5), latL = seq(30, 35, 1.5), 
 #'                       nAnalogs = 7,region = region, AnalogsInfo = TRUE)
 #'Local_scalecor <- Analogs(expL = expSLP, obsL = obsSLP,time_obsL = time_obsSLP,
 #'                          obsVar = obsSLP, expVar = expSLP, 
 #'                          time_expL = "01-10-2000",criteria = "Local_cor", 
+#'                          lonL = seq(-1, 5, 1.5), latL = seq(30, 35, 1.5),
 #'                          lonVar = seq(-1, 5, 1.5), latVar = seq(30, 35, 1.5),
 #'                          nAnalogs = 7,region = region, 
 #'                          AnalogsInfo = TRUE)
@@ -404,7 +410,8 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
 #'                          time_obsL = time_obsSLP, time_expL = time_expSLP, 
 #'                          excludeTime = excludeTime, AnalogsInfo = TRUE)
 #'@export
-Analogs <- function(expL, obsL, time_obsL, time_expL = NULL, expVar = NULL,
+Analogs <- function(expL, obsL, time_obsL, time_expL = NULL, 
+                    lonL = NULL, latL = NULL, expVar = NULL,
                     obsVar = NULL,
                     criteria = "Large_dist",excludeTime = NULL,
                     lonVar = NULL, latVar = NULL, region = NULL,
@@ -640,6 +647,7 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL, expVar = NULL,
                      fun = .analogs, time_obsL, expVar = expVar,
                      time_expL=time_expL, excludeTime=excludeTime,
                      obsVar = obsVar, criteria = criteria,
+                     lonL = lonL, latL = latL,
                      lonVar = lonVar, latVar = latVar, region = region,
                      nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo,
                      output_dims = c('nAnalogs', 'lat', 'lon'), 
@@ -652,6 +660,7 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL, expVar = NULL,
                      fun = .analogs,time_obsL, 
                      time_expL=time_expL, excludeTime=excludeTime,
                      expVar = expVar, criteria = criteria,
+                     lonL = lonL, latL = latL,
                      lonVar = lonVar, latVar = latVar, region = region,
                      nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo,
                      output_dims = c('nAnalogs', 'lat', 'lon'), 
@@ -664,6 +673,7 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL, expVar = NULL,
                      fun = .analogs,
                      criteria = criteria,time_obsL,
                      time_expL=time_expL, excludeTime=excludeTime,
+                     lonL = lonL, latL = latL,
                      lonVar = lonVar, latVar = latVar, region = region,
                      nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo,
                      output_dims = c('nAnalogs', 'lat', 'lon'), 
@@ -676,6 +686,7 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL, expVar = NULL,
                      fun = .analogs, time_obsL, expVar = expVar,
                      time_expL=time_expL, excludeTime=excludeTime,
                      obsVar = obsVar, criteria = criteria,
+                     lonL = lonL, latL = latL,
                      lonVar = lonVar, latVar = latVar, region = region,
                      nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo,
                      output_dims = list(fields = c('nAnalogs', 'lat', 'lon'),
@@ -690,6 +701,7 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL, expVar = NULL,
                      fun = .analogs,time_obsL,
                      time_expL=time_expL, excludeTime=excludeTime,
                      expVar = expVar, criteria = criteria,
+                     lonL = lonL, latL = latL,
                      lonVar = lonVar, latVar = latVar, region = region,
                      nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo,
                      output_dims = list(fields = c('nAnalogs', 'lat', 'lon'),
@@ -705,6 +717,7 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL, expVar = NULL,
                    fun = .analogs,time_obsL, 
                    criteria = criteria,
                    time_expL=time_expL, excludeTime=excludeTime,
+                   lonL = lonL, latL = latL,
                    lonVar = lonVar, latVar = latVar, region = region,
                    nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo,
                    output_dims = list(fields = c('nAnalogs', 'lat', 'lon'),
@@ -719,6 +732,7 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL, expVar = NULL,
 .analogs <- function(expL, obsL, time_expL,  excludeTime = NULL,
                     obsVar = NULL, expVar = NULL,
                     time_obsL, criteria = "Large_dist",
+                    lonL = NULL, latL = NULL,
                     lonVar = NULL, latVar = NULL, region = NULL, 
                     nAnalogs = NULL, AnalogsInfo = FALSE) {
 
@@ -796,7 +810,8 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL, expVar = NULL,
                                 expVar = expVar, obsVar = obsVar, 
                                 criteria = criteria, 
                                 AnalogsInfo = AnalogsInfo,
-                                nAnalogs = nAnalogs,lonVar = lonVar, 
+                                nAnalogs = nAnalogs,
+                                lonL = lonL, latL = latL, lonVar = lonVar, 
                                 latVar = latVar, region = region)
     if (AnalogsInfo == TRUE) {
       return(list(AnalogsFields = Analog_result$AnalogsFields, 
@@ -807,14 +822,17 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL, expVar = NULL,
       return(AnalogsFields = Analog_result$AnalogsFields)
     }
 }
-FindAnalog <- function(expL, obsL, time_obsL, expVar, obsVar, criteria, lonVar,
+FindAnalog <- function(expL, obsL, time_obsL, expVar, obsVar, criteria, 
+                       lonL, latL, lonVar,
                        latVar, region, nAnalogs = nAnalogs,
                        AnalogsInfo = AnalogsInfo) {
   position <- Select(expL = expL, obsL = obsL,  expVar = expVar, 
-                     obsVar = obsVar, criteria = criteria, lonVar = lonVar, 
+                     obsVar = obsVar, criteria = criteria, 
+                     lonL = lonL, latL = latL, lonVar = lonVar, 
                      latVar = latVar, region = region)$position
   metrics<- Select(expL = expL, obsL = obsL,  expVar = expVar, 
-                   obsVar = obsVar, criteria = criteria, lonVar = lonVar, 
+                   obsVar = obsVar, criteria = criteria, lonL = lonL,
+                   latL = latL, lonVar = lonVar, 
                    latVar = latVar, region = region)$metric.original
   best <- Apply(list(position), target_dims = c('time', 'pos'), 
                 fun = BestAnalog, criteria = criteria, 
@@ -824,8 +842,8 @@ FindAnalog <- function(expL, obsL, time_obsL, expVar, obsVar, criteria, lonVar,
   dim(Analogs_dates) <- dim(best)
   if (all(!is.null(region), !is.null(lonVar), !is.null(latVar))) {
     if (is.null(obsVar)) {
-      obsVar <- SelBox(obsL, lon = lonVar, lat = latVar, region = region)$data
-      expVar <- SelBox(expL, lon = lonVar, lat = latVar, region=region)$data
+      obsVar <- SelBox(obsL, lon = lonL, lat = latL, region = region)$data
+      expVar <- SelBox(expL, lon = lonL, lat = latL, region=region)$data
       Analogs_fields <- Subset(obsVar, 
                                along = which(names(dim(obsVar)) == 'time'),
                                indices = best)
@@ -955,7 +973,7 @@ BestAnalog <- function(position, nAnalogs = nAnalogs, AnalogsInfo = FALSE,
   }
 }
 Select <- function(expL, obsL,  expVar = NULL, obsVar = NULL, 
-                   criteria = "Large_dist",
+                   criteria = "Large_dist", lonL = NULL, latL = NULL,
                    lonVar = NULL, latVar = NULL, region = NULL) {
   names(dim(expL)) <- replace_repeat_dimnames(names(dim(expL)), 
                                               names(dim(obsL)))
@@ -989,11 +1007,11 @@ Select <- function(expL, obsL,  expVar = NULL, obsVar = NULL,
                 position = pos1))
   }
   if (criteria == "Local_dist" | criteria == "Local_cor") {
-    obs <- SelBox(obsL, lon = lonVar, lat = latVar, region = region)$data
-    exp <- SelBox(expL, lon = lonVar, lat = latVar, region = region)$data
+    obs <- SelBox(obsL, lon = lonL, lat = latL, region = region)$data
+    exp <- SelBox(expL, lon = lonL, lat = latL, region = region)$data
     metric2 <- Apply(list(obs), target_dims = list(c('lat', 'lon')), 
                      fun = .select, exp, metric = "dist")$output1
-    metric2.original=metric2
+    metric2.original = metric2
     dim(metric2) <- c(dim(metric2), metric=1)
     margins <- c(1 : (length(dim(metric2))))[-dim_time_obs]
     pos2 <- apply(metric2, margins, order)
