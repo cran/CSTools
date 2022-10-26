@@ -229,18 +229,6 @@ comb.dims <- function(arr.in, dims.to.combine){
 }
 
 
-.make.eval.train.dexes <- function(eval.method, amt.points){ 
-  if(eval.method == "leave-one-out"){
-    dexes.lst <- lapply(seq(1, amt.points), function(x) return(list(eval.dexes = x, train.dexes = seq(1, amt.points)[-x])))
-  } else if (eval.method == "in-sample"){
-    dexes.lst <- list(list(eval.dexes = seq(1, amt.points), train.dexes = seq(1, amt.points)))
-  } else {
-    stop(paste0("unknown sampling method: ", eval.method))
-  }
-  return(dexes.lst)
-}
-
-
 .cat_fc <- function(obs.fc, amt.cat, cat.method, eval.method) {
 	
   dims.tmp=dim(obs.fc)

@@ -1,5 +1,21 @@
+### CSTools 4.1.0
+**Submission date to CRAN: 25-10-2022**
+- New features:
+    + Dependency on package 's2dverification' is changed to 's2dv'
+    + CST_BiasCorrection new parameters 'memb_dim', 'sdate_dim', 'ncores'
+    + CST_Calibration is able to calibrate forecast with new parameter 'exp_cor'
+    + CST_QuantileMapping uses cross-validation and provides option to remove NAs; new parameters 'memb_dim', 'sdate_dim', 'window_dim' and 'na.rm'; 'sample_dim' and 'sample_length' are removed
+    + s2dv_cube() new parameter 'time_dim'
+
+- Fixes:
+    + as.s2dv_cube() detects latitude and longitude structure in startR_array object
+    + Data correction: 'lonlat_data' is renamed to 'lonlat_temp'; 'lonlat_prec' is corrected by one-day shift
+    + Typo and parameter correction in vignette 'MostLikelyTercile_vignette'
+    + Figure and result correction in vignette 'RainFARM_vignette'
+    + PlotMostLikelyQuantileMap() works with s2dv::PlotLayout
+
 ### CSTools 4.0.1
-**Submission date to CRAN: XX-06-2021**
+**Submission date to CRAN: 05-10-2021**
 
 - New features:
     + Dynamical Bias Correction method: `CST_ProxiesAttractors` and `CST_DynBiasCorrection` 

@@ -9,6 +9,12 @@
 #'@param cat_dim the name of the dimension along which the different categories are stored in \code{probs}. This only applies if \code{probs} is provided in the form of 3-dimensional array. The default expected name is 'bin'.
 #'@param bar_titles vector of character strings with the names to be drawn on top of the color bar for each of the categories. As many titles as categories provided in \code{probs} must be provided.
 #'@param col_unknown_cat character string with a colour representation of the colour to be used to paint the cells for which no category can be clearly assigned. Takes the value 'white' by default.
+#'@param drawleg Where to draw the common colour bar. Can take values TRUE, 
+#'  FALSE or:\cr
+#'  'up', 'u', 'U', 'top', 't', 'T', 'north', 'n', 'N'\cr
+#'  'down', 'd', 'D', 'bottom', 'b', 'B', 'south', 's', 'S' (default)\cr
+#'  'right', 'r', 'R', 'east', 'e', 'E'\cr
+#'  'left', 'l', 'L', 'west', 'w', 'W'
 #'@param ... additional parameters to be sent to \code{PlotCombinedMap} and \code{PlotEquiMap}.
 #'@seealso \code{PlotCombinedMap} and \code{PlotEquiMap}
 #' 
@@ -23,10 +29,12 @@
 #'c <- 1 - (a + b)
 #'lons <- seq(0, 359.5, length = 20)
 #'lats <- seq(-89.5, 89.5, length = 10)
+#'\dontrun{
 #'PlotMostLikelyQuantileMap(list(a, b, c), lons, lats, 
 #'                          toptitle = 'Most likely tercile map',
 #'                          bar_titles = paste('% of belonging to', c('a', 'b', 'c')), 
 #'                          brks = 20, width = 10, height = 8)
+#'}
 #'
 #'# More complex example
 #'n_lons <- 40
@@ -93,16 +101,18 @@
 #'bins <- multiApply::Apply(sample_data, 'time', binning, thresholds)$output1
 #'
 #'# 3. Plotting most likely quantile/bin
+#'\dontrun{
 #'PlotMostLikelyQuantileMap(bins, lons, lats, 
 #'                          toptitle = 'Most likely quantile map',
 #'                          bar_titles = paste('% of belonging to', letters[1:n_bins]),
 #'                          mask = 1 - (w1 + w2 / max(c(w1, w2))), 
 #'                          brks = 20, width = 10, height = 8)
+#'}
 #'
 #'@export
 PlotMostLikelyQuantileMap <- function(probs, lon, lat, cat_dim = 'bin',
                                       bar_titles = NULL, 
-                                      col_unknown_cat = 'white',
+                                      col_unknown_cat = 'white', drawleg = T,
                                       ...) {
   # Check probs
   error <- FALSE
@@ -184,6 +194,7 @@ PlotMostLikelyQuantileMap <- function(probs, lon, lat, cat_dim = 'bin',
   PlotCombinedMap(probs * 100, lon, lat, map_select_fun = max, 
                   display_range = c(minimum_value, 100),
                   map_dim = cat_dim, 
-                  bar_titles = bar_titles, 
-                  col_unknown_map = col_unknown_cat, ...)
+                  bar_titles = bar_titles,
+                  col_unknown_map = col_unknown_cat, 
+                  drawleg = drawleg, ...)
 }

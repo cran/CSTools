@@ -77,7 +77,7 @@ CST_RFSlope <- function(data, kmin = 1, time_dim = NULL, ncores = 1) {
 #' minus the dimensions specified by \code{lon_dim}, \code{lat_dim} and \code{time_dim}.
 #' @import multiApply
 #' @import rainfarmr
-#' @importFrom s2dverification Subset
+#' @importFrom ClimProjDiags Subset
 #' @export
 #' @examples
 #' # Example for the 'reduced' RFSlope function 

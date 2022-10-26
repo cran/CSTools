@@ -16,11 +16,11 @@ Weather regimes are a set of patterns able to characterize the different circula
 
 ### 1- Required packages 
 
-The functions to compute the Weather Regimes are part of CSTools while plotting functions are included in s2dverification package:
+The functions to compute the Weather Regimes are part of CSTools while plotting functions are included in s2dv package:
  
 ```r
 library(CSTools)
-library(s2dverification)
+library(s2dv)
 library(zeallot)
 ```
 
@@ -75,7 +75,7 @@ The LOESS filter has been applied to the climatology to remove the short-term va
 
 ### 4- Weather regimes in observations 
 
-`CST_WeatherRegimes()` function is used to define the clusters based on the sea level pressure anomalies from ERA-Interim. This function is based on the [*kmeans function*] (http://stat.ethz.ch/R-manual/R-devel/library/stats/html/kmeans.html)
+`CST_WeatherRegimes()` function is used to define the clusters based on the sea level pressure anomalies from ERA-Interim. This function is based on the [*kmeans function*] (https://stat.ethz.ch/R-manual/R-devel/library/stats/html/kmeans.html)
 from the stats R package. In this example we have made different assumptions: four clusters (`ncenters=4`) will be produced and the Empirical orthogonal functions are not used to filter the data (`EOFS=FALSE`) just to take into account the extreme values. More details about the methodology can be found in Cortesi et al. 2018 (submitted). 
 
 
@@ -91,7 +91,7 @@ WR_obs <- CST_WeatherRegimes(data = ano_obs, EOFs = FALSE, ncenters = 4)
 ### 5- Visualisation of the observed weather regimes
 
 
-To plot the composite maps of each regime and the mean frequencies of each cluster, we have employed the `PlotLayout()` and `PlotEquiMap()` functions available in s2dverifcation. The object `WR_obs$data` is divided by 100 to change from Pa to hPa. As the `WR_obs$statistics$frequency` provides the monthly frequencies, the climatological frequencies are obtained as the average across the 20 years of the monthly frequencies. Note that these frequencies could slightly change as a consequence of the randomness inherent to the iterative processes involved in the k-means.   
+To plot the composite maps of each regime and the mean frequencies of each cluster, we have employed the `PlotLayout()` and `PlotEquiMap()` functions available in s2dv. The object `WR_obs$data` is divided by 100 to change from Pa to hPa. As the `WR_obs$statistics$frequency` provides the monthly frequencies, the climatological frequencies are obtained as the average across the 20 years of the monthly frequencies. Note that these frequencies could slightly change as a consequence of the randomness inherent to the iterative processes involved in the k-means.   
 
  ```r
 clim_frequencies <- paste0('freq = ',

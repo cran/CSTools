@@ -55,8 +55,8 @@ included in the hclust (stats package).
 }
 \examples{
 \dontrun{
-res1 <- CST_WeatherRegimes(data = lonlat_data$obs, EOFs = FALSE, ncenters = 4)
-res2 <- CST_WeatherRegimes(data = lonlat_data$obs, EOFs = TRUE, ncenters = 3)
+res1 <- CST_WeatherRegimes(data = lonlat_temp$obs, EOFs = FALSE, ncenters = 4)
+res2 <- CST_WeatherRegimes(data = lonlat_temp$obs, EOFs = TRUE, ncenters = 3)
 }
 }
 \references{

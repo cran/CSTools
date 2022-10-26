@@ -1,20 +1,49 @@
 #'Plot one or multiple ensemble forecast pdfs for the same event
 #'
 #'@author Llorenç Lledó \email{llledo@bsc.es}
-#'@description This function plots the probability distribution function of several ensemble forecasts. Separate panels are used to plot forecasts valid or initialized at different times or by different models or even at different locations. Probabilities for tercile categories are computed, plotted in colors and annotated. An asterisk marks the tercile with higher probabilities. Probabilities for extreme categories (above P90 and below P10) can also be included as hatched areas. Individual ensemble members can be plotted as jittered points. The observed value is optionally shown as a diamond.
+#'@description This function plots the probability distribution function of 
+#'several ensemble forecasts. Separate panels are used to plot forecasts valid 
+#'or initialized at different times or by different models or even at different 
+#'locations. Probabilities for tercile categories are computed, plotted in 
+#'colors and annotated. An asterisk marks the tercile with higher probabilities. 
+#'Probabilities for extreme categories (above P90 and below P10) can also be 
+#'included as hatched areas. Individual ensemble members can be plotted as 
+#'jittered points. The observed value is optionally shown as a diamond.
 #'
-#'@param fcst a dataframe or array containing all the ensember members for each forecast. If \code{'fcst'} is an array, it should have two labelled dimensions, and one of them should be \code{'members'}. If \code{'fcsts'} is a data.frame, each column shoul be a separate forecast, with the rows beeing the different ensemble members.
-#'@param tercile.limits an array or vector with P33 and P66 values that define the tercile categories for each panel. Use an array of dimensions (nforecasts,2) to  define different terciles for each forecast panel, or a vector with two elements to reuse the same tercile limits for all forecast panels.
-#'@param extreme.limits (optional) an array or vector with P10 and P90 values that define the extreme categories for each panel. Use an array of (nforecasts,2) to define different extreme limits for each forecast panel, or a vector with two elements to reuse the same tercile limits for all forecast panels. (Default: extreme categories are not shown).
-#'@param obs (optional) A vector providing the observed values for each forecast panel or a single value that will be reused for all forecast panels. (Default: observation is not shown).
-#'@param plotfile (optional) a filename (pdf, png...) where the plot will be saved. (Default: the plot is not saved).
-#'@param title a string with the plot title.
-#'@param var.name a string with the variable name and units.
-#'@param fcst.names (optional) an array of strings with the titles of each individual forecast.
-#'@param add.ensmemb either to add the ensemble members \code{'above'} (default) or \code{'below'} the pdf, or not (\code{'no'}).
-#'@param color.set a selection of predefined color sets: use \code{'ggplot'} (default) for blue/green/red, \code{'s2s4e'} for blue/grey/orange, or \code{'hydro'} for yellow/gray/blue (suitable for precipitation and inflows).
+#'@param fcst A dataframe or array containing all the ensember members for each 
+#'  forecast. If \code{'fcst'} is an array, it should have two labelled 
+#'  dimensions, and one of them should be \code{'members'}. If \code{'fcsts'} is 
+#'  a data.frame, each column shoul be a separate forecast, with the rows beeing 
+#'  the different ensemble members.
+#'@param tercile.limits An array or vector with P33 and P66 values that define 
+#'  the tercile categories for each panel. Use an array of dimensions 
+#'  (nforecasts,2) to  define different terciles for each forecast panel, or a 
+#'  vector with two elements to reuse the same tercile limits for all forecast 
+#'  panels.
+#'@param extreme.limits (optional) An array or vector with P10 and P90 values 
+#'  that define the extreme categories for each panel. Use an array of 
+#'  (nforecasts,2) to define different extreme limits for each forecast panel, 
+#'  or a vector with two elements to reuse the same tercile limits for all 
+#'  forecast panels. (Default: extreme categories are not shown).
+#'@param obs (optional) A vector providing the observed values for each forecast 
+#'  panel or a single value that will be reused for all forecast panels. 
+#'  (Default: observation is not shown).
+#'@param plotfile (optional) A filename (pdf, png...) where the plot will be 
+#'  saved. (Default: the plot is not saved).
+#'@param title A string with the plot title.
+#'@param var.name A string with the variable name and units.
+#'@param fcst.names (optional) An array of strings with the titles of each 
+#'  individual forecast.
+#'@param add.ensmemb Either to add the ensemble members \code{'above'} (default) 
+#'  or \code{'below'} the pdf, or not (\code{'no'}).
+#'@param color.set A selection of predefined color sets: use \code{'ggplot'} 
+#'  (default) for blue/green/red, \code{'s2s4e'} for blue/grey/orange, or 
+#'  \code{'hydro'} for yellow/gray/blue (suitable for precipitation and 
+#'  inflows).
+#'@param memb_dim A character string indicating the name of the member 
+#'  dimension.
 #'
-#'@return a ggplot object containing the plot.
+#'@return A ggplot object containing the plot.
 #'
 #'@importFrom data.table data.table
 #'@importFrom data.table CJ
@@ -29,14 +58,15 @@
 #'                    fcst3 = rnorm(10, -0.5, 0.9))
 #'PlotForecastPDF(fcsts,c(-1,1))
 #'\donttest{
-#'fcsts2 <- array(rnorm(100), dim = c(members = 20, fcst = 5))
+#'fcsts2 <- array(rnorm(100), dim = c(member = 20, fcst = 5))
 #'PlotForecastPDF(fcsts2, c(-0.66, 0.66), extreme.limits = c(-1.2, 1.2), 
 #'                fcst.names = paste0('random fcst ', 1 : 5), obs = 0.7)
 #'}
 #'@export
 PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = NULL, 
-    plotfile = NULL, title = "Set a title", var.name = "Varname (units)", fcst.names = NULL, 
-    add.ensmemb = c("above", "below", "no"), color.set = c("ggplot", "s2s4e", "hydro")) {
+                            plotfile = NULL, title = "Set a title", var.name = "Varname (units)", 
+                            fcst.names = NULL, add.ensmemb = c("above", "below", "no"), 
+                            color.set = c("ggplot", "s2s4e", "hydro"), memb_dim = 'member') {
     value <- init <- extremes <- x <- ymin <- ymax <- tercile <- NULL
     y <- xend <- yend <- yjitter <- MLT <- lab.pos <- NULL
     ggColorHue <- function(n) {
@@ -76,10 +106,10 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     # Check fcst type and convert to data.frame if needed
     #------------------------
     if (is.array(fcst)) {
-        if (!"members" %in% names(dim(fcst)) | length(dim(fcst)) != 2) {
-            stop("Parameter 'fcst' should be a two-dimensional array with labelled dimensions and one of them should be 'members'")
+        if (!memb_dim %in% names(dim(fcst)) | length(dim(fcst)) != 2) {
+            stop("Parameter 'fcst' should be a two-dimensional array with labelled dimensions and one of them should be for member. The name of this dimension can be adjusted with 'memb_dim'.")
         }
-        dim.members <- which(names(dim(fcst)) == "members")
+        dim.members <- which(names(dim(fcst)) == memb_dim)
         if (dim.members == 1) {
             fcst.df <- data.frame(fcst)
         } else {

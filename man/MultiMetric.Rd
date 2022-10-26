@@ -36,10 +36,10 @@ a list of arrays containing the statistics of the selected metric in the element
 This function calculates correlation (Anomaly Correlation Coefficient; ACC), root mean square error (RMS) and the root mean square error skill score (RMSSS) of individual anomaly models and multi-models mean (if desired) with the observations on arrays with named dimensions.
 }
 \examples{
-res <- MultiMetric(lonlat_data$exp$data, lonlat_data$obs$data)
+res <- MultiMetric(lonlat_temp$exp$data, lonlat_temp$obs$data)
 }
 \references{
-Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31.\url{https://link.springer.com/10.1007/s00382-018-4404-z}
+Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31.\url{https://link.springer.com/article/10.1007/s00382-018-4404-z}
 }
 \seealso{
 \code{\link[s2dv]{Corr}}, \code{\link[s2dv]{RMS}}, \code{\link[s2dv]{RMSSS}} and \code{\link{CST_Load}}

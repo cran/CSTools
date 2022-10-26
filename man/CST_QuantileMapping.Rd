@@ -2,120 +2,97 @@
 % Please edit documentation in R/CST_QuantileMapping.R
 \name{CST_QuantileMapping}
 \alias{CST_QuantileMapping}
-\title{Quantiles Mapping for seasonal or decadal forecast data}
+\title{Quantile Mapping for seasonal or decadal forecast data}
 \usage{
 CST_QuantileMapping(
   exp,
   obs,
   exp_cor = NULL,
-  sample_dims = c("sdate", "ftime", "member"),
-  sample_length = NULL,
+  sdate_dim = "sdate",
+  memb_dim = "member",
+  window_dim = NULL,
   method = "QUANT",
+  na.rm = FALSE,
   ncores = NULL,
   ...
 )
 }
 \arguments{
-\item{exp}{an object of class \code{s2dv_cube}}
+\item{exp}{An object of class \code{s2dv_cube}.}
 
-\item{obs}{an object of class \code{s2dv_cube}}
+\item{obs}{An object of class \code{s2dv_cube}.}
 
-\item{exp_cor}{an object of class \code{s2dv_cube} in which the quantile mapping correction will be applied. If it is not specified, the correction is applied in object \code{exp}.}
+\item{exp_cor}{An object of class \code{s2dv_cube} in which the quantile 
+mapping correction should be applied. If it is not specified, the correction
+is applied in object 'exp'.}
 
-\item{sample_dims}{a character vector indicating the dimensions that can be used as sample for the same distribution}
+\item{sdate_dim}{A character string indicating the dimension name in which 
+cross-validation would be applied when exp_cor is not provided. 'sdate' by 
+default.}
 
-\item{sample_length}{a numeric value indicating the length of the timeseries window to be used as sample for the sample distribution and correction. By default, NULL, the total length of the timeseries will be used.}
+\item{memb_dim}{A character string indicating the dimension name where 
+ensemble members are stored in the experimental arrays. 'member' by default.}
 
-\item{method}{a character string indicating the method to be used: 'PTF','DIST','RQUANT','QUANT','SSPLIN'. By default, the empirical quantile mapping 'QUANT' is used.}
+\item{window_dim}{A character string indicating the dimension name where 
+samples have been stored. It can be NULL (default) in case all samples are 
+used.}
 
-\item{ncores}{an integer indicating the number of parallel processes to spawn for the use for parallel computation in multiple cores.}
+\item{method}{A character string indicating the method to be used:'PTF',
+'DIST','RQUANT','QUANT','SSPLIN'. By default, the empirical quantile mapping
+'QUANT' is used.}
 
-\item{...}{additional arguments passed to the method specified by \code{method}.}
+\item{na.rm}{A logical value indicating if missing values should be removed
+(FALSE by default).}
+
+\item{ncores}{An integer indicating the number of cores for parallel 
+computation using multiApply function. The default value is NULL (1).}
+
+\item{...}{Additional parameters to be used by the method choosen. See qmap 
+package for details.}
 }
 \value{
-an oject of class \code{s2dv_cube} containing the experimental data after applyingthe quantile mapping correction. 
-) <- c(dataset = 1, member = 10, sdate = 20, ftime = 60 ,
+An object of class \code{s2dv_cube} containing the experimental data
+after applying the quantile mapping correction.
 }
 \description{
-This function is a wrapper from fitQmap and doQmap from package 'qmap'to be applied in CSTools objects of class 's2dv_cube'. The quantile mapping adjustment between an experiment, tipically a hindcast, and observations is applied to the experiment itself or to a provided forecast.
-}
-\details{
-The different methods are:
-\itemize{ 
-\item{'PTF'} {fits a parametric transformations to the quantile-quantile relation of observed and modelled values. See \code{?qmap::fitQmapPTF}.}
-\item{'DIST'} {fits a theoretical distribution to observed and to modelled time series. See \code{?qmap::fitQmapDIST}.}
-\item{'RQUANT'} {estimates the values of the quantile-quantile relation of observed and modelled time series for regularly spaced quantiles using local linear least square regression. See \code{?qmap::fitQmapRQUANT}.}
-\item{'QUANT'} {estimates values of the empirical cumulative distribution function of observed and modelled time series for regularly spaced quantiles. See \code{?qmap::fitQmapQUANT}.}
-\item{'SSPLIN'} {fits a smoothing spline to the quantile-quantile plot of observed and modelled time series. See \code{?qmap::fitQmapSSPLIN}.}}
-All methods accepts some common arguments:
-\itemize{
-\item{wet.day} {logical indicating whether to perform wet day correction or not.(Not available in 'DIS' method)}
-\item{qstep} {NULL or a numeric value between 0 and 1.}}
-When providing a forecast to be corrected through the pararmeter \code{exp_cor}, some inputs might need to be modified. The quantile correction is compute by comparing objects passed through 'exp' and 'obs' parameters, this correction will be later applied to the forecast provided in 'exp_cor'. Imaging the case of 'exp' and 'obs' having several start dates, stored using a dimension e.g. 'sdate', 'sample_dims' include this dimension 'sdate' and 'exp_cor' has forecasts for several sdates but different from the ones in 'exp'. In this case, the correction computed with 'exp' and 'obs' would be applied for each 'sdate' of 'exp_cor' separately. This example corresponds to a case of split a dataset in training set and validation set.
+This function is a wrapper of fitQmap and doQmap from package
+'qmap' to be applied on the object of class 's2dv_cube'. The quantile mapping
+adjustment between an experiment, typically a hindcast, and observation is 
+applied to the experiment itself or to a provided forecast.
 }
 \examples{
-library(qmap)
-exp <- 1 : (1 * 5 * 10 * 6 * 2 * 3)
-dim(exp) <- c(dataset = 1, member = 10, sdate = 5, ftime = 6 , 
-             lat = 2, lon = 3)
-exp <- list(data = exp)
+# Use synthetic data
+exp <- NULL
+exp$data <- 1 : c(1 * 3 * 5 * 4 * 3 * 2)
+dim(exp$data) <- c(dataset = 1, member = 3, sdate = 5, ftime = 4,
+                  lat = 3, lon = 2)
 class(exp) <- 's2dv_cube'
-obs <- 101 : (100 + 1 * 1 * 5 * 6 * 2 * 3)
-dim(obs) <- c(dataset = 1, member = 1, sdate = 5, ftime = 6 ,
-             lat = 2, lon = 3)
-obs <- list(data = obs)
+obs$data <- 101 : c(100 + 1 * 1 * 5 * 4 * 3 * 2)
+dim(obs$data) <- c(dataset = 1, member = 1, sdate = 5, ftime = 4,
+                  lat = 3, lon = 2)
 class(obs) <- 's2dv_cube'
-res <- CST_QuantileMapping(exp, obs, method = 'RQUANT')
-\donttest{
-exp <- lonlat_data$exp
-obs <- lonlat_data$obs
 res <- CST_QuantileMapping(exp, obs)
 
-exp_cor <- exp
-exp_cor$data <- exp_cor$data[,,1,,,]
-dim(exp_cor$data) <- c(dataset = 1, member = 15, sdate = 1, ftime = 3, 
-                      lat = 22, lon = 53)
-res <- CST_QuantileMapping(exp, obs, exp_cor,
-                          sample_dims = c('sdate', 'ftime', 'member'))
-res <- CST_QuantileMapping(exp, obs, exp_cor,
-                          sample_dims = c('ftime', 'member'))
-data(obsprecip)
-data(modprecip)
-exp <- modprecip$MOSS[1:10000]
-dim(exp) <- c(time = length(exp))
-exp <- list(data = exp)
-class(exp) <- 's2dv_cube'
-obs <- obsprecip$MOSS[1:10000]
-dim(obs) <- c(time = length(obs))
-obs <- list(data = obs)
-class(obs) <- 's2dv_cube'
-res <- CST_QuantileMapping(exp = exp, obs = obs, sample_dims = 'time',
-                          method = 'DIST')
-# Example using different lenght of members and sdates:
-exp <- lonlat_data$exp
-exp$data <- exp$data[,,1:4,,,]
+# Use data in package
+\donttest{
+exp <- lonlat_temp$exp
+exp$data <- exp$data[, , 1:4, , 1:2, 1:3]
 dim(exp$data) <- c(dataset = 1, member = 15, sdate = 4, ftime = 3, 
-                      lat = 22, lon = 53)
-obs <- lonlat_data$obs
-obs$data <- obs$data[,,1:4, ,,]
+                  lat = 2, lon = 3)
+obs <- lonlat_temp$obs
+obs$data <- obs$data[, , 1:4, , 1:2, 1:3]
 dim(obs$data) <- c(dataset = 1, member = 1, sdate = 4, ftime = 3, 
-                      lat = 22, lon = 53)
-exp_cor <- lonlat_data$exp
-exp_cor$data <- exp_cor$data[,1:5,5:6,,,]
-dim(exp_cor$data) <- c(dataset = 1, member = 5, sdate = 2, ftime = 3, 
-                     lat = 22, lon = 53)
-res <- CST_QuantileMapping(exp, obs, exp_cor,
-                          sample_dims = c('sdate', 'ftime', 'member'))
-exp_cor <- lonlat_data$exp
-exp_cor$data <- exp_cor$data[,,5:6,,,]
-dim(exp_cor$data) <- c(dataset = 1, member = 15, sdate = 2, ftime = 3, 
-                      lat = 22, lon = 53)
-res <- CST_QuantileMapping(exp, obs, exp_cor,
-                          sample_dims = c('sdate', 'ftime', 'member'))
+                  lat = 2, lon = 3)
+exp_cor <- lonlat_temp$exp
+exp_cor$data <- exp_cor$data[, 1, 5:6, , 1:2, 1:3]
+dim(exp_cor$data) <- c(dataset = 1, member = 1, sdate = 2, ftime = 3, 
+                      lat = 2, lon = 3)
+res <- CST_QuantileMapping(exp, obs, exp_cor, window_dim = 'ftime')
 }
+
 }
 \seealso{
-\code{qmap::fitQmap} and \code{qmap::doQmap}
+\code{\link[qmap]{fitQmap}} and \code{\link[qmap]{doQmap}}
 }
 \author{
 Nuria Perez-Zanon, \email{nuria.perez@bsc.es}

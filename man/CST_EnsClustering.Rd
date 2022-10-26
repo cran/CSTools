@@ -100,33 +100,32 @@ deviation for each cluster (i.e. how much the cluster is compact).
 }
 \examples{
 \donttest{
-exp <- lonlat_data$exp
+exp <- lonlat_temp$exp
 # Example 1: Cluster on all start dates, members and models
 res <- CST_EnsClustering(exp, numclus = 3,
                          cluster_dim = c("member", "dataset", "sdate"))
-iclus = res$cluster[2, 1, 3]
+iclus <- res$cluster[2, 1, 3]
 
-print(paste("Cluster of 2. member, 1. dataset, 3. sdate:", iclus))
-print(paste("Frequency (numerosity) of cluster (", iclus, ") :", res$freq[iclus]))
-library(s2dverification)
-PlotEquiMap(res$repr_field[iclus, , ], exp$lon, exp$lat,
-            filled.continents = FALSE,
-            toptitle = paste("Representative field of cluster", iclus))
+#print(paste("Cluster of 2. member, 1. dataset, 3. sdate:", iclus))
+#print(paste("Frequency (numerosity) of cluster (", iclus, ") :", res$freq[iclus]))
+s2dv::PlotEquiMap(res$repr_field[iclus, , ], exp$lon, exp$lat,
+                  filled.continents = FALSE,
+                  toptitle = paste("Representative field of cluster", iclus))
 
 # Example 2: Cluster on members retaining 4 EOFs during 
 # preliminary dimensional reduction
-
 res <- CST_EnsClustering(exp, numclus = 3, numpcs = 4, cluster_dim = "member")
+
 # Example 3: Cluster on members, retain 80\% of variance during 
 # preliminary dimensional reduction
-
 res <- CST_EnsClustering(exp, numclus = 3, variance_explained = 80,
                          cluster_dim = "member")
-# Example 4: Compute percentile in time
 
+# Example 4: Compute percentile in time
 res <- CST_EnsClustering(exp, numclus = 3,  time_percentile = 90,
                          time_moment = "perc", cluster_dim = "member")
 }
+
 }
 \author{
 Federico Fabiano - ISAC-CNR, \email{f.fabiano@isac.cnr.it}

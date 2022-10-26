@@ -99,12 +99,11 @@
 #'for downscaling. 
 #'@param ncores The number of cores to use in parallel computation
 #'@import multiApply
-#'@importFrom s2dverification Subset
 #'@import abind
-#'@importFrom ClimProjDiags SelBox
+#'@importFrom ClimProjDiags SelBox Subset
 #'
-#'@seealso code{\link{CST_Load}}, \code{\link[s2dverification]{Load}} and 
-#'\code{\link[s2dverification]{CDORemap}}
+#'@seealso code{\link{CST_Load}}, \code{\link[s2dv]{Load}} and 
+#'\code{\link[s2dv]{CDORemap}}
 #'
 #'@return An 'array' object containing the dowscaled values of the best 
 #'analogs. 
@@ -301,9 +300,8 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
 #' the best analog.
 #'@param ncores the number of cores to use in parallel computation.
 #'@import multiApply
-#'@importFrom s2dverification Subset
 #'@import abind
-#'@importFrom ClimProjDiags SelBox
+#'@importFrom ClimProjDiags SelBox Subset
 #'
 #'@return AnalogsFields, dowscaled values of the best analogs for the criteria 
 #'selected. If AnalogsInfo is set to TRUE the function also returns a 
@@ -782,7 +780,7 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL,
         time_ref <- time_obsL[-c(which(time_obsL %in% excludeTime))]
         posdim <- which(names(dim(obsL)) == 'time')
         posref <- which(time_obsL %in% time_ref)
-        obsT <- Subset(obsL,along = posdim,indices = posref)
+        obsT <- Subset(obsL, along = posdim, indices = posref)
         if (!is.null(obsVar)) {
           obsTVar <- Subset(obsVar, along = posdim, indices = posref)
         }

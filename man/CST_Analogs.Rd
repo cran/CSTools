@@ -145,8 +145,8 @@ from surface pressure using analogues.  Clim. Dyn., 41, 1419-1437.
 \email{pascal.yiou@lsce.ipsl.fr}
 }
 \seealso{
-code{\link{CST_Load}}, \code{\link[s2dverification]{Load}} and 
-\code{\link[s2dverification]{CDORemap}}
+code{\link{CST_Load}}, \code{\link[s2dv]{Load}} and 
+\code{\link[s2dv]{CDORemap}}
 }
 \author{
 M. Carmen Alvarez-Castro, \email{carmen.alvarez-castro@cmcc.it}

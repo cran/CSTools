@@ -7,6 +7,7 @@
 CST_Calibration(
   exp,
   obs,
+  exp_cor = NULL,
   cal.method = "mse_min",
   eval.method = "leave-one-out",
   multi.model = FALSE,
@@ -20,13 +21,15 @@ CST_Calibration(
 )
 }
 \arguments{
-\item{exp}{an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the seasonal forecast experiment data in the element named \code{$data}.}
+\item{exp}{an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the seasonal hindcast experiment data in the element named \code{$data}. The hindcast is used to calibrate the forecast in case the forecast is provided; if not, the same hindcast will be calibrated instead.}
 
 \item{obs}{an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the observed data in the element named \code{$data}.}
 
+\item{exp_cor}{an optional object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the seasonal forecast experiment data in the element named \code{$data}. If the forecast is provided, it will be calibrated using the hindcast and observations; if not, the hindcast will be calibrated instead.}
+
 \item{cal.method}{is the calibration method used, can be either \code{bias}, \code{evmos}, \code{mse_min}, \code{crps_min} or \code{rpc-based}. Default value is \code{mse_min}.}
 
-\item{eval.method}{is the sampling method used, can be either \code{in-sample} or \code{leave-one-out}. Default value is the \code{leave-one-out} cross validation.}
+\item{eval.method}{is the sampling method used, can be either \code{in-sample} or \code{leave-one-out}. Default value is the \code{leave-one-out} cross validation. In case the forecast is provided, any chosen eval.method is over-ruled and a third option is used.}
 
 \item{multi.model}{is a boolean that is used only for the \code{mse_min} method. If multi-model ensembles or ensembles of different sizes are used, it must be set to \code{TRUE}. By default it is \code{FALSE}. Differences between the two approaches are generally small but may become large when using small ensemble sizes. Using multi.model when the calibration method is \code{bias}, \code{evmos} or \code{crps_min} will not affect the result.}
 
@@ -63,6 +66,24 @@ obs <- list(data = obs1, lat = lat, lon = lon)
 attr(exp, 'class') <- 's2dv_cube'
 attr(obs, 'class') <- 's2dv_cube'
 a <- CST_Calibration(exp = exp, obs = obs, cal.method = "mse_min", eval.method = "in-sample")
+str(a)
+
+# Example 2:
+mod1 <- 1 : (1 * 3 * 4 * 5 * 6 * 7)
+mod2 <- 1 : (1 * 3 * 1 * 5 * 6 * 7)
+dim(mod1) <- c(dataset = 1, member = 3, sdate = 4, ftime = 5, lat = 6, lon = 7)
+dim(mod2) <- c(dataset = 1, member = 3, sdate = 1, ftime = 5, lat = 6, lon = 7)
+obs1 <- 1 : (1 * 1 * 4 * 5 * 6 * 7)
+dim(obs1) <- c(dataset = 1, member = 1, sdate = 4, ftime = 5, lat = 6, lon = 7)
+lon <- seq(0, 30, 5)
+lat <- seq(0, 25, 5)
+exp <- list(data = mod1, lat = lat, lon = lon)
+obs <- list(data = obs1, lat = lat, lon = lon)
+exp_cor <- list(data = mod2, lat = lat, lon = lon)
+attr(exp, 'class') <- 's2dv_cube'
+attr(obs, 'class') <- 's2dv_cube'
+attr(exp_cor, 'class') <- 's2dv_cube'
+a <- CST_Calibration(exp = exp, obs = obs, exp_cor = exp_cor, cal.method = "evmos")
 str(a)
 }
 \seealso{

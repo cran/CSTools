@@ -30,10 +30,10 @@ PlotForecastPDF(fcst, tercile.limits = c(20, 26))
 
 ![Example 1](./Figures/PlotForecastPDF_ex1.png)
 
-Input data can also be provided as an two-dimensional array, as far as one of the dimensions is named 'members':
+Input data can also be provided as an two-dimensional array, as far as one of the dimensions is named 'member' or adjusted in 'memb_dim' parameter:
 
 ```{r,fig.show = 'hide',warning=F}
-fcst <- array(rnorm(mean=25, sd=2, n=90), dim=c(members=30, 3))
+fcst <- array(rnorm(mean = 25, sd = 2, n = 90), dim = c(member = 30, 3))
 PlotForecastPDF(fcst, tercile.limits = c(23, 27))
 ```
 
@@ -70,20 +70,21 @@ PlotForecastPDF uses ggplot2, so you can save the output of the function to a va
 
 ```
 library(ggplot2)
-fcst <- array(rnorm(mean=25, sd=2, n=90), dim=c(members=30, 3))
+fcst <- array(rnorm(mean = 25, sd = 2, n = 90), dim = c(member = 30, 3))
 plot <-PlotForecastPDF(fcst, tercile.limits = c(23, 27))
 ggsave("outfile.pdf", plot, width=7, height=5)
 ```
 
-### 5.- A reproducible example using lonlat_data
+### 5.- A reproducible example using lonlat_temp
 This final example uses the sample lonlat data from CSTools. It is suitable for checking reproducibility of results.
 
 ```{r,fig.show = 'hide',warning=F}
-fcst <- data.frame(fcst1 = lonlat_data$exp$data[1,,1,1,1,1] - 273.15,
-                   fcst2 = lonlat_data$exp$data[1,,1,2,1,1] - 273.15)
+fcst <- data.frame(fcst1 = lonlat_temp$exp$data[1,,1,1,1,1] - 273.15,
+                   fcst2 = lonlat_temp$exp$data[1,,1,2,1,1] - 273.15)
 PlotForecastPDF(fcst, tercile.limits = c(5, 7), extreme.limits = c(4, 8), 
   var.name = "Temperature (ºC)",
   title = "Forecasts initialized on Nov 2000 at sample Mediterranean region", 
   fcst.names = c("November", "December"))
 ```
+
 ![Example 4](./Figures/PlotForecastPDF_ex4.png)

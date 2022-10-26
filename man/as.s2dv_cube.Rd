@@ -7,13 +7,13 @@
 as.s2dv_cube(object)
 }
 \arguments{
-\item{object}{an object of class 'startR_array' generated from function \code{Start} from startR package (version 0.1.3 from earth.bsc.es/gitlab/es/startR) or a list output from function \code{Load} from s2dverification package.}
+\item{object}{an object of class 'startR_array' generated from function \code{Start} from startR package (version 0.1.3 from earth.bsc.es/gitlab/es/startR) or a list output from function \code{Load} from s2dv package.}
 }
 \value{
 The function returns a 's2dv_cube' object to be easily used with functions \code{CST} from CSTools package.
 }
 \description{
-This function converts data loaded using startR package or s2dverification Load function into a 's2dv_cube' object.
+This function converts data loaded using startR package or s2dv Load function into a 's2dv_cube' object.
 }
 \examples{
 \dontrun{
@@ -41,7 +41,7 @@ class(data)
 }
 }
 \seealso{
-\code{\link{s2dv_cube}}, \code{\link[s2dverification]{Load}}, \code{\link[startR]{Start}} and \code{\link{CST_Load}}
+\code{\link{s2dv_cube}}, \code{\link[s2dv]{Load}}, \code{\link[startR]{Start}} and \code{\link{CST_Load}}
 }
 \author{
 Perez-Zanon Nuria, \email{nuria.perez@bsc.es}

@@ -2,58 +2,94 @@
 % Please edit documentation in R/CST_QuantileMapping.R
 \name{QuantileMapping}
 \alias{QuantileMapping}
-\title{Quantiles Mapping for seasonal or decadal forecast data}
+\title{Quantile Mapping for seasonal or decadal forecast data}
 \usage{
 QuantileMapping(
   exp,
   obs,
   exp_cor = NULL,
-  sample_dims = "ftime",
-  sample_length = NULL,
+  sdate_dim = "sdate",
+  memb_dim = "member",
+  window_dim = NULL,
   method = "QUANT",
+  na.rm = FALSE,
   ncores = NULL,
   ...
 )
 }
 \arguments{
-\item{exp}{a multi-dimensional array with named dimensions containing the hindcast.}
+\item{exp}{A multidimensional array with named dimensions containing the 
+hindcast.}
 
-\item{obs}{a multi-dimensional array with named dimensions (the same as the provided in 'exp') containing the reference dataset.}
+\item{obs}{A multidimensional array with named dimensions containing the 
+reference dataset.}
 
-\item{exp_cor}{a multi-dimensional array with named dimensions in which the quantile mapping correction will be applied. If it is not specified, the correction is applied in object \code{exp}.}
+\item{exp_cor}{A multidimensional array with named dimensions in which the
+quantile mapping correction should be applied. If it is not specified, the 
+correction is applied on object 'exp'.}
 
-\item{sample_dims}{a character vector indicating the dimensions that can be used as sample for the same distribution}
+\item{sdate_dim}{A character string indicating the dimension name in which
+cross-validation would be applied when exp_cor is not provided. 'sdate' by
+default.}
 
-\item{sample_length}{a numeric value indicating the length of the timeseries window to be used as sample for the sample distribution and correction. By default, NULL, the total length of the timeseries will be used.}
+\item{memb_dim}{A character string indicating the dimension name where
+ensemble members are stored in the experimental arrays. 'member' by 
+default.}
 
-\item{method}{a character string indicating the method to be used: 'PTF','DIST','RQUANT','QUANT','SSPLIN'. By default, the empirical quantile mapping 'QUANT' is used.}
+\item{window_dim}{A character string indicating the dimension name where 
+samples have been stored. It can be NULL (default) in case all samples are
+used.}
 
-\item{ncores}{an integer indicating the number of parallel processes to spawn for the use for parallel computation in multiple cores.}
+\item{method}{A character string indicating the method to be used: 'PTF',
+'DIST','RQUANT','QUANT','SSPLIN'. By default, the empirical quantile mapping
+'QUANT' is used.}
 
-\item{...}{additional arguments passed to the method specified by \code{method}.}
+\item{na.rm}{A logical value indicating if missing values should be removed
+(FALSE by default).}
+
+\item{ncores}{An integer indicating the number of cores for parallel 
+computation using multiApply function. The default value is NULL (1).}
+
+\item{...}{Additional parameters to be used by the method choosen. See qmap 
+package for details.}
 }
 \value{
-an oject of class \code{s2dv_cube} containing the experimental data after applyingthe quantile mapping correction. 
-) <- c(dataset = 1, member = 10, sdate = 20, ftime = 60 ,
+An array containing the experimental data after applying the quantile
+mapping correction.
 }
 \description{
-This function is a wrapper from fitQmap and doQmap from package 'qmap'to be applied in CSTools objects of class 's2dv_cube'. The quantile mapping adjustment between an experiment, tipically a hindcast, and observations is applied to the experiment itself or to a provided forecast.
+This function is a wrapper of fitQmap and doQmap from package
+'qmap' to be applied on multi-dimensional arrays. The quantile mapping 
+adjustment between an experiment, typically a hindcast, and observation is 
+applied to the experiment itself or to a provided forecast.
 }
-\details{
-The different methods are:
-\itemize{ 
-\item{'PTF'} {fits a parametric transformations to the quantile-quantile relation of observed and modelled values. See \code{?qmap::fitQmapPTF}.}
-\item{'DIST'} {fits a theoretical distribution to observed and to modelled time series. See \code{?qmap::fitQmapDIST}.}
-\item{'RQUANT'} {estimates the values of the quantile-quantile relation of observed and modelled time series for regularly spaced quantiles using local linear least square regression. See \code{?qmap::fitQmapRQUANT}.}
-\item{'QUANT'} {estimates values of the empirical cumulative distribution function of observed and modelled time series for regularly spaced quantiles. See \code{?qmap::fitQmapQUANT}.}
-\item{'SSPLIN'} {fits a smoothing spline to the quantile-quantile plot of observed and modelled time series. See \code{?qmap::fitQmapSSPLIN}.}}
-All methods accepts some common arguments:
-\itemize{
-\item{wet.day} {logical indicating whether to perform wet day correction or not.(Not available in 'DIS' method)}
-\item{qstep} {NULL or a numeric value between 0 and 1.}}
+\examples{
+# Use synthetic data
+exp <- 1 : c(1 * 3 * 5 * 4 * 3 * 2)
+dim(exp) <- c(dataset = 1, member = 3, sdate = 5, ftime = 4, 
+             lat = 3, lon = 2)
+obs <- 101 : c(100 + 1 * 1 * 5 * 4 * 3 * 2)
+dim(obs) <- c(dataset = 1, member = 1, sdate = 5, ftime = 4,
+             lat = 3, lon = 2)
+res <- QuantileMapping(exp, obs)
+
+# Use data in package
+\donttest{
+exp <- lonlat_temp$exp$data[, , 1:4, , 1:2, 1:3]
+dim(exp) <- c(dataset = 1, member = 15, sdate = 4, ftime = 3, 
+             lat = 2, lon = 3)
+obs <- lonlat_temp$obs$data[, , 1:4, , 1:2, 1:3]
+dim(obs) <- c(dataset = 1, member = 1, sdate = 4, ftime = 3, 
+             lat = 2, lon = 3)
+exp_cor <- lonlat_temp$exp$data[, 1, 5:6, , 1:2, 1:3]
+dim(exp_cor) <- c(dataset = 1, member = 1, sdate = 2, ftime = 3, 
+                 lat = 2, lon = 3)
+res <- QuantileMapping(exp, obs, exp_cor, window_dim = 'ftime')
+}
+
 }
 \seealso{
-\code{qmap::fitQmap} and \code{qmap::doQmap}
+\code{\link[qmap]{fitQmap}} and \code{\link[qmap]{doQmap}}
 }
 \author{
 Nuria Perez-Zanon, \email{nuria.perez@bsc.es}

@@ -68,7 +68,7 @@ The clustering is performed in a reduced EOF space.
 }
 \examples{
 \donttest{
-exp <- lonlat_data$exp
+exp <- lonlat_temp$exp
 res <- EnsClustering(exp$data, exp$lat, exp$lon, numclus = 3,
                      cluster_dim = c("member", "dataset", "sdate"))
 }

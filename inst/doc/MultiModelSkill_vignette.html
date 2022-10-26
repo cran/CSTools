@@ -203,11 +203,11 @@ hr {
 <body>
 <h2>Multi-model Skill Assessment</h2>
 
-<p><strong>reference</strong>: Mishra, N., Prodhomme, C., &amp; Guemas, V. (2018). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31. <a href="https://link.springer.com/article/10.1007%2Fs00382-018-4404-z">https://link.springer.com/article/10.1007%2Fs00382-018-4404-z</a></p>
+<p><strong>reference</strong>: Mishra, N., Prodhomme, C., &amp; Guemas, V. (2018). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31. <a href="https://link.springer.com/article/10.1007/s00382-018-4404-z">https://link.springer.com/article/10.1007/s00382-018-4404-z</a></p>
 
-<p>The R package s2dverification should be loaded by running:</p>
+<p>The R package s2dv should be loaded by running:</p>
 
-<pre><code class="r">library(s2dverification)
+<pre><code class="r">library(s2dv)
 </code></pre>
 
 <p>Library <em>CSTools</em>, should be installed from CRAN and loaded:</p>
@@ -246,7 +246,7 @@ Ask nuria.perez at bsc.es to achieve the data to run the recipe.</p>
 
 <pre><code class="r">require(zeallot)
 
-glosea5 &lt;- &#39;/esnas/exp/glosea5/specs-seasonal_i1p1/$STORE_FREQ$_mean/$VAR_NAME$-allmemb/$VAR_NAME$_$START_DATE$.nc&#39;
+glosea5 &lt;- &#39;/esarchive/exp/glosea5/glosea5c3s/$STORE_FREQ$_mean/$VAR_NAME$_f6h/$VAR_NAME$_$START_DATE$.nc&#39;
 
 c(exp, obs) %&lt;-% 
    CST_Load(var = clim_var, exp = list(list(name = &#39;glosea5&#39;, path = glosea5), 
@@ -348,7 +348,6 @@ List of 4
 
 <pre><code class="r">AnomDJF &lt;- CST_MultiMetric(exp = ano_exp, obs = ano_obs, metric = &#39;rms&#39;, 
                           multimodel = TRUE)
-RMS &lt;- AnomDJF$data[ , , 2, , ]
 </code></pre>
 
 <p>The following lines are necessary to obtain the plot which visualizes the best model given this metric for each grid point. </p>
@@ -372,7 +371,7 @@ PlotCombinedMap(AnomDJF$data$rms[,1,,], lon = Lon, lat = Lat, map_select_fun = m
 
 <p>By running the following lines a plot for the best model given the RMSSS is obtained. 
 When parameter <code>metric</code> is defined as <code>rmsss</code>, the RMSSS are stored in the first position on the third dimension of the <code>metric</code> component in the AnoMultiMetric output. 
-Notice that the perfect RMSSS is 1 and the parameter  <code>map_select_fun</code> from <code>PlotCombinedMap</code> function (see <em>s2dverification R package</em>) has been defined in order to select the best model.</p>
+Notice that the perfect RMSSS is 1 and the parameter  <code>map_select_fun</code> from <code>PlotCombinedMap</code> function (see <em>s2dv R package</em>) has been defined in order to select the best model.</p>
 
 <pre><code class="r">AnomDJF &lt;- CST_MultiMetric(exp = ano_exp, obs = ano_obs, metric = &#39;rmsss&#39;, 
                           multimodel = TRUE)

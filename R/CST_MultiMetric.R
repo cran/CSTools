@@ -15,7 +15,7 @@
 #'@return an object of class \code{s2dv_cube} containing the statistics of the selected metric in the element \code{$data} which is a list of arrays: for the metric requested and others for statistics about its signeificance. The arrays have two dataset dimensions equal to the 'dataset' dimension in the \code{exp$data} and \code{obs$data} inputs. If \code{multimodel} is TRUE, the first position in the first 'nexp' dimension correspons to the Multi-Model Mean. 
 #'@seealso \code{\link[s2dv]{Corr}}, \code{\link[s2dv]{RMS}}, \code{\link[s2dv]{RMSSS}} and \code{\link{CST_Load}}
 #'@references 
-#'Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31.\url{https://link.springer.com/10.1007/s00382-018-4404-z}
+#'Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31.\url{https://link.springer.com/article/10.1007/s00382-018-4404-z}
 #' 
 #'@importFrom s2dv MeanDims Reorder Corr RMS RMSSS InsertDim
 #'@import abind
@@ -38,8 +38,8 @@
 #'a <- CST_MultiMetric(exp = ano_exp, obs = ano_obs)
 #'str(a)
 #'\donttest{
-#'exp <- lonlat_data$exp
-#'obs <- lonlat_data$obs
+#'exp <- lonlat_temp$exp
+#'obs <- lonlat_temp$obs
 #'a <- CST_MultiMetric(exp, obs, metric = 'rpss', multimodel = FALSE)
 #'a <- CST_MultiMetric(exp, obs, metric = 'correlation')
 #'a <- CST_MultiMetric(exp, obs, metric = 'rms')
@@ -75,7 +75,7 @@ CST_MultiMetric <- function(exp, obs, metric = "correlation", multimodel = TRUE,
 #'@return a list of arrays containing the statistics of the selected metric in the element \code{$data} which is a list of arrays: for the metric requested and others for statistics about its signeificance. The arrays have two dataset dimensions equal to the 'dataset' dimension in the \code{exp$data} and \code{obs$data} inputs. If \code{multimodel} is TRUE, the greatest position in the first dimension correspons to the Multi-Model Mean. 
 #'@seealso \code{\link[s2dv]{Corr}}, \code{\link[s2dv]{RMS}}, \code{\link[s2dv]{RMSSS}} and \code{\link{CST_Load}}
 #'@references 
-#'Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31.\url{https://link.springer.com/10.1007/s00382-018-4404-z}
+#'Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31.\url{https://link.springer.com/article/10.1007/s00382-018-4404-z}
 #' 
 #'@importFrom s2dv MeanDims Reorder Corr RMS RMSSS InsertDim
 #'@import abind
@@ -83,7 +83,7 @@ CST_MultiMetric <- function(exp, obs, metric = "correlation", multimodel = TRUE,
 #'@import stats
 #'@import multiApply
 #'@examples
-#'res <- MultiMetric(lonlat_data$exp$data, lonlat_data$obs$data)
+#'res <- MultiMetric(lonlat_temp$exp$data, lonlat_temp$obs$data)
 #'@export
 MultiMetric <- function(exp, obs, metric = "correlation", multimodel = TRUE,
                         time_dim = 'ftime', memb_dim = 'member', sdate_dim = 'sdate') {

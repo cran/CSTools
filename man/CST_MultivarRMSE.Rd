@@ -20,8 +20,8 @@ an object of class \code{s2dv_cube} containing the RMSE in the element \code{$da
 This function calculates the RMSE from multiple variables, as the mean of each variable's RMSE scaled by its observed standard deviation. Variables can be weighted based on their relative importance (defined by the user).
 }
 \examples{
-# Creation of sample s2dverification objects. These are not complete
-# s2dverification objects though. The Load function returns complete objects.
+# Creation of sample s2dv objects. These are not complete s2dv objects 
+# though. The Load function returns complete objects.
 # using package zeallot is optional:
 library(zeallot)
 # Example with 2 variables

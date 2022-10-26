@@ -65,8 +65,8 @@ wt_exp <- sample(1:3, 15*6*3, replace=T)
 dim(wt_exp) <- c(dataset=1, member=15, sdate=6, ftime=3)
 wt_obs <- sample(1:3, 6*3, replace=T)
 dim(wt_obs) <- c(dataset=1, member=1, sdate=6, ftime=3)
-exp_corr <- AdamontQQCorr(exp=lonlat_data$exp$data, wt_exp=wt_exp, 
-   obs=lonlat_data$obs$data, wt_obs=wt_obs, 
+exp_corr <- AdamontQQCorr(exp=lonlat_temp$exp$data, wt_exp=wt_exp, 
+   obs=lonlat_temp$obs$data, wt_obs=wt_obs, 
    corrdims = c('dataset','member','sdate','ftime'))
 }
 }

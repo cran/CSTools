@@ -13,7 +13,7 @@
 #'
 #'@details Parameter 'insert_ftime' has been included for the case of using daily data, requiring split the temporal dimensions by months (or similar) and the first lead time doesn't correspondt to the 1st day of the month. In this case, the insert_ftime could be used, to get a final output correctly organized. E.g.: leadtime 1 is the 2nd of November and the input time series extend to the 31st of December. When requiring split by month with \code{inset_ftime = 1}, the 'monthly' dimension of length two will indicate the month (position 1 for November and position 2 for December), dimension 'time' will be length 31. For November, the position 1 and 31 will be NAs, while from positon 2 to 30 will be filled with the data provided. This allows to select correctly days trhough time dimension.
 #'@import abind
-#'@importFrom s2dverification Subset
+#'@importFrom ClimProjDiags Subset
 #'@examples
 #'
 #'data <- 1 : 20
@@ -108,7 +108,7 @@ CST_SplitDim <- function(data, split_dim = 'time', indices = NULL,
 #'@param freq a character string indicating the frequency: by 'day', 'month' and 'year' or 'monthly' (by default). 'month' identifies months between 1 and 12 independetly of the year they belong to, while 'monthly' differenciates months from different years. Parameter 'freq' can also be numeric indicating the length in which to subset the dimension.
 #'@param new_dim_name a character string indicating the name of the new dimension.
 #'@import abind
-#'@importFrom s2dverification Subset
+#'@importFrom ClimProjDiags Subset
 #'@examples
 #'
 #'data <- 1 : 20

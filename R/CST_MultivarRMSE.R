@@ -13,8 +13,8 @@
 #'@seealso \code{\link[s2dv]{RMS}} and \code{\link{CST_Load}}
 #'@importFrom s2dv RMS MeanDims
 #'@examples
-#'# Creation of sample s2dverification objects. These are not complete
-#'# s2dverification objects though. The Load function returns complete objects.
+#'# Creation of sample s2dv objects. These are not complete s2dv objects 
+#'# though. The Load function returns complete objects.
 #'# using package zeallot is optional:
 #' library(zeallot)
 #'# Example with 2 variables
@@ -72,7 +72,7 @@ CST_MultivarRMSE <- function(exp, obs, weight = NULL) {
   
   if (nvar < 2) {
     stop("Parameters 'exp' and 'obs'  must contain at least two", 
-         " s2dverification objects for two different variables.")
+         " s2dv objects for two different variables.")
   }
   
   for (j in 1 : nvar) {

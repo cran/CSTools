@@ -7,7 +7,7 @@
 #' @description This function performs the matching between a field of anomalies and a set
 #' of maps which will be used as a reference. The anomalies will be assigned to the reference map 
 #' for which the minimum Eucledian distance (method=’distance’) or highest spatial correlation 
-#' (method=‘ACC’) is obtained. 
+#' (method = 'ACC') is obtained. 
 #' 
 #'@references Torralba, V. (2019) Seasonal climate prediction for the wind energy sector: methods and tools
 #' for the development of a climate service. Thesis. Available online: \url{https://eprints.ucm.es/56841/}
@@ -15,8 +15,8 @@
 #'@param data a 's2dv_cube' object.
 
 #'@param ref_maps a 's2dv_cube' object as the output of CST_WeatherRegimes.  
-#'@param method whether the matching will be performed in terms of minimum distance (default = ’distance’) or 
-#' the maximum spatial correlation (method = ’ACC’) between the maps.
+#'@param method whether the matching will be performed in terms of minimum distance (default = 'distance') or 
+#' the maximum spatial correlation (method = 'ACC') between the maps.
 #'@param composite a logical parameter indicating if the composite maps are computed or not (default = FALSE).
 #'@param memb a logical value indicating whether to compute composites for separate members (default FALSE) or as unique ensemble (TRUE).
 #'This option is only available for when parameter 'composite' is set to TRUE and the data object has a dimension named 'member'.
@@ -27,14 +27,13 @@
 #'         that accounts for the serial dependence of the data with the same structure as Composite.)(only when composite = 'TRUE'),
 #'         \code{$cluster} (array with the same dimensions as data (except latitude and longitude which are removed) indicating the ref_maps to which each point is allocated.) ,
 #'         \code{$frequency} (A vector of integers (from k=1,...k n reference maps) indicating the percentage of assignations corresponding to each map.),
-#'@importFrom s2dverification ACC Mean1Dim
-#'@importFrom s2dv InsertDim
+#'@importFrom s2dv ACC MeanDims InsertDim
 #'@import multiApply
 #'@examples
 #'\dontrun{
-#'regimes <- CST_WeatherRegimes(data = lonlat_data$obs, EOFs = FALSE, ncenters = 4)
-#'res1 <- CST_RegimesAssign(data = lonlat_data$exp, ref_maps = regimes, composite = FALSE)
-#'res2 <- CST_RegimesAssign(data = lonlat_data$exp, ref_maps = regimes, composite = TRUE)
+#'regimes <- CST_WeatherRegimes(data = lonlat_temp$obs, EOFs = FALSE, ncenters = 4)
+#'res1 <- CST_RegimesAssign(data = lonlat_temp$exp, ref_maps = regimes, composite = FALSE)
+#'res2 <- CST_RegimesAssign(data = lonlat_temp$exp, ref_maps = regimes, composite = TRUE)
 #'}
 #'@export
 #'
@@ -82,17 +81,17 @@ CST_RegimesAssign <- function(data,  ref_maps,
 #'
 #' @description This function performs the matching between a field of anomalies and a set
 #' of maps which will be used as a reference. The anomalies will be assigned to the reference map 
-#' for which the minimum Eucledian distance (method=’distance’) or highest spatial correlation 
-#' (method=‘ACC’) is obtained. 
+#' for which the minimum Eucledian distance (method = 'distance') or highest spatial correlation 
+#' (method = 'ACC') is obtained. 
 #'
 #'@references Torralba, V. (2019) Seasonal climate prediction for the wind energy sector: methods and tools for the development of a climate service. Thesis. Available online: \url{https://eprints.ucm.es/56841/}
 #'
 #'@param data an array containing anomalies with named dimensions: dataset, member, sdate, ftime, lat and lon.
 #'@param ref_maps array with 3-dimensions ('lon', 'lat', 'cluster') containing the maps/clusters that will be used as a reference for the matching. 
-#'@param method whether the matching will be performed in terms of minimum distance (default = ’distance’) or 
-#' the maximum spatial correlation (method=’ACC’) between the maps.
+#'@param method whether the matching will be performed in terms of minimum distance (default = 'distance') or 
+#' the maximum spatial correlation (method = 'ACC') between the maps.
 #'@param lat a vector of latitudes corresponding to the positions provided in data and ref_maps.
-#'@param composite a logical parameter indicating if the composite maps are computed or not (default=FALSE).
+#'@param composite a logical parameter indicating if the composite maps are computed or not (default = FALSE).
 #'@param memb a logical value indicating whether to compute composites for separate members (default FALSE) or as unique ensemble (TRUE).
 #'This option is only available for when parameter 'composite' is set to TRUE and the data object has a dimension named 'member'.
 #'@param ncores the number of multicore threads to use for parallel computation.
@@ -103,15 +102,14 @@ CST_RegimesAssign <- function(data,  ref_maps,
 #'         \code{$cluster} (array with the same dimensions as data (except latitude and longitude which are removed) indicating the ref_maps to which each point is allocated.) ,
 #'         \code{$frequency} (A vector of integers (from k = 1, ... k n reference maps) indicating the percentage of assignations corresponding to each map.),
 #'  
-#'@importFrom s2dverification ACC Mean1Dim Eno
-#'@importFrom s2dv InsertDim
+#'@importFrom s2dv ACC MeanDims Eno InsertDim
 #'@import multiApply   
 #'@examples 
 #'\dontrun{
-#'regimes <- WeatherRegime(data = lonlat_data$obs$data, lat = lonlat_data$obs$lat,
+#'regimes <- WeatherRegime(data = lonlat_temp$obs$data, lat = lonlat_temp$obs$lat,
 #'                         EOFs = FALSE, ncenters = 4)$composite
-#'res1 <- RegimesAssign(data = lonlat_data$exp$data, ref_maps = drop(regimes), 
-#'                      lat = lonlat_data$exp$lat, composite = FALSE)
+#'res1 <- RegimesAssign(data = lonlat_temp$exp$data, ref_maps = drop(regimes), 
+#'                      lat = lonlat_temp$exp$lat, composite = FALSE)
 #'}	
 #'@export
 
@@ -183,7 +181,7 @@ RegimesAssign <- function(data, ref_maps, lat, method = "distance", composite = 
     freqs[n] <- (length(which(index == n)) / length(index)) * 100
   }
   
-  if (composite){
+  if (composite) {
     poslon <- which(names(dim(data)) == 'lon')
     poslat <- which(names(dim(data)) == 'lat')
     postime <- which(names(dim(data)) == 'time')
@@ -193,9 +191,9 @@ RegimesAssign <- function(data, ref_maps, lat, method = "distance", composite = 
     if (any(is.na(index))) {
       recon <-list(
           composite = InsertDim(array(NA, dim = c(dim(dataComp)[-postime])), 
-                                postime, dim(ref_maps)['composite.cluster']),
+                                postime, dim(ref_maps)['composite.cluster'], name = ''),
           pvalue = InsertDim(array(NA, dim = c(dim(dataComp)[-postime])), 
-                             postime, dim(ref_maps)['composite.cluster']))
+                             postime, dim(ref_maps)['composite.cluster'], name = ''))
     } else {
       if (memb) {
         dataComp <- MergeDims(dataComp, merge_dims = c('time', 'member'), rename_dim = 'time')
@@ -212,7 +210,7 @@ RegimesAssign <- function(data, ref_maps, lat, method = "distance", composite = 
                    pvalue = recon$pvalue,
                    cluster = index,
                    frequency = freqs)
-  } else{
+  } else {
     
     output <- list(cluster = index,
                    frequency = freqs)
@@ -221,7 +219,11 @@ RegimesAssign <- function(data, ref_maps, lat, method = "distance", composite = 
   return(output)
 }
 
-.RegimesAssign <- function(ref, target, method = 'distance', lat, composite=FALSE) {
+.RegimesAssign <- function(ref, target, method = 'distance', lat, composite = FALSE) {
+
+  # ref: c('lat', 'lon', 'cluster')
+  # target: c('lat', 'lon')
+
   posdim <- which(names(dim(ref)) == 'cluster')
   poslat <- which(names(dim(ref)) == 'lat')
   poslon <- which(names(dim(ref)) == 'lon')
@@ -279,9 +281,9 @@ RegimesAssign <- function(data, ref_maps, lat, method = "distance", composite = 
   if (method == 'ACC') {
     corr <- rep(NA, nclust)
     for (i in 1:nclust) {
+      #NOTE: s2dv::ACC returns centralized and weighted result.
       corr[i] <-
-        ACC(InsertDim(InsertDim(InsertDim(ref[i, , ] * latWeights, 1, 1), 2, 1), 3, 1),
-          InsertDim(InsertDim(InsertDim(target * latWeights, 1, 1), 2, 1), 3, 1))$ACC[2]
+        ACC(ref[i, , ], target, lat = lat, dat_dim = NULL, avg_dim = NULL, memb_dim = NULL)$acc
     }
     assign <- which(corr == max(corr))
   }
@@ -313,11 +315,11 @@ Composite <- function(var, occ, lag = 0, eno = FALSE, K = NULL, fileout = NULL) 
   pvalue    <- array(dim = c(dim(var)[1:2], composite = K))
 
   if (eno == TRUE) { 
-    n_tot <- Eno(var, posdim = 3)
+    n_tot <- Eno(var, time_dim = 'time')
   } else {
     n_tot <- length(occ)
   }
-  mean_tot <- Mean1Dim(var, posdim = 3, narm = TRUE)
+  mean_tot <- MeanDims(var, dims = 3, na.rm = TRUE)
   stdv_tot <- apply(var, c(1, 2), sd, na.rm = TRUE) 
 
   for (k in 1 : K) {
@@ -329,7 +331,7 @@ Composite <- function(var, occ, lag = 0, eno = FALSE, K = NULL, fileout = NULL) 
         indices <- indices[-toberemoved]
       }
       if (eno == TRUE) {
-        n_k <- Eno(var[, , indices], posdim = 3)
+        n_k <- Eno(var[, , indices], time_dim = 'time')
       } else {
         n_k <- length(indices)
       }
@@ -337,7 +339,7 @@ Composite <- function(var, occ, lag = 0, eno = FALSE, K = NULL, fileout = NULL) 
         composite[, , k] <- var[, , indices] 
         warning(paste("Composite", k, "has length 1 and pvalue is NA."))
       }  else {
-        composite[, , k] <- Mean1Dim(var[, , indices], posdim = 3, narm = TRUE)
+        composite[, , k] <- MeanDims(var[, , indices], dims = 3, na.rm = TRUE)
       }
       stdv_k <- apply(var[, , indices], c(1, 2), sd, na.rm = TRUE)
     

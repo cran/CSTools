@@ -162,7 +162,7 @@ CST_RainFARM <- function(data, weights = 1., slope = 0, nf, kmin = 1,
 #' The ordering of the remaining dimensions in the \code{exp} element of the input object is maintained.
 #' @details Wether parameter 'slope' and 'weights' presents seasonality dependency, a dimension name should match between these parameters and the input data in parameter 'data'. See example 2 below where weights and slope vary with 'sdate' dimension.
 #' @import multiApply
-#' @importFrom s2dverification Subset
+#' @importFrom ClimProjDiags Subset
 #' @importFrom abind abind
 #' @export
 #' @examples

@@ -65,7 +65,7 @@ Two datasets are used to illustrate how to use the function. The first one could
 ### Example 1: using data from CSTools
 
 
-After loading **CSTools** package on the R session, the user will have access to the sample data `lonlat_data` and `lonlat_prec`.
+After loading **CSTools** package on the R session, the user will have access to the sample data `lonlat_temp` and `lonlat_prec`.
 
 *Note: If it is the first time using CSTools, install the package by running `install.packages("CSTools")`. 
 
@@ -76,18 +76,18 @@ library(CSTools)
 After exploring the data, the user can directly run the Analogs downscaling method using the 'Large_dis' metric:
 
 ```
-class(lonlat_data$exp)
-names(lonlat_data$obs)
-dim(lonlat_data$obs$data)
-dim(lonlat_data$exp$data)
-head(lonlat_data$exp$Dates$start)
+class(lonlat_temp$exp)
+names(lonlat_temp$obs)
+dim(lonlat_temp$obs$data)
+dim(lonlat_temp$exp$data)
+head(lonlat_temp$exp$Dates$start)
 ```
 There are 15 ensemble members available in the data set, 6 starting dates and 3
 forecast times, which refer to daily values in the month of November following
 starting dates on November 1st in the years 2010, 2011, 2012.
 
 ```
-down <- CST_Analogs(expL = lonlat_data$exp, obsL = lonlat_data$obs)
+down <- CST_Analogs(expL = lonlat_temp$exp, obsL = lonlat_temp$obs)
 ```
 
 The visualization of the first three time steps for the ensemble mean of the forecast initialized the 1st of Noveber 2000 can be done using the package **s2dv**:
@@ -109,7 +109,7 @@ PlotLayout(PlotEquiMap, c('lat', 'lon'),
 The user can also request extra Analogs and the information:
 
 ```
-down <- CST_Analogs(expL = lonlat_data$exp, obsL = lonlat_data$obs,
+down <- CST_Analogs(expL = lonlat_temp$exp, obsL = lonlat_temp$obs,
                      nAnalogs = 2, AnalogsInfo = TRUE)
 ```
 
@@ -128,7 +128,7 @@ The last command run concludes that the best analog of the ensemble 15 correspon
 
 ```
 PlotLayout(PlotEquiMap, c('lat', 'lon'), var = list(down$data$fields[1,,,15,1,1],
-           lonlat_data$obs$data[1,1,5,1,,]), nrow = 1, ncol = 2,
+           lonlat_temp$obs$data[1,1,5,1,,]), nrow = 1, ncol = 2,
            lon = down$lon, lat = down$lat, filled.continents = FALSE,
            titles = c("Downscaled 2000-11-01", "Observed 2004-11-01"), units = 'T(K)',
            width = 7, height = 4, fileout = './Figures/Analogs2.png') 

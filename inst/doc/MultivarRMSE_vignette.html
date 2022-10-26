@@ -205,7 +205,7 @@ hr {
 
 <p>To run this vignette, the next R packages should be installed and loaded:</p>
 
-<pre><code class="r">library(s2dverification)
+<pre><code class="r">library(s2dv)
 library(RColorBrewer)
 </code></pre>
 
@@ -246,7 +246,7 @@ Ask nuria.perez at bsc.es for the data to run the recipe.</p>
 
 <pre><code class="r">require(zeallot)
 
-glosea5 &lt;- list(path = &#39;/esnas/exp/glosea5/specs-seasonal_i1p1/$STORE_FREQ$_mean/$VAR_NAME$-allmemb/$VAR_NAME$_$START_DATE$.nc&#39;)
+glosea5 &lt;- list(name = &#39;glosea5&#39;, path = &#39;/esarchive/exp/glosea5/glosea5c3s/$STORE_FREQ$_mean/$VAR_NAME$_f6h/$VAR_NAME$_$START_DATE$.nc&#39;)
 
  c(exp_T, obs_T) %&lt;-% 
    CST_Load(var = temp, exp = list(glosea5),

@@ -1,15 +1,15 @@
 #'Conversion of 'startR_array' or 'list' objects to 's2dv_cube'
 #'
-#'This function converts data loaded using startR package or s2dverification Load function into a 's2dv_cube' object.
+#'This function converts data loaded using startR package or s2dv Load function into a 's2dv_cube' object.
 #'
 #'@author Perez-Zanon Nuria, \email{nuria.perez@bsc.es}
 #'@author Nicolau Manubens, \email{nicolau.manubens@bsc.es}
 #'
-#'@param object an object of class 'startR_array' generated from function \code{Start} from startR package (version 0.1.3 from earth.bsc.es/gitlab/es/startR) or a list output from function \code{Load} from s2dverification package.
+#'@param object an object of class 'startR_array' generated from function \code{Start} from startR package (version 0.1.3 from earth.bsc.es/gitlab/es/startR) or a list output from function \code{Load} from s2dv package.
 #'
 #'@return The function returns a 's2dv_cube' object to be easily used with functions \code{CST} from CSTools package.
 #'
-#'@seealso \code{\link{s2dv_cube}}, \code{\link[s2dverification]{Load}}, \code{\link[startR]{Start}} and \code{\link{CST_Load}}
+#'@seealso \code{\link{s2dv_cube}}, \code{\link[s2dv]{Load}}, \code{\link[startR]{Start}} and \code{\link{CST_Load}}
 #'@examples
 #'\dontrun{
 #'library(startR)
@@ -38,7 +38,7 @@
 as.s2dv_cube <- function(object) {
   if (is.list(object)) {
     if (is.null(object) || (is.null(object$mod) && is.null(object$obs))) {
-      stop("The s2dverification::Load call did not return any data.")
+      stop("The s2dv::Load call did not return any data.")
     }
     obs <- object
     obs$mod <- NULL
@@ -115,18 +115,46 @@ as.s2dv_cube <- function(object) {
         }
     }
  
-  } else if (class(object) == 'startR_array') {
+  } else if (inherits(object, 'startR_array')) {
     result <- list()
     result$data <- as.vector(object)
     dim(result$data) <- dim(object)
-    result$lon <- attributes(object)$Variables$dat1$longitude
-    result$lat <- attributes(object)$Variables$dat1$latitude
-    vars <- which(names(attributes(object)$Variables$common) != 'time')
-      if (length(vars) > 1) {
-        warning("More than one variable has been provided and ",
-                "only the first one will be used.")
-        vars <- vars[1]
-      }
+
+    dat_attr_names <- names(attributes(object)$Variables$dat1)
+    common_attr_names <- names(attributes(object)$Variables$common)
+    # $lon
+    known_lon_names <- utils::getFromNamespace(".KnownLonNames", "s2dv")()
+    if (!is.null(dat_attr_names[which(dat_attr_names %in% known_lon_names)]) &
+        !identical(dat_attr_names[which(dat_attr_names %in% known_lon_names)], character(0))) {
+      result$lon <- attributes(object)$Variables$dat1[[dat_attr_names[which(dat_attr_names %in% known_lon_names)]]]
+    } else if (!is.null(common_attr_names[which(common_attr_names %in% known_lon_names)]) &
+               !identical(common_attr_names[which(common_attr_names %in% known_lon_names)], character(0))) {
+      result$lon <- attributes(object)$Variables$common[[common_attr_names[which(common_attr_names %in% known_lon_names)]]]
+    } else {
+      warning("'lon' is not found in this object.")
+      result$lon <- NULL
+    }
+    # $lat
+    known_lat_names <- utils::getFromNamespace(".KnownLatNames", "s2dv")()
+    if (!is.null(dat_attr_names[which(dat_attr_names %in% known_lat_names)]) &
+        !identical(dat_attr_names[which(dat_attr_names %in% known_lat_names)], character(0))) {
+      result$lat <- attributes(object)$Variables$dat1[[dat_attr_names[which(dat_attr_names %in% known_lat_names)]]]
+    } else if (!is.null(common_attr_names[which(common_attr_names %in% known_lat_names)]) &
+               !identical(common_attr_names[which(common_attr_names %in% known_lat_names)], character(0))) {
+      result$lat <- attributes(object)$Variables$common[[common_attr_names[which(common_attr_names %in% known_lat_names)]]]
+    } else {
+      warning("'lat' is not found in this object.")
+      result$lat <- NULL
+    }
+
+    vars <- which(!common_attr_names %in% c("time", known_lon_names, known_lat_names))
+
+    if (length(vars) > 1) {
+      warning("More than one variable has been provided and ",
+              "only the first one '", common_attr_names[vars[1]],"' will be used.")
+      vars <- vars[1]
+    }
+
     Variable <- list()
     Variable$varName <- names(attributes(object)$Variables$common)[vars]
     attr(Variable, 'variable') <- attributes(object)$Variables$common[[vars]]

@@ -11,14 +11,13 @@ vignette: >
 Multi-model Skill Assessment
 -----------------------------------------
 
-**reference**: Mishra, N., Prodhomme, C., & Guemas, V. (2018). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31. <https://link.springer.com/article/10.1007%2Fs00382-018-4404-z>
+**reference**: Mishra, N., Prodhomme, C., & Guemas, V. (2018). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31. <https://link.springer.com/article/10.1007/s00382-018-4404-z>
 
 
-The R package s2dverification should be loaded by running:
-
+The R package s2dv should be loaded by running:
 
 ```r
-library(s2dverification)
+library(s2dv)
 ```
 
 
@@ -70,7 +69,7 @@ Ask nuria.perez at bsc.es to achieve the data to run the recipe.
 ```r
 require(zeallot)
 
-glosea5 <- '/esnas/exp/glosea5/specs-seasonal_i1p1/$STORE_FREQ$_mean/$VAR_NAME$-allmemb/$VAR_NAME$_$START_DATE$.nc'
+glosea5 <- '/esarchive/exp/glosea5/glosea5c3s/$STORE_FREQ$_mean/$VAR_NAME$_f6h/$VAR_NAME$_$START_DATE$.nc'
 
 c(exp, obs) %<-% 
    CST_Load(var = clim_var, exp = list(list(name = 'glosea5', path = glosea5), 
@@ -189,7 +188,6 @@ The same function can be used to compute the RMS error by defining the parameter
 ```r
 AnomDJF <- CST_MultiMetric(exp = ano_exp, obs = ano_obs, metric = 'rms', 
                           multimodel = TRUE)
-RMS <- AnomDJF$data[ , , 2, , ]
 ```
 
 The following lines are necessary to obtain the plot which visualizes the best model given this metric for each grid point. 
@@ -216,7 +214,7 @@ PlotCombinedMap(AnomDJF$data$rms[,1,,], lon = Lon, lat = Lat, map_select_fun = m
 
 By running the following lines a plot for the best model given the RMSSS is obtained. 
 When parameter `metric` is defined as `rmsss`, the RMSSS are stored in the first position on the third dimension of the `metric` component in the AnoMultiMetric output. 
-Notice that the perfect RMSSS is 1 and the parameter  `map_select_fun` from `PlotCombinedMap` function (see *s2dverification R package*) has been defined in order to select the best model.
+Notice that the perfect RMSSS is 1 and the parameter  `map_select_fun` from `PlotCombinedMap` function (see *s2dv R package*) has been defined in order to select the best model.
 
 
 ```r

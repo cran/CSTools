@@ -28,7 +28,7 @@ Funtion based on the matlab code (davide.faranda@lsce.ipsl.fr) used in
 }
 \examples{
 # Example 1: Computing the attractor using simple s2dv data
-attractor <- CST_ProxiesAttractor(data = lonlat_data$obs, quanti = 0.6)
+attractor <- CST_ProxiesAttractor(data = lonlat_temp$obs, quanti = 0.6)
 
 }
 \references{

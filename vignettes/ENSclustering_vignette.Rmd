@@ -42,7 +42,7 @@ For our example we will use the sample seasonal temperature data provided within
 Data can be loaded as follows:
 
 ```r
-datalist <- CSTools::lonlat_data$exp
+datalist <- CSTools::lonlat_temp$exp
 ```
 
 The data will has the following dimension:

@@ -18,8 +18,7 @@
 #'
 #' @return A list with two S3 objects, 'exp' and 'obs', of the class 's2dv_cube', containing experimental and date-corresponding observational anomalies, respectively. These 's2dv_cube's can be ingested by other functions in CSTools.
 #'
-#'@importFrom s2dverification Clim Ano_CrossValid
-#'@importFrom s2dv InsertDim
+#'@importFrom s2dv InsertDim Clim Ano_CrossValid
 #'
 #'@examples
 #'# Example 1:
@@ -45,11 +44,11 @@
 #'anom4 <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = FALSE)
 #'str(anom4)
 #'
-#'anom5 <- CST_Anomaly(lonlat_data$exp)
+#'anom5 <- CST_Anomaly(lonlat_temp$exp)
 #'
-#'anom6 <- CST_Anomaly(obs = lonlat_data$obs)
+#'anom6 <- CST_Anomaly(obs = lonlat_temp$obs)
 #'
-#'@seealso \code{\link[s2dverification]{Ano_CrossValid}}, \code{\link[s2dverification]{Clim}} and \code{\link{CST_Load}}
+#'@seealso \code{\link[s2dv]{Ano_CrossValid}}, \code{\link[s2dv]{Clim}} and \code{\link{CST_Load}}
 #'
 #'
 #'@export
@@ -141,11 +140,14 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, cross = FALSE, memb = TRUE,
   
   # With cross-validation
   if (cross) {
-    ano <- Ano_CrossValid(var_exp = exp$data, var_obs = obs$data, memb = memb)
+    ano <- Ano_CrossValid(exp = exp$data, obs = obs$data, memb = memb)
+    # reorder dimension back
+    ano$exp <- aperm(ano$exp, match(names(dim(exp$data)), names(dim(ano$exp))))
+    ano$obs <- aperm(ano$obs, match(names(dim(obs$data)), names(dim(ano$obs))))
    
     #  Without cross-validation 
   } else {
-    tmp <- Clim(var_exp = exp$data, var_obs = obs$data, memb = memb)
+    tmp <- Clim(exp = exp$data, obs = obs$data, memb = memb)
     if (!is.null(filter_span)) {
         if (is.numeric(filter_span)) {
             pos_dims <- names(dim(tmp$clim_exp))
@@ -173,18 +175,18 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, cross = FALSE, memb = TRUE,
     clim_exp <- InsertDim(clim_exp, 3, dim_exp[3]) 
     clim_obs <- InsertDim(clim_obs, 3, dim_obs[3]) 
     ano <- NULL    
-    ano$ano_exp <- exp$data - clim_exp
-    ano$ano_obs <- obs$data - clim_obs 
+    ano$exp <- exp$data - clim_exp
+    ano$obs <- obs$data - clim_obs 
   }
-  
+
   # Permuting back dimensions to original order
   if  (dim_anom != 3) {
     
     if (case_obs == 0) {
-      ano$ano_exp <- aperm(ano$ano_exp, perm = dimperm)
+      ano$exp <- aperm(ano$exp, perm = dimperm)
     } 
     if (case_exp == 0) {
-      ano$ano_obs <- aperm(ano$ano_obs, perm = dimperm)
+      ano$obs <- aperm(ano$obs, perm = dimperm)
     }
         
     #Updating back permuted dimensions
@@ -193,10 +195,10 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, cross = FALSE, memb = TRUE,
   }
   
   # Adding dimensions names
-  attr(ano$ano_exp, 'dimensions') <- dimnames_data
-  attr(ano$ano_obs, 'dimensions') <- dimnames_data
-  exp$data <- ano$ano_exp
-  obs$data <- ano$ano_obs
+  attr(ano$exp, 'dimensions') <- dimnames_data
+  attr(ano$obs, 'dimensions') <- dimnames_data
+  exp$data <- ano$exp
+  obs$data <- ano$obs
   
   #  Outputs
   # ~~~~~~~~~

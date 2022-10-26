@@ -10,7 +10,7 @@
 #'@param na.rm a logical indicating if the NA values should be removed or not.
 #'
 #'@import abind
-#'@importFrom s2dverification Subset
+#'@importFrom ClimProjDiags Subset
 #'@examples
 #'
 #'data <- 1 : c(2 * 3 * 4 * 5 * 6 * 7)
@@ -49,7 +49,7 @@ CST_MergeDims <- function(data, merge_dims = c('ftime', 'monthly'), rename_dim =
 #'@param na.rm a logical indicating if the NA values should be removed or not.
 #'
 #'@import abind
-#'@importFrom s2dverification Subset
+#'@importFrom ClimProjDiags Subset
 #'@examples
 #'
 #'data <- 1 : 20

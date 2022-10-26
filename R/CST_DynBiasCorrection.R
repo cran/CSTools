@@ -132,7 +132,7 @@ CST_DynBiasCorrection<- function(exp, obs, method = 'QUANT', wetday=FALSE,
 #'performed conditioned by local dimension 'dim' or inverse of persistence 'theta'
 #'
 #'@import multiApply
-#'@importFrom s2dverification Subset
+#'@importFrom ClimProjDiags Subset
 #'@import qmap
 #'@examples
 #'expL <- rnorm(1:2000)

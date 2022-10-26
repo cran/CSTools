@@ -23,11 +23,21 @@
 #'@param bar_titles Optional vector of character strings providing the titles to be shown on top of each of the colour bars.
 #'@param legend_scale Scale factor for the size of the colour bar labels. Takes 1 by default.
 #'@param cex_bar_titles Scale factor for the sizes of the bar titles. Takes 1.5 by default.
+#'@param plot_margin Numeric vector of length 4 for the margin sizes in the 
+#'  following order: bottom, left, top, and right. If not specified, use the 
+#'  default of par("mar"), c(5.1, 4.1, 4.1, 2.1). Used as 'margin_scale' in 
+#'  s2dv::PlotEquiMap.
 #'@param fileout File where to save the plot. If not specified (default) a graphics device will pop up. Extensions allowed: eps/ps, jpeg, png, pdf, bmp and tiff
 #'@param width File width, in the units specified in the parameter size_units (inches by default). Takes 8 by default.
 #'@param height File height, in the units specified in the parameter size_units (inches by default). Takes 5 by default.
 #'@param size_units Units of the size of the device (file or window) to plot in. Inches ('in') by default. See ?Devices and the creator function of the corresponding device.
-#'@param res Resolution of the device (file or window) to plot in. See ?Devices and the creator function of the corresponding device. 
+#'@param res Resolution of the device (file or window) to plot in. See ?Devices and the creator function of the corresponding device.
+#'@param drawleg Where to draw the common colour bar. Can take values TRUE, 
+#'  FALSE or:\cr
+#'  'up', 'u', 'U', 'top', 't', 'T', 'north', 'n', 'N'\cr
+#'  'down', 'd', 'D', 'bottom', 'b', 'B', 'south', 's', 'S' (default)\cr
+#'  'right', 'r', 'R', 'east', 'e', 'E'\cr
+#'  'left', 'l', 'L', 'west', 'w', 'W' 
 #'@param ... Additional parameters to be passed on to \code{PlotEquiMap}.
 
 #'@seealso \code{PlotCombinedMap} and \code{PlotEquiMap}
@@ -44,12 +54,14 @@
 #'c <- 1 - (a + b)
 #'lons <- seq(0, 359.5, length = 20)
 #'lats <- seq(-89.5, 89.5, length = 10)
+#'\dontrun{
 #'PlotCombinedMap(list(a, b, c), lons, lats, 
 #'                toptitle = 'Maximum map',
 #'                map_select_fun = max,
 #'                display_range = c(0, 1),
 #'                bar_titles = paste('% of belonging to', c('a', 'b', 'c')), 
 #'                brks = 20, width = 10, height = 8)
+#'}
 #'
 #'Lon <- c(0:40, 350:359)
 #'Lat <- 51:26
@@ -57,9 +69,11 @@
 #'dim(data) <- c(map = 3, lon = 51, lat = 26)
 #'mask <-  sample(c(0,1), replace = TRUE, size = 51 * 26)
 #'dim(mask) <- c(lat = 26, lon = 51)
+#'\dontrun{
 #'PlotCombinedMap(data, lon = Lon, lat = Lat, map_select_fun = max,
 #'                display_range = range(data), mask = mask,
 #'                width = 12, height = 8) 
+#'}
 #'
 #'@export
 PlotCombinedMap <- function(maps, lon, lat, 
@@ -71,14 +85,16 @@ PlotCombinedMap <- function(maps, lon, lat,
                             dots = NULL,
                             bar_titles = NULL, legend_scale = 1,
                             cex_bar_titles = 1.5,
+                            plot_margin = NULL,
                             fileout = NULL, width = 8, height = 5, 
-                            size_units = 'in', res = 100, 
+                            size_units = 'in', res = 100, drawleg = T,
                             ...) {
   args <- list(...)
 
   # If there is any filenames to store the graphics, process them
   # to select the right device 
   if (!is.null(fileout)) {
+    .SelectDevice <- utils::getFromNamespace(".SelectDevice", "s2dv")
     deviceInfo <- .SelectDevice(fileout = fileout, width = width, height = height, 
                                 units = size_units, res = res)
     saveToFile <- deviceInfo$fun
@@ -87,6 +103,7 @@ PlotCombinedMap <- function(maps, lon, lat,
   
   # Check probs
   error <- FALSE
+  # Change list into an array
   if (is.list(maps)) {
     if (length(maps) < 1) {
       stop("Parameter 'maps' must be of length >= 1 if provided as a list.")
@@ -195,71 +212,14 @@ PlotCombinedMap <- function(maps, lon, lat,
     stop("The parameter 'map_select_fun' must be a function or a numeric array.")
   }
   
-  # Check display_range
-  if (!is.numeric(display_range) || length(display_range) != 2) {
-    stop("Parameter 'display_range' must be a numeric vector of length 2.")
-  }
-  
-  # Check brks
-  if (is.null(brks) || (is.numeric(brks) && length(brks) == 1)) {
-    num_brks <- 5
-    if (is.numeric(brks)) {
-      num_brks <- brks
-    }
-    brks <- seq(from = display_range[1], to = display_range[2], length.out = num_brks)
-  }
-  if (!is.numeric(brks)) {
-    stop("Parameter 'brks' must be a numeric vector.")
-  }
-  
-  # Check cols
-  col_sets <- list(c("#A1D99B", "#74C476", "#41AB5D", "#238B45"),
-                   c("#6BAED6FF", "#4292C6FF", "#2171B5FF", "#08519CFF"),
-                   c("#FFEDA0FF", "#FED976FF", "#FEB24CFF", "#FD8D3CFF"),
-                   c("#FC4E2AFF", "#E31A1CFF", "#BD0026FF", "#800026FF"),
-                   c("#FCC5C0", "#FA9FB5", "#F768A1", "#DD3497"))
-  if (is.null(cols)) {
-    if (length(col_sets) >= dim(maps)[map_dim]) {
-      chosen_sets <- 1:(dim(maps)[map_dim])
-      chosen_sets <- chosen_sets + floor((length(col_sets) - length(chosen_sets)) / 2)
-    } else {
-      chosen_sets <- array(1:length(col_sets), dim(maps)[map_dim])
-    }
-    cols <- col_sets[chosen_sets]
-  } else {
-    if (!is.list(cols)) {
-      stop("Parameter 'cols' must be a list of character vectors.")
-    }
-    if (!all(sapply(cols, is.character))) {
-      stop("Parameter 'cols' must be a list of character vectors.")
-    }
-    if (length(cols) != dim(maps)[map_dim]) {
-      stop("Parameter 'cols' must be a list of the same length as the number of ",
-           "maps in 'maps'.")
-    }
-  }
-  for (i in 1:length(cols)) {
-    if (length(cols[[i]]) != (length(brks) - 1)) {
-      cols[[i]] <- colorRampPalette(cols[[i]])(length(brks) - 1)
-    }
-  }
-  
-  # Check bar_titles
-  if (is.null(bar_titles)) {
-    if (!is.null(names(cols))) {
-      bar_titles <- names(cols)
-    } else {
-      bar_titles <- paste0("Map ", 1:length(cols))
-    }
-  } else {
-    if (!is.character(bar_titles)) {
-      stop("Parameter 'bar_titles' must be a character vector.")
-    }
-    if (length(bar_titles) != length(cols)) {
-      stop("Parameter 'bar_titles' must be of the same length as the number of ",
-           "maps in 'maps'.")
-    }
-  }
+  # Generate the desired brks and cols. Only nmap, brks, cols, bar_limits, and 
+  # bar_titles matter here because plot = F.
+  colorbar <- GradientCatsColorBar(nmap = dim(maps)[map_dim],  
+                                   brks = brks, cols = cols, vertical = FALSE,
+                                   subsampleg = NULL, bar_limits = display_range, var_limits = NULL,
+                                   triangle_ends = NULL, plot = FALSE, draw_separators = TRUE,
+                                   bar_titles = bar_titles, title_scale = 1, label_scale = legend_scale * 1.5,
+                                   extra_margin = c(2, 0, 2, 0))
   
   # Check legend_scale
   if (!is.numeric(legend_scale)) {
@@ -303,7 +263,7 @@ PlotCombinedMap <- function(maps, lon, lat,
   #----------------------
   # Identify the most likely map
   #----------------------
-  brks_norm <- seq(0, 1, length.out = length(brks))
+  brks_norm <- seq(0, 1, length.out = length(colorbar$brks))
   if (is.function(map_select_fun)) {
     range_width <- display_range[2] - display_range[1]
     ml_map <- apply(maps, c(lat_dim, lon_dim), function(x) {
@@ -319,7 +279,7 @@ PlotCombinedMap <- function(maps, lon, lat,
           } else {
             res <- res + (map_select_fun(x) - display_range[1]) / range_width
             if (map_select_fun(x) == display_range[1]) {
-	      res <- res + brks_norm[2] / (num_brks * 2)
+	      res <- res + brks_norm[2] / (length(brks_norm) * 2)
             }
           }
         } else {
@@ -360,22 +320,31 @@ PlotCombinedMap <- function(maps, lon, lat,
   } else if (names(dev.cur()) == 'null device') {
     dev.new(units = size_units, res = res, width = width, height = height)
   }
-  plot.new()
+  #NOTE: I think plot.new() is not necessary in any case.
+#  plot.new()
+  #TODO: Don't hardcoded. Let users decide.
   par(font.main = 1)
-  layout(matrix(c(rep(1, nmap),2:(nmap + 1)), 2, nmap, byrow = TRUE), heights = c(6, 1.5))
-  
+  # If colorbars need to be plotted, re-define layout.
+  if (drawleg) {
+    layout(matrix(c(rep(1, nmap),2:(nmap + 1)), 2, nmap, byrow = TRUE), heights = c(6, 1.5))
+  }
+
   #----------------------
   # Set colors and breaks and then PlotEquiMap
   #----------------------
-  tcols <- c(col_unknown_map, cols[[1]])
+  tcols <- c(col_unknown_map, colorbar$cols[[1]])
   for (k in 2:nmap) {
-    tcols <- append(tcols, c(col_unknown_map, cols[[k]]))
+    tcols <- append(tcols, c(col_unknown_map, colorbar$cols[[k]]))
+  }
+  tbrks <- c(-1, brks_norm + rep(1:nmap, each = length(brks_norm)))
+
+  if (is.null(plot_margin)) {
+    plot_margin <- c(5, 4, 4, 2) + 0.1  # default of par()$mar
   }
 
-  tbrks <- c(-1, brks_norm + rep(1:nmap, each = length(brks)))
   PlotEquiMap(var = ml_map, lon = lon, lat = lat, 
               brks = tbrks, cols = tcols, drawleg = FALSE, 
-              filled.continents = FALSE, dots = dots, ...)
+              filled.continents = FALSE, dots = dots, margin_scale = plot_margin, ...)
   
   #----------------------
   # Add overplot on top
@@ -419,86 +388,17 @@ PlotCombinedMap <- function(maps, lon, lat,
     old_mar[3] <- old_mar[3] - (2 * size_title + 1)
     par(mar = old_mar)
   }
-  for (k in 1:nmap){
-    ColorBar(brks = brks, cols = cols[[k]], vertical = FALSE, 
-             draw_separators = TRUE, extra_margin = c(2, 0, 2, 0), 
-             label_scale = legend_scale * 1.5)
-    if (!is.null(bar_titles)) {
-      mtext(bar_titles[[k]], 3, line = -3, cex = cex_bar_titles)
-    }
+
+  if (drawleg) {
+    GradientCatsColorBar(nmap = dim(maps)[map_dim],  
+                         brks = colorbar$brks, cols = colorbar$cols, vertical = FALSE,
+                         subsampleg = NULL, bar_limits = display_range, var_limits = NULL,
+                         triangle_ends = NULL, plot = TRUE, draw_separators = TRUE,
+                         bar_titles = bar_titles, title_scale = 1, label_scale = legend_scale * 1.5,
+                         extra_margin = c(2, 0, 2, 0))
   }
   
   # If the graphic was saved to file, close the connection with the device
   if (!is.null(fileout)) dev.off()
-}
-
-# Once PlotCombined is included in s2dverification and removed from
-# CSTools, this function will be removed from CSTools too.
-.SelectDevice <- function(fileout, width, height, units, res) {
-  # This function is used in the plot functions to check the extension of the 
-  # files where the graphics will be stored and select the right R device to 
-  # save them.
-  # If the vector of filenames ('fileout') has files with different 
-  # extensions, then it will only accept the first one, changing all the rest 
-  # of the filenames to use that extension.
-
-  # We extract the extension of the filenames: '.png', '.pdf', ...
-  ext <- regmatches(fileout, regexpr("\\.[a-zA-Z0-9]*$", fileout))
-
-  if (length(ext) != 0) {
-    # If there is an extension specified, select the correct device
-    ## units of width and height set to accept inches
-    if (ext[1] == ".png") {
-      saveToFile <- function(fileout) {
-        png(filename = fileout, width = width, height = height, res = res, units = units)
-      }
-    } else if (ext[1] == ".jpeg") {
-      saveToFile <- function(fileout) {
-        jpeg(filename = fileout, width = width, height = height, res = res, units = units)
-      }
-    } else if (ext[1] %in% c(".eps", ".ps")) {
-      saveToFile <- function(fileout) {
-        postscript(file = fileout, width = width, height = height)
-      }
-    } else if (ext[1] == ".pdf") {
-      saveToFile <- function(fileout) {
-        pdf(file = fileout, width = width, height = height)
-      }
-    } else if (ext[1] == ".svg") {
-      saveToFile <- function(fileout) {
-        svg(filename = fileout, width = width, height = height)
-      }
-    } else if (ext[1] == ".bmp") {
-      saveToFile <- function(fileout) {
-        bmp(filename = fileout, width = width, height = height, res = res, units = units)
-      }
-    } else if (ext[1] == ".tiff") {
-      saveToFile <- function(fileout) {
-        tiff(filename = fileout, width = width, height = height, res = res, units = units)
-      }
-    } else {
-      warning("file extension not supported, it will be used '.eps' by default.")
-      ## In case there is only one filename
-      fileout[1] <- sub("\\.[a-zA-Z0-9]*$", ".eps", fileout[1])
-      ext[1] <- ".eps"
-      saveToFile <- function(fileout) {
-        postscript(file = fileout, width = width, height = height)
-      }
-    }
-    # Change filenames when necessary
-    if (any(ext != ext[1])) {
-      warning(paste0("some extensions of the filenames provided in 'fileout' are not ", ext[1],". The extensions are being converted to ", ext[1], "."))
-      fileout <- sub("\\.[a-zA-Z0-9]*$", ext[1], fileout)
-    }
-  } else {
-    # Default filenames when there is no specification
-    warning("there are no extensions specified in the filenames, default to '.eps'")
-    fileout <- paste0(fileout, ".eps")
-    saveToFile <- postscript
-  }
-
-  # return the correct function with the graphical device, and the correct 
-  # filenames
-  list(fun = saveToFile, files = fileout)
 }
 

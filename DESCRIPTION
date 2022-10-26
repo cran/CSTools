@@ -1,9 +1,9 @@
 Package: CSTools
 Title: Assessing Skill of Climate Forecasts on Seasonal-to-Decadal
         Timescales
-Version: 4.0.1
+Version: 4.1.0
 Authors@R: c(
-    person("Nuria", "Perez-Zanon", , "nuria.perez@bsc.es", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-8568-3071")),
+    person("Nuria", "Perez-Zanon", , "nuria.perez@bsc.es", role = "aut", comment = c(ORCID = "0000-0001-8568-3071")),
     person("Louis-Philippe", "Caron", , "louis-philippe.caron@bsc.es", role = "aut", comment = c(ORCID = "0000-0001-5221-0147")),
     person("Carmen", "Alvarez-Castro", , "carmen.alvarez-castro@cmcc.it", role = "aut", comment = c(ORCID = "0000-0002-9958-010X")),
     person("Lauriane", "Batte", , "lauriane.batte@meteo.fr", role = "aut"),
@@ -16,6 +16,7 @@ Authors@R: c(
     person("Bert", "van Schaeybroeck", , "bertvs@meteo.be", role = "aut"),
     person("Veronica", "Torralba", , "veronica.torralba@bsc.es", role = "aut"),
     person("Deborah", "Verfaillie", , "deborah.verfaillie@bsc.es", role = "aut"),
+    person("Eva", "Rifà", , "eva.rifarovira@bsc.es", role = c("cre", "ctb")),
     person("Filippo", "Cali Quaglia", , "filippo.caliquaglia@gmail.com", role = "ctb"),
     person("Maria M.", "Chaves-Montero", , "mariadm.chaves@cmcc.it", role = "ctb"),
     person("Chihchung", "Chou", , "chihchung.chou@bsc.es", role = "ctb"),
@@ -33,6 +34,8 @@ Authors@R: c(
     person("Francesc", "Roura-Adserias", , "francesc.roura@bsc.es", role = "ctb"),
     person("Silvia", "Terzago", , "s.terzago@isac.cnr.it", role = "ctb"),
     person("Danila", "Volpi", , "d.volpi@isac.cnr.it", role = "ctb"),
+    person("An-Chi", "Ho", , "an.ho@bsc.es", role = "ctb"),
+    person("Victoria", "Agudetse", , "victoria.agudetse@bsc.es", role = "ctb"),
     person("BSC-CNS", role = c("cph")))
 Description: Exploits dynamical seasonal forecasts in order to provide
     information relevant to stakeholders at the seasonal timescale. The package
@@ -41,6 +44,7 @@ Description: Exploits dynamical seasonal forecasts in order to provide
     multivariate verification, as well as basic and advanced tools to obtain
     tailored products. This package was developed in the context of the
     ERA4CS project MEDSCOPE and the H2020 S2S4E project.
+    Pérez-Zanón et al. (2022) <doi:10.5194/gmd-15-6115-2022>.
     Doblas-Reyes et al. (2005) <doi:10.1111/j.1600-0870.2005.00104.x>.
     Mishra et al. (2018) <doi:10.1007/s00382-018-4404-z>.
     Sanchez-Garcia et al. (2019) <doi:10.5194/asr-16-165-2019>.
@@ -52,19 +56,18 @@ Description: Exploits dynamical seasonal forecasts in order to provide
     Van Schaeybroeck et al. (2019) <doi:10.1016/B978-0-12-812372-0.00010-8>.
     Yiou et al. (2013) <doi:10.1007/s00382-012-1626-3>.
 Depends: R (>= 3.4.0), maps, qmap, easyVerification
-Imports: s2dverification, s2dv, rainfarmr, multiApply (>= 2.1.1),
-        ClimProjDiags, ncdf4, plyr, abind, data.table, reshape2,
-        ggplot2, RColorBrewer, graphics, grDevices, stats, utils,
-        verification
+Imports: s2dv, rainfarmr, multiApply (>= 2.1.1), ClimProjDiags, ncdf4,
+        plyr, abind, data.table, reshape2, ggplot2, RColorBrewer,
+        graphics, grDevices, stats, utils, verification
 Suggests: zeallot, testthat, knitr, markdown, rmarkdown, startR
 VignetteBuilder: knitr
 License: Apache License 2.0
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.0.2
+RoxygenNote: 7.2.0
 NeedsCompilation: yes
-Packaged: 2021-10-04 09:27:34 UTC; nperez
-Author: Nuria Perez-Zanon [aut, cre] (<https://orcid.org/0000-0001-8568-3071>),
+Packaged: 2022-10-26 08:05:40 UTC; erifarov
+Author: Nuria Perez-Zanon [aut] (<https://orcid.org/0000-0001-8568-3071>),
   Louis-Philippe Caron [aut] (<https://orcid.org/0000-0001-5221-0147>),
   Carmen Alvarez-Castro [aut] (<https://orcid.org/0000-0002-9958-010X>),
   Lauriane Batte [aut],
@@ -77,6 +80,7 @@ Author: Nuria Perez-Zanon [aut, cre] (<https://orcid.org/0000-0001-8568-3071>),
   Bert van Schaeybroeck [aut],
   Veronica Torralba [aut],
   Deborah Verfaillie [aut],
+  Eva Rifà [cre, ctb],
   Filippo Cali Quaglia [ctb],
   Maria M. Chaves-Montero [ctb],
   Chihchung Chou [ctb],
@@ -94,7 +98,9 @@ Author: Nuria Perez-Zanon [aut, cre] (<https://orcid.org/0000-0001-8568-3071>),
   Francesc Roura-Adserias [ctb],
   Silvia Terzago [ctb],
   Danila Volpi [ctb],
+  An-Chi Ho [ctb],
+  Victoria Agudetse [ctb],
   BSC-CNS [cph]
-Maintainer: Nuria Perez-Zanon <nuria.perez@bsc.es>
+Maintainer: Eva Rifà <eva.rifarovira@bsc.es>
 Repository: CRAN
-Date/Publication: 2021-10-05 07:20:21 UTC
+Date/Publication: 2022-10-26 10:57:59 UTC

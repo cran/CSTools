@@ -24,7 +24,7 @@
 #' \donttest{
 #' library(zeallot)
 #' library(ClimProjDiags)
-#' c(exp, obs) %<-% lonlat_data
+#' c(exp, obs) %<-% lonlat_temp
 #' # Create three datasets (from the members)
 #' exp1 <- exp
 #' exp2 <- exp

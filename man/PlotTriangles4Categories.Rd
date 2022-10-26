@@ -103,7 +103,7 @@ to plot in. See ?Devices and the creator function of the corresponding device.}
 \item{figure.width}{a numeric value to control the width of the plot.}
 
 \item{...}{The additional parameters to be passed to function ColorBar() in 
-s2dverification for color legend creation.}
+s2dv for color legend creation.}
 }
 \value{
 A figure in popup window by default, or saved to the specified path.

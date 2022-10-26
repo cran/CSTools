@@ -34,12 +34,12 @@
 #'          \code{cluster} (A matrix or vector with integers (from 1:k) indicating the cluster to which each time step is allocated.),
 #'         \code{persistence} (Percentage of days in a month/season before a cluster is replaced for a new one (only if method=’kmeans’ has been selected.)),
 #'         \code{frequency} (Percentage of days in a month/season belonging to each cluster (only if method=’kmeans’ has been selected).),
-#'@importFrom s2dverification EOF
+#'@importFrom s2dv EOF
 #'@import multiApply
 #'@examples
 #'\dontrun{
-#'res1 <- CST_WeatherRegimes(data = lonlat_data$obs, EOFs = FALSE, ncenters = 4)
-#'res2 <- CST_WeatherRegimes(data = lonlat_data$obs, EOFs = TRUE, ncenters = 3)
+#'res1 <- CST_WeatherRegimes(data = lonlat_temp$obs, EOFs = FALSE, ncenters = 4)
+#'res2 <- CST_WeatherRegimes(data = lonlat_temp$obs, EOFs = TRUE, ncenters = 3)
 #'}
 #'@export
 #'
@@ -109,11 +109,11 @@ CST_WeatherRegimes <- function(data, ncenters = NULL,
 #'         \code{cluster} (A matrix or vector with integers (from 1:k) indicating the cluster to which each time step is allocated.),
 #'         \code{persistence} (Percentage of days in a month/season before a cluster is replaced for a new one (only if method=’kmeans’ has been selected.)),
 #'         \code{frequency} (Percentage of days in a month/season belonging to each cluster (only if method=’kmeans’ has been selected).),
-#'@importFrom s2dverification EOF
+#'@importFrom s2dv EOF
 #'@import multiApply
 #'@examples
 #'\dontrun{
-#'res <- WeatherRegime(data = lonlat_data$obs$data, lat = lonlat_data$obs$lat,
+#'res <- WeatherRegime(data = lonlat_temp$obs$data, lat = lonlat_temp$obs$lat,
 #'                     EOFs = FALSE, ncenters = 4)
 #'}
 #'@export
@@ -183,7 +183,7 @@ WeatherRegime <- function(data, ncenters = NULL,
   return(output)
 }
 
-.WeatherRegime <- function(data, ncenters = NULL, EOFs = TRUE,neofs = 30,
+.WeatherRegime <- function(data, ncenters = NULL, EOFs = TRUE, neofs = 30,
                            varThreshold = NULL, lon = NULL,
                            lat = NULL, method = "kmeans",
                            iter.max=100, nstart = 30) {
@@ -211,24 +211,29 @@ WeatherRegime <- function(data, ncenters = NULL,
   
   if (any(is.na(data))){
     nas_test <- MergeDims(data, merge_dims = c('lat','lon'),
-                          rename_dim = 'space',na.rm = TRUE)
+                          rename_dim = 'space', na.rm = TRUE)
     if (dim(nas_test)['space']== c(nlat*nlon)){
       stop("Parameter 'data' contains NAs in the 'time' dimensions.")
     }
   }
-
   if (EOFs  == TRUE) {
     if (is.null(varThreshold)) {
+      suppressWarnings({
       dataPC <- EOF(data,
                     lat = as.vector(lat),
                     lon = as.vector(lon),
+                    time_dim = 'time',
                     neofs = neofs)
+      })
       cluster_input <- dataPC$PC
     } else {
+      suppressWarnings({
       dataPC <- EOF(data,
                     lat = as.vector(lat),
                     lon = as.vector(lon),
+                    time_dim = 'time',
                     neofs = neofs)
+      })
       minPC <- 
         head(as.numeric(which(cumsum(dataPC$var) > varThreshold)), 1)
       cluster_input <- dataPC$PC[, 1:minPC]

@@ -7,6 +7,7 @@
 Calibration(
   exp,
   obs,
+  exp_cor = NULL,
   cal.method = "mse_min",
   eval.method = "leave-one-out",
   multi.model = FALSE,
@@ -20,13 +21,15 @@ Calibration(
 )
 }
 \arguments{
-\item{exp}{an array containing the seasonal forecast experiment data.}
+\item{exp}{a multidimensional array with named dimensions (at least 'sdate' and 'member') containing the seasonal hindcast experiment data. The hindcast is used to calibrate the forecast in case the forecast is provided; if not, the same hindcast will be calibrated instead.}
 
-\item{obs}{an array containing the observed data.}
+\item{obs}{a multidimensional array with named dimensions (at least 'sdate') containing the observed data.}
+
+\item{exp_cor}{an optional multidimensional array with named dimensions (at least 'sdate' and 'member') containing the seasonal forecast experiment data. If the forecast is provided, it will be calibrated using the hindcast and observations; if not, the hindcast will be calibrated instead.}
 
 \item{cal.method}{is the calibration method used, can be either \code{bias}, \code{evmos}, \code{mse_min}, \code{crps_min} or \code{rpc-based}. Default value is \code{mse_min}.}
 
-\item{eval.method}{is the sampling method used, can be either \code{in-sample} or \code{leave-one-out}. Default value is the \code{leave-one-out} cross validation.}
+\item{eval.method}{is the sampling method used, can be either \code{in-sample} or \code{leave-one-out}. Default value is the \code{leave-one-out} cross validation. In case the forecast is provided, any chosen eval.method is over-ruled and a third option is used.}
 
 \item{multi.model}{is a boolean that is used only for the \code{mse_min} method. If multi-model ensembles or ensembles of different sizes are used, it must be set to \code{TRUE}. By default it is \code{FALSE}. Differences between the two approaches are generally small but may become large when using small ensemble sizes. Using multi.model when the calibration method is \code{bias}, \code{evmos} or \code{crps_min} will not affect the result.}
 

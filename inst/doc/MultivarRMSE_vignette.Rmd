@@ -16,7 +16,7 @@ To run this vignette, the next R packages should be installed and loaded:
 
 
 ```r
-library(s2dverification)
+library(s2dv)
 library(RColorBrewer)
 ```
 
@@ -70,7 +70,7 @@ Ask nuria.perez at bsc.es for the data to run the recipe.
 ```r
 require(zeallot)
  
-glosea5 <- list(path = '/esnas/exp/glosea5/specs-seasonal_i1p1/$STORE_FREQ$_mean/$VAR_NAME$-allmemb/$VAR_NAME$_$START_DATE$.nc')
+glosea5 <- list(name = 'glosea5', path = '/esarchive/exp/glosea5/glosea5c3s/$STORE_FREQ$_mean/$VAR_NAME$_f6h/$VAR_NAME$_$START_DATE$.nc')
 
  c(exp_T, obs_T) %<-% 
    CST_Load(var = temp, exp = list(glosea5),

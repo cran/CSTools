@@ -24,7 +24,7 @@
 #'@examples
 #'\dontrun{
 #'library(CSTools)
-#'data <- lonlat_data$exp
+#'data <- lonlat_temp$exp
 #'destination <- "./path2/"
 #'CST_SaveExp(data = data, destination = destination)
 #'}
@@ -86,19 +86,19 @@ CST_SaveExp <- function(data, destination = "./CST_Data", extra_string = NULL) {
 #'
 #'@examples
 #'\dontrun{
-#'data <- lonlat_data$exp$data
-#'lon <- lonlat_data$exp$lon
-#'lat <- lonlat_data$exp$lat
+#'data <- lonlat_temp$exp$data
+#'lon <- lonlat_temp$exp$lon
+#'lat <- lonlat_temp$exp$lat
 #'Dataset <- 'XXX'
 #'var_name <- 'tas'
 #'units <- 'k'
-#'startdates <- lapply(1:length(lonlat_data$exp$Datasets),
+#'startdates <- lapply(1:length(lonlat_temp$exp$Datasets),
 #'                     function(x) {
-#'                         lonlat_data$exp$Datasets[[x]]$InitializationDates[[1]]})[[1]]
-#'Dates <- lonlat_data$exp$Dates$start
+#'                         lonlat_temp$exp$Datasets[[x]]$InitializationDates[[1]]})[[1]]
+#'Dates <- lonlat_temp$exp$Dates$start
 #'dim(Dates) <- c(time = length(Dates)/length(startdates), sdate = length(startdates))
-#'cdo_grid_name = attr(lonlat_data$exp$lon, 'cdo_grid_name')
-#'projection = attr(lonlat_data$exp$lon, 'projection')
+#'cdo_grid_name = attr(lonlat_temp$exp$lon, 'cdo_grid_name')
+#'projection = attr(lonlat_temp$exp$lon, 'projection')
 #'destination = './path/'
 #'SaveExp(data, lon, lat, Dataset, var_name, units, startdates, Dates,
 #'                    cdo_grid_name, projection, destination)

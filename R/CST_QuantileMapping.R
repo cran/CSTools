@@ -1,437 +1,329 @@
-#'Quantiles Mapping for seasonal or decadal forecast data
+#'Quantile Mapping for seasonal or decadal forecast data
 #'
-#'@description This function is a wrapper from fitQmap and doQmap from package 'qmap'to be applied in CSTools objects of class 's2dv_cube'. The quantile mapping adjustment between an experiment, tipically a hindcast, and observations is applied to the experiment itself or to a provided forecast.
-#'
+#'@description This function is a wrapper of fitQmap and doQmap from package
+#''qmap' to be applied on the object of class 's2dv_cube'. The quantile mapping
+#'adjustment between an experiment, typically a hindcast, and observation is 
+#'applied to the experiment itself or to a provided forecast.
+
 #'@author Nuria Perez-Zanon, \email{nuria.perez@bsc.es}
-#'@param exp an object of class \code{s2dv_cube}
-#'@param obs an object of class \code{s2dv_cube}
-#'@param exp_cor an object of class \code{s2dv_cube} in which the quantile mapping correction will be applied. If it is not specified, the correction is applied in object \code{exp}.
-#'@param sample_dims a character vector indicating the dimensions that can be used as sample for the same distribution
-#'@param sample_length a numeric value indicating the length of the timeseries window to be used as sample for the sample distribution and correction. By default, NULL, the total length of the timeseries will be used. 
-#'@param method a character string indicating the method to be used: 'PTF','DIST','RQUANT','QUANT','SSPLIN'. By default, the empirical quantile mapping 'QUANT' is used.
-#'@param ncores an integer indicating the number of parallel processes to spawn for the use for parallel computation in multiple cores.
-#'@param ... additional arguments passed to the method specified by \code{method}.
+#'@param exp An object of class \code{s2dv_cube}.
+#'@param obs An object of class \code{s2dv_cube}.
+#'@param exp_cor An object of class \code{s2dv_cube} in which the quantile 
+#'  mapping correction should be applied. If it is not specified, the correction
+#'  is applied in object 'exp'.
+#'@param sdate_dim A character string indicating the dimension name in which 
+#'  cross-validation would be applied when exp_cor is not provided. 'sdate' by 
+#'  default.
+#'@param memb_dim A character string indicating the dimension name where 
+#'  ensemble members are stored in the experimental arrays. 'member' by default.
+#'@param window_dim A character string indicating the dimension name where 
+#'  samples have been stored. It can be NULL (default) in case all samples are 
+#'  used. 
+#'@param method A character string indicating the method to be used:'PTF',
+#'  'DIST','RQUANT','QUANT','SSPLIN'. By default, the empirical quantile mapping
+#'  'QUANT' is used.
+#'@param na.rm A logical value indicating if missing values should be removed   
+#'  (FALSE by default).
+#'@param ncores An integer indicating the number of cores for parallel 
+#'  computation using multiApply function. The default value is NULL (1). 
+#'@param ... Additional parameters to be used by the method choosen. See qmap 
+#'  package for details.
 #'
-#'@details The different methods are:
-#'\itemize{ 
-#'\item{'PTF'} {fits a parametric transformations to the quantile-quantile relation of observed and modelled values. See \code{?qmap::fitQmapPTF}.}
-#' \item{'DIST'} {fits a theoretical distribution to observed and to modelled time series. See \code{?qmap::fitQmapDIST}.}
-#'\item{'RQUANT'} {estimates the values of the quantile-quantile relation of observed and modelled time series for regularly spaced quantiles using local linear least square regression. See \code{?qmap::fitQmapRQUANT}.}
-#'\item{'QUANT'} {estimates values of the empirical cumulative distribution function of observed and modelled time series for regularly spaced quantiles. See \code{?qmap::fitQmapQUANT}.}
-#'\item{'SSPLIN'} {fits a smoothing spline to the quantile-quantile plot of observed and modelled time series. See \code{?qmap::fitQmapSSPLIN}.}}
-#'All methods accepts some common arguments:
-#'\itemize{
-#'\item{wet.day} {logical indicating whether to perform wet day correction or not.(Not available in 'DIS' method)}
-#'\item{qstep} {NULL or a numeric value between 0 and 1.}}
-#' When providing a forecast to be corrected through the pararmeter \code{exp_cor}, some inputs might need to be modified. The quantile correction is compute by comparing objects passed through 'exp' and 'obs' parameters, this correction will be later applied to the forecast provided in 'exp_cor'. Imaging the case of 'exp' and 'obs' having several start dates, stored using a dimension e.g. 'sdate', 'sample_dims' include this dimension 'sdate' and 'exp_cor' has forecasts for several sdates but different from the ones in 'exp'. In this case, the correction computed with 'exp' and 'obs' would be applied for each 'sdate' of 'exp_cor' separately. This example corresponds to a case of split a dataset in training set and validation set.
-#' 
-#'@return an oject of class \code{s2dv_cube} containing the experimental data after applyingthe quantile mapping correction. 
-#') <- c(dataset = 1, member = 10, sdate = 20, ftime = 60 , 
-#'@import qmap
-#'@import multiApply
-#'@import abind
+#'@return An object of class \code{s2dv_cube} containing the experimental data
+#'after applying the quantile mapping correction.
 #'
-#'@seealso \code{qmap::fitQmap} and \code{qmap::doQmap}
+#'@seealso \code{\link[qmap]{fitQmap}} and \code{\link[qmap]{doQmap}} 
 #'@examples
-#'library(qmap)
-#'exp <- 1 : (1 * 5 * 10 * 6 * 2 * 3)
-#'dim(exp) <- c(dataset = 1, member = 10, sdate = 5, ftime = 6 , 
-#'              lat = 2, lon = 3)
-#'exp <- list(data = exp)
+#'# Use synthetic data
+#'exp <- NULL
+#'exp$data <- 1 : c(1 * 3 * 5 * 4 * 3 * 2)
+#'dim(exp$data) <- c(dataset = 1, member = 3, sdate = 5, ftime = 4,
+#'                   lat = 3, lon = 2)
 #'class(exp) <- 's2dv_cube'
-#'obs <- 101 : (100 + 1 * 1 * 5 * 6 * 2 * 3)
-#'dim(obs) <- c(dataset = 1, member = 1, sdate = 5, ftime = 6 ,
-#'              lat = 2, lon = 3)
-#'obs <- list(data = obs)
+#'obs$data <- 101 : c(100 + 1 * 1 * 5 * 4 * 3 * 2)
+#'dim(obs$data) <- c(dataset = 1, member = 1, sdate = 5, ftime = 4,
+#'                   lat = 3, lon = 2)
 #'class(obs) <- 's2dv_cube'
-#'res <- CST_QuantileMapping(exp, obs, method = 'RQUANT')
-#'\donttest{
-#'exp <- lonlat_data$exp
-#'obs <- lonlat_data$obs
 #'res <- CST_QuantileMapping(exp, obs)
 #'
-#'exp_cor <- exp
-#'exp_cor$data <- exp_cor$data[,,1,,,]
-#'dim(exp_cor$data) <- c(dataset = 1, member = 15, sdate = 1, ftime = 3, 
-#'                       lat = 22, lon = 53)
-#'res <- CST_QuantileMapping(exp, obs, exp_cor,
-#'                           sample_dims = c('sdate', 'ftime', 'member'))
-#'res <- CST_QuantileMapping(exp, obs, exp_cor,
-#'                           sample_dims = c('ftime', 'member'))
-#'data(obsprecip)
-#'data(modprecip)
-#'exp <- modprecip$MOSS[1:10000]
-#'dim(exp) <- c(time = length(exp))
-#'exp <- list(data = exp)
-#'class(exp) <- 's2dv_cube'
-#'obs <- obsprecip$MOSS[1:10000]
-#'dim(obs) <- c(time = length(obs))
-#'obs <- list(data = obs)
-#'class(obs) <- 's2dv_cube'
-#'res <- CST_QuantileMapping(exp = exp, obs = obs, sample_dims = 'time',
-#'                           method = 'DIST')
-#'# Example using different lenght of members and sdates:
-#'exp <- lonlat_data$exp
-#'exp$data <- exp$data[,,1:4,,,]
+#'# Use data in package
+#'\donttest{
+#'exp <- lonlat_temp$exp
+#'exp$data <- exp$data[, , 1:4, , 1:2, 1:3]
 #'dim(exp$data) <- c(dataset = 1, member = 15, sdate = 4, ftime = 3, 
-#'                       lat = 22, lon = 53)
-#'obs <- lonlat_data$obs
-#'obs$data <- obs$data[,,1:4, ,,]
+#'                   lat = 2, lon = 3)
+#'obs <- lonlat_temp$obs
+#'obs$data <- obs$data[, , 1:4, , 1:2, 1:3]
 #'dim(obs$data) <- c(dataset = 1, member = 1, sdate = 4, ftime = 3, 
-#'                       lat = 22, lon = 53)
-#'exp_cor <- lonlat_data$exp
-#'exp_cor$data <- exp_cor$data[,1:5,5:6,,,]
-#'dim(exp_cor$data) <- c(dataset = 1, member = 5, sdate = 2, ftime = 3, 
-#'                      lat = 22, lon = 53)
-#'res <- CST_QuantileMapping(exp, obs, exp_cor,
-#'                           sample_dims = c('sdate', 'ftime', 'member'))
-#'exp_cor <- lonlat_data$exp
-#'exp_cor$data <- exp_cor$data[,,5:6,,,]
-#'dim(exp_cor$data) <- c(dataset = 1, member = 15, sdate = 2, ftime = 3, 
-#'                       lat = 22, lon = 53)
-#'res <- CST_QuantileMapping(exp, obs, exp_cor,
-#'                           sample_dims = c('sdate', 'ftime', 'member'))
+#'                   lat = 2, lon = 3)
+#'exp_cor <- lonlat_temp$exp
+#'exp_cor$data <- exp_cor$data[, 1, 5:6, , 1:2, 1:3]
+#'dim(exp_cor$data) <- c(dataset = 1, member = 1, sdate = 2, ftime = 3, 
+#'                       lat = 2, lon = 3)
+#'res <- CST_QuantileMapping(exp, obs, exp_cor, window_dim = 'ftime')
 #'}
+#'
+#'@import qmap 
+#'@import multiApply 
+#'@import s2dv
 #'@export
-CST_QuantileMapping <- function(exp, obs, exp_cor = NULL,
-                                sample_dims = c('sdate', 'ftime', 'member'), 
-                                sample_length = NULL, method = 'QUANT', ncores = NULL, ...) {
+CST_QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
+                                memb_dim = 'member', window_dim = NULL, 
+                                method = 'QUANT', na.rm = FALSE, 
+                                ncores = NULL, ...) {
     if (!inherits(exp, 's2dv_cube') || !inherits(obs, 's2dv_cube')) {
         stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube', ",
              "as output by CSTools::CST_Load.")
     }
     if (!is.null(exp_cor)) {
-        if (!inherits(exp_cor, 's2dv_cube')) {
-            stop("Parameter 'exp_cor' must be of the class 's2dv_cube', ",
-                 "as output by CSTools::CST_Load.")
-        }
+      if (!inherits(exp_cor, 's2dv_cube')) {
+        stop("Parameter 'exp_cor' must be of the class 's2dv_cube', ",
+             "as output by CSTools::CST_Load.")
+      }
     }
-    if (!(method %in% c('PTF','DIST','RQUANT','QUANT','SSPLIN'))) {
-        stop("Parameter 'method' must be one of the following methods: ",
-             "'PTF','DIST','RQUANT','QUANT','SSPLIN'.")
-    }
-    QMapped <- QuantileMapping(exp = exp$data, obs = obs$data, exp_cor = exp_cor$data,
-                               sample_dims = sample_dims, sample_length = sample_length,
-                               method = method, ncores = ncores, ...)
+
+    QMapped <- QuantileMapping(exp = exp$data, obs = obs$data, 
+                               exp_cor = exp_cor$data,
+                               sdate_dim = sdate_dim, memb_dim = memb_dim,
+                               window_dim = window_dim, method = method,
+                               na.rm = na.rm, ncores = ncores, ...)
     if (is.null(exp_cor)) {
-        exp$data <- QMapped
-        exp$source_files <- c(exp$source_files, obs$source_files)
+      exp$data <- QMapped
+      exp$Datasets <- c(exp$Datasets, obs$Datasets)
+      exp$source_files <- c(exp$source_files, obs$source_files)
+      return(exp)
+
     } else {
-        exp_cor$data <- QMapped
-        exp_cor$source_files <- c(exp$source_files, obs$source_files, exp_cor$source_files)
-        exp <- exp_cor
+      exp_cor$data <- QMapped
+      exp_cor$Datasets <- c(exp_cor$Datasets, exp$Datasets, obs$Datasets)
+      exp_cor$source_files <- c(exp_cor$source_files, exp$source_files, obs$source_files)
+      return(exp_cor)
     }
-    return(exp)
+    
+    
 }
-#'Quantiles Mapping for seasonal or decadal forecast data
+
+#'Quantile Mapping for seasonal or decadal forecast data
 #'
-#'@description This function is a wrapper from fitQmap and doQmap from package 'qmap'to be applied in CSTools objects of class 's2dv_cube'. The quantile mapping adjustment between an experiment, tipically a hindcast, and observations is applied to the experiment itself or to a provided forecast.
+#'@description This function is a wrapper of fitQmap and doQmap from package
+#''qmap' to be applied on multi-dimensional arrays. The quantile mapping 
+#'adjustment between an experiment, typically a hindcast, and observation is 
+#'applied to the experiment itself or to a provided forecast.
 #'
 #'@author Nuria Perez-Zanon, \email{nuria.perez@bsc.es}
-#'@param exp a multi-dimensional array with named dimensions containing the hindcast.
-#'@param obs a multi-dimensional array with named dimensions (the same as the provided in 'exp') containing the reference dataset.
-#'@param exp_cor a multi-dimensional array with named dimensions in which the quantile mapping correction will be applied. If it is not specified, the correction is applied in object \code{exp}.
-#'@param sample_dims a character vector indicating the dimensions that can be used as sample for the same distribution
-#'@param sample_length a numeric value indicating the length of the timeseries window to be used as sample for the sample distribution and correction. By default, NULL, the total length of the timeseries will be used. 
-#'@param method a character string indicating the method to be used: 'PTF','DIST','RQUANT','QUANT','SSPLIN'. By default, the empirical quantile mapping 'QUANT' is used.
-#'@param ncores an integer indicating the number of parallel processes to spawn for the use for parallel computation in multiple cores.
-#'@param ... additional arguments passed to the method specified by \code{method}.
+#'@param exp A multidimensional array with named dimensions containing the 
+#'  hindcast. 
+#'@param obs A multidimensional array with named dimensions containing the 
+#'  reference dataset.
+#'@param exp_cor A multidimensional array with named dimensions in which the
+#'  quantile mapping correction should be applied. If it is not specified, the 
+#'  correction is applied on object 'exp'.
+#'@param sdate_dim A character string indicating the dimension name in which
+#'  cross-validation would be applied when exp_cor is not provided. 'sdate' by
+#'  default.
+#'@param memb_dim A character string indicating the dimension name where
+#'  ensemble members are stored in the experimental arrays. 'member' by 
+#'  default. 
+#'@param window_dim A character string indicating the dimension name where 
+#'  samples have been stored. It can be NULL (default) in case all samples are
+#'  used. 
+#'@param method A character string indicating the method to be used: 'PTF',
+#'  'DIST','RQUANT','QUANT','SSPLIN'. By default, the empirical quantile mapping
+#'  'QUANT' is used. 
+#'@param na.rm A logical value indicating if missing values should be removed  
+#'  (FALSE by default). 
+#'@param ncores An integer indicating the number of cores for parallel 
+#'  computation using multiApply function. The default value is NULL (1). 
+#'@param ... Additional parameters to be used by the method choosen. See qmap 
+#'  package for details.
 #'
-#'@details The different methods are:
-#'\itemize{ 
-#'\item{'PTF'} {fits a parametric transformations to the quantile-quantile relation of observed and modelled values. See \code{?qmap::fitQmapPTF}.}
-#' \item{'DIST'} {fits a theoretical distribution to observed and to modelled time series. See \code{?qmap::fitQmapDIST}.}
-#'\item{'RQUANT'} {estimates the values of the quantile-quantile relation of observed and modelled time series for regularly spaced quantiles using local linear least square regression. See \code{?qmap::fitQmapRQUANT}.}
-#'\item{'QUANT'} {estimates values of the empirical cumulative distribution function of observed and modelled time series for regularly spaced quantiles. See \code{?qmap::fitQmapQUANT}.}
-#'\item{'SSPLIN'} {fits a smoothing spline to the quantile-quantile plot of observed and modelled time series. See \code{?qmap::fitQmapSSPLIN}.}}
-#'All methods accepts some common arguments:
-#'\itemize{
-#'\item{wet.day} {logical indicating whether to perform wet day correction or not.(Not available in 'DIS' method)}
-#'\item{qstep} {NULL or a numeric value between 0 and 1.}}
-#'@return an oject of class \code{s2dv_cube} containing the experimental data after applyingthe quantile mapping correction. 
-#') <- c(dataset = 1, member = 10, sdate = 20, ftime = 60 , 
-#'@import qmap
-#'@import multiApply
-#'@import abind
+#'@return An array containing the experimental data after applying the quantile
+#'mapping correction.
+#' 
+#'@seealso \code{\link[qmap]{fitQmap}} and \code{\link[qmap]{doQmap}} 
+#'@examples
+#'# Use synthetic data
+#'exp <- 1 : c(1 * 3 * 5 * 4 * 3 * 2)
+#'dim(exp) <- c(dataset = 1, member = 3, sdate = 5, ftime = 4, 
+#'              lat = 3, lon = 2)
+#'obs <- 101 : c(100 + 1 * 1 * 5 * 4 * 3 * 2)
+#'dim(obs) <- c(dataset = 1, member = 1, sdate = 5, ftime = 4,
+#'              lat = 3, lon = 2)
+#'res <- QuantileMapping(exp, obs)
 #'
-#'@seealso \code{qmap::fitQmap} and \code{qmap::doQmap}
+#'# Use data in package
+#'\donttest{
+#'exp <- lonlat_temp$exp$data[, , 1:4, , 1:2, 1:3]
+#'dim(exp) <- c(dataset = 1, member = 15, sdate = 4, ftime = 3, 
+#'              lat = 2, lon = 3)
+#'obs <- lonlat_temp$obs$data[, , 1:4, , 1:2, 1:3]
+#'dim(obs) <- c(dataset = 1, member = 1, sdate = 4, ftime = 3, 
+#'              lat = 2, lon = 3)
+#'exp_cor <- lonlat_temp$exp$data[, 1, 5:6, , 1:2, 1:3]
+#'dim(exp_cor) <- c(dataset = 1, member = 1, sdate = 2, ftime = 3, 
+#'                  lat = 2, lon = 3)
+#'res <- QuantileMapping(exp, obs, exp_cor, window_dim = 'ftime')
+#'}
+#'
+#'@import qmap 
+#'@import multiApply 
+#'@import s2dv
 #'@export
-QuantileMapping <- function(exp, obs, exp_cor = NULL, sample_dims = 'ftime', 
-                            sample_length = NULL, method = 'QUANT', ncores = NULL, ...) {
+QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
+                            memb_dim = 'member', window_dim = NULL, 
+                            method = 'QUANT',
+                            na.rm = FALSE, ncores = NULL, ...) {
+  # exp and obs
   obsdims <- names(dim(obs))
   expdims <- names(dim(exp))
+  if (!is.array(exp) || !is.numeric(exp)) {
+    stop("Parameter 'exp' must be a numeric array.")
+  }
+  if (!is.array(obs) || !is.numeric(obs)) {
+    stop("Parameter 'obs' must be a numeric array.")
+  }
   if (is.null(expdims)) {
     stop("Parameter 'exp' must have dimension names.")
   }
   if (is.null(obsdims)) {
     stop("Parameter 'obs' must have dimension names.")
   }
-  if (any(is.na(exp)))  {
-    warning("Parameter 'exp' contains NA values.")
-  }  
-  if (any(is.na(obs))) {
-    warning("Parameter 'obs' contains NA values.")
+  # sdate_dim
+  if (!is.character(sdate_dim) | length(sdate_dim) != 1) {
+    stop("Parameter 'sdate_dim' must be a character string.")
   }
+  if (!sdate_dim %in% expdims | !sdate_dim %in% obsdims) {
+    stop("Parameter 'sdate_dim' is not found in 'exp' or 'obs' dimension.")
+  }
+  if (dim(exp)[sdate_dim] == 1 || dim(obs)[sdate_dim] == 1) {
+    stop("Parameter 'exp' and 'obs' must have dimension length of 'sdate_dim' bigger than 1.")
+  }
+  # exp_cor
   if (!is.null(exp_cor)) {
-    exp_cordims <- names(dim(exp_cor))
-    if (is.null(exp_cordims)) {
+    if (is.null(names(dim(exp_cor)))) {
       stop("Parameter 'exp_cor' must have dimension names.")
     }
+    if (!sdate_dim %in% names(dim(exp_cor))) {
+      stop("Parameter 'sdate_dim' is not found in 'exp_cor' dimension.")
+    }
   }
-  if (!all(sample_dims %in% expdims)) {
-    stop("Parameter 'sample_dims' must be a vector of string character ",
-         "indicating names of exiting dimension in parameter 'exp'.")
+  # method
+  if (!(method %in% c('PTF', 'DIST', 'RQUANT', 'QUANT', 'SSPLIN')) | length(method) != 1) {
+    stop("Parameter 'method' must be one of the following methods: ",
+         "'PTF', 'DIST', 'RQUANT', 'QUANT', 'SSPLIN'.")
   }
-  ## The sample_dims could be of any length (even different between exp and obs)
-  ## but the repeated dims that aren't in sample_dims should be drop:
-  commondims <- obsdims[obsdims %in% expdims]
-  commondims <- names(which(unlist(lapply(commondims, function(x) {
-                             dim(obs)[obsdims == x] != dim(exp)[expdims == x]}))))
-  if (any(!(commondims %in% sample_dims))) {
-      todrop <- commondims[!(commondims %in% sample_dims)]
-      todrop <- match(todrop, obsdims)
-        if (all(dim(obs)[todrop] != 1)) {
-            stop("Review parameter 'sample_dims' or the data dimensions",
-                 "since multiple dimensions with different length have ",
-                 "being found in the data inputs that don't match with ",
-                 "'sample_dims' parameter.")
-         } else {
-             obs <- adrop(obs, drop = todrop)
-         }
+  # memb_dim
+  if (!all(memb_dim %in% obsdims)) {
+    obs <- InsertDim(obs, posdim = 1, lendim = 1,
+                     name = memb_dim[!(memb_dim %in% obsdims)])
   }
-  if (!all(sample_dims %in% obsdims)) {
-    newobsdims <- sample_dims[!sample_dims %in% obsdims]
-    dim(obs) <- c(dim(obs), 1 : length(newobsdims))
-    names(dim(obs))[-c(1:length(obsdims))] <- newobsdims
+  if (any(!memb_dim %in% expdims)) {
+    stop("Parameter 'memb_dim' is not found in 'exp' dimensions.")
   }
+  sample_dims <- c(memb_dim, sdate_dim)
+  # window_dim
+  if (!is.null(window_dim)) {
+    if (!(window_dim %in% obsdims)) {
+      stop("Parameter 'window_dim' is not found in 'obs'.")
+    }
+    obs <- CSTools::MergeDims(obs, c(memb_dim, window_dim))
+    if (window_dim %in% expdims) {
+      exp <- CSTools::MergeDims(exp, c(memb_dim, window_dim))
+      warning("Parameter 'window_dim' is found in exp and is merged to 'memb_dim'.")
+    }
+  }
+  # na.rm
+  if (!is.logical(na.rm) | length(na.rm) > 1) {
+    stop("Parameter 'na.rm' must be one logical value.")
+  }
+  # ncores
+  if (!is.null(ncores)) {
+    if (!is.numeric(ncores) | ncores %% 1 != 0 | ncores <= 0 |
+      length(ncores) > 1) {
+      stop("Parameter 'ncores' must be either NULL or a positive integer.")
+    }
+  }
+
+  ###############################
 
   if (!is.null(exp_cor)) {
-    commondims <- exp_cordims[exp_cordims %in% expdims]
-    commondims <- names(which(unlist(lapply(commondims, function(x) {
-                             dim(exp_cor)[exp_cordims == x] != dim(exp)[expdims == x]}))))
-    if (any(commondims %in% sample_dims)) {
-      todrop <- commondims[(commondims %in% sample_dims)]
-      todroppos <- match(todrop, sample_dims)
-      if (all(dim(exp_cor)[todrop] != 1)) {
-        warning(paste("The sample_dims", paste(todrop, collapse = " "), 
-                      "are not used when applying the",
-                      "correction to 'exp_cor'"))
-        sample_dims <- list(sample_dims, sample_dims, sample_dims[-todroppos]) 
-      } else {
-        exp_cor <- adrop(exp_cor, drop = todroppos)
-      }
-    } else {
-      todrop <- commondims[!(commondims %in% sample_dims)]
-      todrop <- match(todrop, obsdims)
-      if (all(dim(exp_cor)[todrop] != 1)) {
-        stop("Review parameter 'sample_dims' or the data dimensions ",
-             "since multiple dimensions with different length have ",
-             "being found in the data inputs that don't match with ",
-             "'sample_dims' parameter.")
-      } else {
-        exp_cor <- adrop(exp_cor, drop = todrop)
-      }
-    }
-  } 
-
-  if (!is.null(sample_length) & !is.numeric(sample_length)) {
-    warning("Parameter 'sample_length' has not been correctly defined and ",
-            "the whole length of the timeseries will be used.")
-    sample_length <- NULL
-  }
-  if (length(sample_length) > 1) {
-    warning("Parameter 'sample_length' has length > 1 and only the first ",
-            "element will be used.")
-    sample_length <- sample_length[1]
-  }
-  if (!is.character(method)) {
-    warning("Parameter 'method' must be a character string indicating ",
-         "one of the following methods: 'PTF', 'DIST', 'RQUANT', 
-         'QUANT', 'SSPLIN'. Method 'QUANT' is being used.")
-    method = 'QUANT'
-  }
-  if (length(method) > 1) {
-    warning("Parameter 'method' has length > 1 and only the first element",
-            " is used.")
-    method <- method[1]
-  }
-
-#  qmaped <- Apply(list(exp, obs), target_dims = sample_dims, fun = qmapcor, ...,  
-#                  exp_cor = exp_cor, sample_length = sample_length,
-  if (is.null(exp_cor)) {
-    qmaped <- Apply(list(exp, obs), target_dims = sample_dims,
-                  fun = qmapcor, ..., sample_length = sample_length,
-                  method = method, ncores = ncores)$output1
-  } else {
     qmaped <- Apply(list(exp, obs, exp_cor), target_dims = sample_dims, 
-                    fun = qmapcor, ..., sample_length = sample_length,
-                    method = method, ncores = ncores)$output1
-  }
-  pos <- match(expdims, names(dim(qmaped)))
-  out_names <- names(dim(exp))
-    if (length(pos) < length(dim(qmaped))) {
-      toadd <- length(dim(qmaped)) - length(pos)
-      toadd <- seq(max(pos) + 1, max(pos) + toadd, 1)
-      pos <- c(pos, toadd)
-      new <- names(dim(qmaped))[names(dim(qmaped)) %in% out_names == FALSE]
-      out_names <- c(out_names, new)
-    } 
-  qmaped <- aperm(qmaped, pos)
-  names(dim(qmaped)) <- out_names
+                    fun = .qmapcor, method = method, sdate_dim = sdate_dim,
+                    na.rm = na.rm, ..., 
+                    ncores = ncores)$output1
+  } else {
+    qmaped <- Apply(list(exp, obs), target_dims = sample_dims,
+                    fun = .qmapcor, exp_cor = NULL, method = method,
+                    sdate_dim = sdate_dim, na.rm = na.rm, ...,                
+                    ncores = ncores)$output1
+  } 
   return(qmaped)
 }
-qmapcor <- function(exp, obs, exp_cor = NULL, sample_length = NULL, method = 'QUANT',
-                    ...) {
-    dimnames_exp <- names(dim(exp))
-    dimnames_obs <- names(dim(obs))
-    if (length(dimnames_exp) != length(dimnames_obs)) {
-        stop("Parameters 'exp' and 'obs' must have the same number of dimensions.")
-    }
-    if (!all(dimnames_exp %in% dimnames_obs)) {
-        stop("Parameters 'exp' and 'obs' must have the same dimension names.")
-    } 
-    if (!(any(names(dim(exp)) %in% 'ftime') | any(names(dim(exp)) %in% 'time') | 
-          any(names(dim(exp)) %in% 'sdate'))) {
-        stop("Parameters 'exp' and 'obs' must have a temporal dimension named ",
-             "'time', 'ftime' or 'sdate'.")
-    }
-        
-    dimensions <- dim(exp)
-    if (!is.null(exp_cor)) {
-        dimensions <- dim(exp_cor)
-    }        
-    if (any(names(dim(exp)) %in% 'ftime') | any(names(dim(exp)) %in% 'time')) {
-        time_dim <- which(names(dim(exp)) == 'ftime' | names(dim(exp)) %in% 'time')
-    } else {
-        time_dim <- which(names(dim(exp)) == 'sdate')
-    }
-    if (any(names(dim(obs)) %in% 'ftime') | any(names(dim(obs)) %in% 'time')) {
-        time_dim_obs <- which(names(dim(obs)) == 'ftime' | names(dim(obs)) %in% 'time')
-    } else {
-        time_dim_obs <- which(names(dim(obs)) == 'sdate')
-    }
-    if (is.null(sample_length)) {
-        sample_length <- dim(exp)[time_dim]
-    }
-    nsamples <- dim(exp)[time_dim]/sample_length
-    if (nsamples %% 1 != 0) { 
-        # add NA to complete the last sample
-        nsamples <- ceiling(nsamples)
-        fillsample1D <- rep(NA, nsamples * sample_length -  dim(exp)[time_dim])
-        if (length(dim(exp)) > 1) {
-            fillsample <- rep(fillsample1D, prod(dim(exp)[-time_dim]))
-            dims <- dim(exp)
-            exp <- c(exp, fillsample)
-            dim(exp) <- c(dims[-time_dim], sample = sample_length, 
-                          ceiling(dims[time_dim]/sample_length))
-            fillsample <- rep(fillsample1D, prod(dim(obs)[-time_dim_obs]))
-            dims <- dim(obs)
-            obs <- c(obs, fillsample)
-            dim(obs) <- c(dims[-time_dim_obs], sample = sample_length,
-                          ceiling(dims[time_dim_obs]/sample_length))
-         } else {
-            exp <- abind(exp, fillsample1D, along = time_dim)
-            names(dim(exp)) <- dimnames_exp
-            obs <- abind(obs, fillsample1D, along = time_dim_obs)
-            names(dim(obs)) <- dimnames_obs
-            dim(exp) <- c(dim(exp)[-time_dim], sample = sample_length,
-                          dim(exp)[time_dim]/sample_length)
-            dim(obs) <- c(dim(obs)[-time_dim_obs], sample = sample_length,
-                          dim(obs)[time_dim_obs]/sample_length)
-         }
-    } else {
-            dim(exp) <- c(dim(exp)[-time_dim], sample = sample_length,
-                          dim(exp)[time_dim]/sample_length)
-            dim(obs) <- c(dim(obs)[-time_dim_obs], sample = sample_length,
-                          dim(obs)[time_dim_obs]/sample_length)          
-    }
-    if (any(names(dim(exp)) %in% 'ftime') | any(names(dim(exp)) %in% 'time')) {
-        new_time_dim_exp <- which(names(dim(exp)) == 'ftime' | names(dim(exp)) %in% 'time')
-    } else {
-        new_time_dim_exp <- which(names(dim(exp)) == 'sdate')
-    }
-    if (any(names(dim(obs)) %in% 'ftime') | any(names(dim(obs)) %in% 'time')) {
-        new_time_dim_obs <- which(names(dim(obs)) == 'ftime' | names(dim(obs)) %in% 'time')
-    } else {
-        new_time_dim_obs <- which(names(dim(obs)) == 'sdate')
-    }
 
-    if (!is.null(exp_cor)) {
-        if (any(names(dim(exp_cor)) %in% 'ftime') | any(names(dim(exp_cor)) %in% 'time')) {
-            time_dim_cor <- which(names(dim(exp_cor)) == 'ftime' | names(dim(exp_cor)) %in% 'time')
-        } else {
-            time_dim_cor <- which(names(dim(exp_cor)) == 'sdate')
-        }
+.qmapcor <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate', method = 'QUANT', 
+                     na.rm = FALSE, ...) {
 
-        nsamples <- dimensions[time_dim_cor]/sample_length
-        if (nsamples %% 1 != 0) {
-        nsamples <- ceiling(nsamples)
-        fillsample1D <- rep(NA, nsamples * sample_length -  dimensions[time_dim_cor])
-            if (length(dimensions) > 1) {
-                fillsample <- rep(fillsample1D, prod(dimensions[-time_dim_cor]))
-                 exp_cor <- c(exp_cor, fillsample)
-                 dim(exp_cor) <- c(dim(exp_cor)[-time_dim_cor], sample = sample_length,
-                               ceiling(dim(exp_cor)[time_dim_cor]/sample_length))
-             } else {
-                exp_cor <- abind(exp_cor, fillsample1D, along = time_dim_cor)
-                names(dim(exp_cor)) <- names(dimensions)
-             }
-        }  
-        dim(exp_cor) <- c(dim(exp_cor)[-time_dim_cor], sample = sample_length,
-                          dim(exp_cor)[time_dim_cor]/sample_length)
-        if (any(names(dim(exp_cor)) %in% 'ftime') | any(names(dim(exp_cor)) %in% 'time')) {
-            new_time_dim_cor <- which(names(dim(exp_cor)) == 'ftime' |
-                                      names(dim(exp_cor)) %in% 'time')
-        } else {
-            new_time_dim_cor <- which(names(dim(exp_cor)) == 'sdate')
-        }
+  # exp: [memb (+ window), sdate]
+  # obs: [memb (+ window), sdate] 
+  # exp_cor: NULL or [memb, sdate]
 
+  if (is.null(exp_cor)) {
+    applied <- exp * NA
+    for (sd in 1:dim(exp)[sdate_dim]) {
+      if (na.rm) {
+        # select start date for cross-val
+        nas_pos <- which(!is.na(exp[, sd]))
+        obs2 <- as.vector(obs[, -sd])
+        exp2 <- as.vector(exp[, -sd])
+        exp_cor2 <- as.vector(exp[, sd])
+        # remove NAs
+        obs2 <- obs2[!is.na(obs2)]
+        exp2 <- exp2[!is.na(exp2)]   
+        exp_cor2 <- exp_cor2[!is.na(exp_cor2)]
+        tryCatch({
+          adjust <- fitQmap(obs2, exp2, method = method, ...)
+          applied[nas_pos, sd] <- doQmap(exp_cor2, adjust, ...)
+          },
+          error = function(error_message) {
+            return(applied[, sd])
+          })
+      } else {
+        # na.rm = FALSE shouldn't fail, just return NA
+        if (anyNA(obs[, -sd]) | anyNA(exp[, -sd])) {
+          applied[, sd] <- NA
+        } else {
+          adjust <- fitQmap(as.vector(obs[, -sd]), as.vector(exp[, -sd]),
+                            method = method, ...)
+          exp2 <- exp[, sd]
+          if (sum(is.na(exp2)) >= 1) {
+            app <- rep(NA, length(exp2))
+            nas_pos <- which(is.na(exp2))
+            exp2 <- exp2[!is.na(exp2)]
+            app[-nas_pos] <- doQmap(as.vector(exp2), adjust, ...)
+          } else {
+            app <- doQmap(as.vector(exp2), adjust, ...)
+          }
+          applied[, sd] <- app
+        }
+      }
+    }
+  } else {
+    applied <- exp_cor * NA
+    if (na.rm) {
+      tryCatch({
+        adjust <- fitQmap(obs[!is.na(obs)], exp[!is.na(exp)],
+                          method = method, ...)
+        applied[!is.na(exp_cor)] <- doQmap(exp_cor[!is.na(exp_cor)],
+                                           adjust, ...)
+        },
+        error = function(error_message) {
+          return(applied)
+        })
     } else {
-        time_dim_cor <- time_dim
-        exp_cor <- exp
-        new_time_dim_cor  <- new_time_dim_exp
+      adjust <- fitQmap(as.vector(obs), as.vector(exp), method = method, ...)
+      applied <- doQmap(as.vector(exp_cor), adjust, ...)
     }
-    applied <- NULL
-    for (i in 1 : nsamples) {
-        if (i <= dim(obs)[new_time_dim_obs]) {
-            sample_obs <- as.vector(asub(obs, idx = i, dims = new_time_dim_obs))
-            sample_exp <- as.vector(asub(exp, idx = i, dims = new_time_dim_exp))
-        } else {
-            sample_obs <- as.vector(asub(obs, idx = dim(obs)[new_time_dim_obs],
-                                    dims = new_time_dim_obs))
-            sample_exp <- as.vector(asub(exp, idx = dim(exp)[new_time_dim_exp],
-                                    dims = new_time_dim_exp))
-        }
-        if (i >= dim(obs)[new_time_dim_obs]) {
-            sample_obs <- sample_obs[!is.na(sample_obs)]
-            sample_exp <- sample_exp[!is.na(sample_exp)]
-        }
-        if (sum(sample_obs) == 0) {
-            warning("The total sum of observed data sample in the sample number ",
-                    i, ", is zero and the function may crash.")
-        }
-        if (sum(sample_exp) == 0) {
-            warning("The total sum of experimental data sample in the sample number ",
-                    i, ", is zero and the function may crash.")
-        }
-        if (length(sample_exp) < sample_length) {
-            warning("The length of the sample used, ", length(sample_exp),
-                    ", in the sample number ", i,
-                    ", is smaller than the defined in parameter 'sample_length'.")
-        }
-        adjust <- fitQmap(sample_obs, sample_exp, method = method,
-                          ...)
-        sample_cor <- as.vector(asub(exp_cor, idx = i, dims = new_time_dim_cor))
-        if (i == nsamples) {
-            sample_cor <- sample_cor[!is.na(sample_cor)]
-        }
-        applied <- c(applied, doQmap(x = sample_cor, fobj = adjust, ...))
-    }
-    if (any(is.na(exp_cor))) {
-        pos <- which(!is.na(exp_cor))
-        exp_cor[pos] <- applied
-     applied <- exp_cor
-    }
-    dim(applied) <- dimensions
-    return(applied) 
+    dim(applied) <- dim(exp_cor)
+  }
+  return(applied)
 }

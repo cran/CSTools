@@ -7,7 +7,7 @@
 CST_Load(...)
 }
 \arguments{
-\item{...}{Parameters that are automatically forwarded to the `s2dverification::Load` function. See details in `?s2dverification::Load`.}
+\item{...}{Parameters that are automatically forwarded to the `s2dv::Load` function. See details in `?s2dv::Load`.}
 }
 \value{
 A list with one or two S3 objects, named 'exp' and 'obs', of the class 's2dv_cube', containing experimental and date-corresponding observational data, respectively. These 's2dv_cube's can be ingested by other functions in CSTools. If the parameter `exp` in the call to `CST_Load` is set to `NULL`, then only the 'obs' component is returned, and viceversa.
@@ -16,7 +16,7 @@ A list with one or two S3 objects, named 'exp' and 'obs', of the class 's2dv_cub
 This function aggregates, subsets and retrieves sub-seasonal, seasonal, decadal or climate projection data from NetCDF files in a local file system or on remote OPeNDAP servers, and arranges it for easy application of the CSTools functions.
 }
 \details{
-It receives any number of parameters (`...`) that are automatically forwarded to the `s2dverification::Load` function. See details in `?s2dverification::Load`.
+It receives any number of parameters (`...`) that are automatically forwarded to the `s2dv::Load` function. See details in `?s2dv::Load`.
 
 It is recommended to use this function in combination with the `zeallot::"%<-%"` operator, to directly assing the two returned 's2dv_cube's to two separate variables, which can then be sent independently to other functions in CSTools as needed. E.g.: `c(exp, obs) <- CST_Load(...)`.
 }
@@ -40,8 +40,8 @@ c(exp, obs) \%<-\%
   )
 }
 \dontshow{
-exp <- CSTools::lonlat_data$exp
-obs <- CSTools::lonlat_data$obs
+exp <- CSTools::lonlat_temp$exp
+obs <- CSTools::lonlat_temp$obs
 }
 }
 \author{

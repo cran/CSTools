@@ -4,10 +4,11 @@
 #'@author Bert Van Schaeybroeck, \email{bertvs@meteo.be}
 #'@description Equivalent to function \code{Calibration} but for objects of class \code{s2dv_cube}.
 #'
-#'@param exp an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the seasonal forecast experiment data in the element named \code{$data}.
+#'@param exp an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the seasonal hindcast experiment data in the element named \code{$data}. The hindcast is used to calibrate the forecast in case the forecast is provided; if not, the same hindcast will be calibrated instead.
 #'@param obs an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the observed data in the element named \code{$data}.
+#'@param exp_cor an optional object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the seasonal forecast experiment data in the element named \code{$data}. If the forecast is provided, it will be calibrated using the hindcast and observations; if not, the hindcast will be calibrated instead.
 #'@param cal.method is the calibration method used, can be either \code{bias}, \code{evmos}, \code{mse_min}, \code{crps_min} or \code{rpc-based}. Default value is \code{mse_min}.
-#'@param eval.method is the sampling method used, can be either \code{in-sample} or \code{leave-one-out}. Default value is the \code{leave-one-out} cross validation.
+#'@param eval.method is the sampling method used, can be either \code{in-sample} or \code{leave-one-out}. Default value is the \code{leave-one-out} cross validation. In case the forecast is provided, any chosen eval.method is over-ruled and a third option is used.
 #'@param multi.model is a boolean that is used only for the \code{mse_min} method. If multi-model ensembles or ensembles of different sizes are used, it must be set to \code{TRUE}. By default it is \code{FALSE}. Differences between the two approaches are generally small but may become large when using small ensemble sizes. Using multi.model when the calibration method is \code{bias}, \code{evmos} or \code{crps_min} will not affect the result.
 #'@param na.fill is a boolean that indicates what happens in case calibration is not possible or will yield unreliable results. This happens when three or less forecasts-observation pairs are available to perform the training phase of the calibration. By default \code{na.fill} is set to true such that NA values will be returned. If \code{na.fill} is set to false, the uncorrected data will be returned. 
 #'@param na.rm is a boolean that indicates whether to remove the NA values or not. The default value is \code{TRUE}. See Details section for further information about its use and compatibility with \code{na.fill}.
@@ -37,33 +38,73 @@
 #'attr(obs, 'class') <- 's2dv_cube'
 #'a <- CST_Calibration(exp = exp, obs = obs, cal.method = "mse_min", eval.method = "in-sample")
 #'str(a)
+#'
+#'# Example 2:
+#'mod1 <- 1 : (1 * 3 * 4 * 5 * 6 * 7)
+#'mod2 <- 1 : (1 * 3 * 1 * 5 * 6 * 7)
+#'dim(mod1) <- c(dataset = 1, member = 3, sdate = 4, ftime = 5, lat = 6, lon = 7)
+#'dim(mod2) <- c(dataset = 1, member = 3, sdate = 1, ftime = 5, lat = 6, lon = 7)
+#'obs1 <- 1 : (1 * 1 * 4 * 5 * 6 * 7)
+#'dim(obs1) <- c(dataset = 1, member = 1, sdate = 4, ftime = 5, lat = 6, lon = 7)
+#'lon <- seq(0, 30, 5)
+#'lat <- seq(0, 25, 5)
+#'exp <- list(data = mod1, lat = lat, lon = lon)
+#'obs <- list(data = obs1, lat = lat, lon = lon)
+#'exp_cor <- list(data = mod2, lat = lat, lon = lon)
+#'attr(exp, 'class') <- 's2dv_cube'
+#'attr(obs, 'class') <- 's2dv_cube'
+#'attr(exp_cor, 'class') <- 's2dv_cube'
+#'a <- CST_Calibration(exp = exp, obs = obs, exp_cor = exp_cor, cal.method = "evmos")
+#'str(a)
 #'@export
 
-CST_Calibration <- function(exp, obs, cal.method = "mse_min", 
+CST_Calibration <- function(exp, obs, exp_cor = NULL, cal.method = "mse_min", 
                             eval.method = "leave-one-out", multi.model = FALSE, 
                             na.fill = TRUE, na.rm = TRUE, apply_to = NULL, alpha = NULL,
                             memb_dim = 'member', sdate_dim = 'sdate', ncores = 1) {
-  if (!inherits(exp, "s2dv_cube") || !inherits(obs, "s2dv_cube")) {
-    stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube', ",
-         "as output by CSTools::CST_Load.")
-  }
   
   if(!missing(multi.model) & !(cal.method == "mse_min")){
 	  warning(paste0("The multi.model parameter is ignored when using the calibration method ", cal.method))
   }
-  exp$data <- Calibration(exp = exp$data, obs = obs$data,
-    cal.method = cal.method, 
-    eval.method = eval.method,  
-    multi.model =  multi.model, 
-    na.fill = na.fill, na.rm = na.rm, 
-    apply_to = apply_to, alpha = alpha,
-    memb_dim = memb_dim, sdate_dim = sdate_dim,
-    ncores = ncores)
   
-  exp$Datasets <- c(exp$Datasets, obs$Datasets)
-  exp$source_files <- c(exp$source_files, obs$source_files)
-  return(exp)
-  
+  if(is.null(exp_cor)){ #exp will be used to calibrate and will also be calibrated: "calibrate hindcast"
+    if (!inherits(exp, "s2dv_cube") || !inherits(obs, "s2dv_cube")) {
+        stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube', ",
+            "as output by CSTools::CST_Load.")
+    }
+    exp$data <- Calibration(exp = exp$data, obs = obs$data, exp_cor = NULL,
+      cal.method = cal.method, 
+      eval.method = eval.method,  
+      multi.model =  multi.model, 
+      na.fill = na.fill, na.rm = na.rm, 
+      apply_to = apply_to, alpha = alpha,
+      memb_dim = memb_dim, sdate_dim = sdate_dim,
+      ncores = ncores)
+    exp$Datasets <- c(exp$Datasets, obs$Datasets)
+    exp$source_files <- c(exp$source_files, obs$source_files)
+   
+    return(exp)  
+
+  }else{ #if exp_cor is provided, it will be calibrated: "calibrate forecast instead of hindcast"
+    eval.method = "hindcast-vs-forecast" #if exp_cor is provided, eval.method is overrruled (because if exp_cor is provided, the train data will be all data of "exp" and the evalutaion data will be all data of "exp_cor"; no need for "leave-one-out" or "in-sample")
+    if (!inherits(exp, "s2dv_cube") || !inherits(obs, "s2dv_cube") || !inherits(exp_cor, "s2dv_cube")) {
+        stop("Parameter 'exp', 'obs' and 'exp_cor' must be of the class 's2dv_cube', ",
+            "as output by CSTools::CST_Load.")
+    }
+    exp_cor$data <- Calibration(exp = exp$data, obs = obs$data, exp_cor = exp_cor$data,
+      cal.method = cal.method, 
+      eval.method = eval.method,  
+      multi.model =  multi.model, 
+      na.fill = na.fill, na.rm = na.rm, 
+      apply_to = apply_to, alpha = alpha,
+      memb_dim = memb_dim, sdate_dim = sdate_dim,
+      ncores = ncores)
+    exp_cor$Datasets <- c(exp_cor$Datasets, obs$Datasets)
+    exp_cor$source_files <- c(exp_cor$source_files, exp$source_files, obs$source_files)  
+      
+    return(exp_cor)
+
+  }  
 }
 
 
@@ -79,10 +120,11 @@ CST_Calibration <- function(exp, obs, cal.method = "mse_min",
 #'@references Van Schaeybroeck, B., & Vannitsem, S. (2011). Post-processing through linear regression. Nonlinear Processes in Geophysics, 18(2), 147. doi:10.5194/npg-18-147-2011
 #'@references Van Schaeybroeck, B., & Vannitsem, S. (2015). Ensemble post-processing using member-by-member approaches: theoretical aspects. Quarterly Journal of the Royal Meteorological Society, 141(688), 807-818.  doi:10.1002/qj.2397
 #'
-#'@param exp an array containing the seasonal forecast experiment data.
-#'@param obs an array containing the observed data.
+#'@param exp a multidimensional array with named dimensions (at least 'sdate' and 'member') containing the seasonal hindcast experiment data. The hindcast is used to calibrate the forecast in case the forecast is provided; if not, the same hindcast will be calibrated instead.
+#'@param obs a multidimensional array with named dimensions (at least 'sdate') containing the observed data.
+#'@param exp_cor an optional multidimensional array with named dimensions (at least 'sdate' and 'member') containing the seasonal forecast experiment data. If the forecast is provided, it will be calibrated using the hindcast and observations; if not, the hindcast will be calibrated instead.
 #'@param cal.method is the calibration method used, can be either \code{bias}, \code{evmos}, \code{mse_min}, \code{crps_min} or \code{rpc-based}. Default value is \code{mse_min}.
-#'@param eval.method is the sampling method used, can be either \code{in-sample} or \code{leave-one-out}. Default value is the \code{leave-one-out} cross validation.
+#'@param eval.method is the sampling method used, can be either \code{in-sample} or \code{leave-one-out}. Default value is the \code{leave-one-out} cross validation. In case the forecast is provided, any chosen eval.method is over-ruled and a third option is used.
 #'@param multi.model is a boolean that is used only for the \code{mse_min} method. If multi-model ensembles or ensembles of different sizes are used, it must be set to \code{TRUE}. By default it is \code{FALSE}. Differences between the two approaches are generally small but may become large when using small ensemble sizes. Using multi.model when the calibration method is \code{bias}, \code{evmos} or \code{crps_min} will not affect the result.
 #'@param na.fill is a boolean that indicates what happens in case calibration is not possible or will yield unreliable results. This happens when three or less forecasts-observation pairs are available to perform the training phase of the calibration. By default \code{na.fill} is set to true such that NA values will be returned. If \code{na.fill} is set to false, the uncorrected data will be returned. 
 #'@param na.rm is a boolean that indicates whether to remove the NA values or not. The default value is \code{TRUE}.
@@ -96,7 +138,7 @@ CST_Calibration <- function(exp, obs, cal.method = "mse_min",
 #'@importFrom s2dv InsertDim MeanDims Reorder
 #'@import abind
 #'@import multiApply
-#'@importFrom s2dverification Subset
+#'@importFrom ClimProjDiags Subset
 #'
 #'@seealso \code{\link{CST_Load}}
 #'
@@ -111,7 +153,7 @@ CST_Calibration <- function(exp, obs, cal.method = "mse_min",
 #'a <- Calibration(exp = mod1, obs = obs1)
 #'str(a)
 #'@export
-Calibration <- function(exp, obs, cal.method = "mse_min",
+Calibration <- function(exp, obs, exp_cor=NULL, cal.method = "mse_min",
                         eval.method = "leave-one-out",  
                         multi.model = FALSE, na.fill = TRUE, 
                         na.rm = TRUE, apply_to = NULL, alpha = NULL,
@@ -123,6 +165,11 @@ Calibration <- function(exp, obs, cal.method = "mse_min",
   amt.dims.obs <- length(dim.obs)
   dim.names.exp <- names(dim.exp)
   dim.names.obs <- names(dim.obs)
+  if(!is.null(exp_cor)){
+    dim.exp_cor <- dim(exp_cor)
+    amt.dims.exp_cor <- length(dim.exp_cor)
+    dim.names.exp_cor <- names(dim.exp_cor)
+  }
   if (is.null(memb_dim) || !is.character(memb_dim)) {
     stop("Parameter 'memb_dim' should be a character string indicating the",
          "name of the dimension where members are stored in 'exp'.")
@@ -150,6 +197,13 @@ Calibration <- function(exp, obs, cal.method = "mse_min",
          "and sdate_dim.")
   }
 
+  if(!is.null(exp_cor)){
+    if (!all(target.dim.names.exp %in% dim.names.exp_cor)) {
+      stop("Parameter 'exp_cor' must have the dimensions defined in memb_dim ",
+           "and sdate_dim.")
+    }
+  }
+
   if (!all(c(sdate_dim) %in% dim.names.obs)) {
     stop("Parameter 'obs' must have the dimension defined in sdate_dim ",
          "parameter.")
@@ -159,6 +213,12 @@ Calibration <- function(exp, obs, cal.method = "mse_min",
     warning("Parameter 'exp' contains NA values.")
   }
   
+  if(!is.null(exp_cor)){
+    if (any(is.na(exp_cor)))  {
+      warning("Parameter 'exp_cor' contains NA values.")
+    }
+  }
+
   if (any(is.na(obs))) {
     warning("Parameter 'obs' contains NA values.")
   }
@@ -171,7 +231,7 @@ Calibration <- function(exp, obs, cal.method = "mse_min",
       target_dims = list(exp = target.dim.names.exp, obs = target.dim.names.obs),
       ncores = ncores,
       fun = .data.set.sufficiently.large)$output1
-    
+  
   if(!all(data.set.sufficiently.large.out)){		
   	if(na.fill){
         warning("Some forecast data could not be corrected due to data lack",
@@ -202,19 +262,33 @@ Calibration <- function(exp, obs, cal.method = "mse_min",
     }
   }
   
-  calibrated <- Apply(data = list(exp = exp, obs = obs),
-    cal.method = cal.method,
-    eval.method = eval.method,
-    multi.model = multi.model,
-    na.fill = na.fill, na.rm = na.rm, 
-    apply_to = apply_to, alpha = alpha,
-    target_dims = list(exp = target.dim.names.exp, obs = target.dim.names.obs),
-    ncores = ncores, output_dims = target.dim.names.exp,
-    fun = .cal)$output1
-  dexes <- match(names(dim(exp)), names(dim(calibrated)))
-  calibrated <- aperm(calibrated, dexes)
-  dimnames(calibrated) <- dimnames(exp)[dexes]
-  
+  if(is.null(exp_cor)){
+    calibrated <- Apply(data = list(exp = exp, obs = obs),
+        cal.method = cal.method,
+        eval.method = eval.method,
+        multi.model = multi.model,
+        na.fill = na.fill, na.rm = na.rm, 
+        apply_to = apply_to, alpha = alpha,
+        target_dims = list(exp = target.dim.names.exp, obs = target.dim.names.obs),
+        ncores = ncores, output_dims = target.dim.names.exp,
+        fun = .cal)$output1
+      dexes <- match(names(dim(exp)), names(dim(calibrated)))
+      calibrated <- aperm(calibrated, dexes)
+      dimnames(calibrated) <- dimnames(exp)[dexes]
+  }else{
+    calibrated <- Apply(data = list(exp = exp, obs = obs, exp_cor = exp_cor),
+      cal.method = cal.method,
+      eval.method = eval.method,
+      multi.model = multi.model,
+      na.fill = na.fill, na.rm = na.rm, 
+      apply_to = apply_to, alpha = alpha,
+      target_dims = list(exp = target.dim.names.exp, obs = target.dim.names.obs, exp_cor = target.dim.names.exp),
+      ncores = ncores, output_dims = target.dim.names.exp,
+      fun = .cal)$output1
+    dexes <- match(names(dim(exp_cor)), names(dim(calibrated)))
+    calibrated <- aperm(calibrated, dexes)
+    dimnames(calibrated) <- dimnames(exp_cor)[dexes]
+  }    
 
   return(calibrated)
 }
@@ -226,24 +300,36 @@ Calibration <- function(exp, obs, cal.method = "mse_min",
   return(amt.good.pts > amt.min.samples)
 }
 
-.make.eval.train.dexes <- function(eval.method, amt.points){ 
+.make.eval.train.dexes <- function(eval.method, amt.points, amt.points_cor){ 
   if(eval.method == "leave-one-out"){
-    dexes.lst <- lapply(seq(1, amt.points), function(x) return(list(eval.dexes = x, train.dexes = seq(1, amt.points)[-x])))
+    dexes.lst <- lapply(seq(1, amt.points), function(x) return(list(eval.dexes = x,
+                        train.dexes = seq(1, amt.points)[-x])))
   } else if (eval.method == "in-sample"){
-    dexes.lst <- list(list(eval.dexes = seq(1, amt.points), train.dexes = seq(1, amt.points)))
+    dexes.lst <- list(list(eval.dexes = seq(1, amt.points), 
+                           train.dexes = seq(1, amt.points)))
+  } else if (eval.method == "hindcast-vs-forecast"){
+    dexes.lst <- list(list(eval.dexes = seq(1,amt.points_cor),
+                           train.dexes = seq(1, amt.points)))
   } else {
     stop(paste0("unknown sampling method: ",eval.method))
   }
   return(dexes.lst)
 }
 
-.cal <- function(exp, obs, cal.method, eval.method, multi.model, na.fill, na.rm, apply_to, alpha) {
-
+.cal <- function(exp, obs, exp_cor = NULL, cal.method, eval.method, multi.model, na.fill, na.rm, apply_to, alpha) {
+  if(is.null(exp_cor)){
+    exp_cor <- exp ## generate a copy of exp so that the same function can run 
+                   ## when exp_cor is provided and when it's not
+  }
   obs <- as.vector(obs)
   dims.fc <- dim(exp)
+  dims.fc_cor <- dim(exp_cor) ## new line
   amt.mbr <- dims.fc[1]
   amt.sdate <- dims.fc[2]
-  var.cor.fc <- NA * exp
+  amt.sdate_cor <- dims.fc_cor[2] ## new line
+  var.cor.fc <- NA * exp_cor ## modified line (exp_cor instead of exp); 
+                             ## in case of exp_cor not provided, at this point exp_cor 
+                             ## is already the same as exp so no change
   names(dim(var.cor.fc)) <- dims.fc
   
   if(!.data.set.sufficiently.large(exp = exp, obs = obs)){
@@ -254,21 +340,22 @@ Calibration <- function(exp, obs, cal.method = "mse_min",
   	  return(var.cor.fc)
   	}
   }
-  
-  eval.train.dexeses <- .make.eval.train.dexes(eval.method, amt.points = amt.sdate)
+  eval.train.dexeses <- .make.eval.train.dexes(eval.method, amt.points = amt.sdate, 
+                                               amt.points_cor = amt.sdate_cor)
   amt.resamples <- length(eval.train.dexeses)
   for (i.sample in seq(1, amt.resamples)) {
     # defining training (tr) and evaluation (ev) subsets 
     eval.dexes <- eval.train.dexeses[[i.sample]]$eval.dexes
     train.dexes <- eval.train.dexeses[[i.sample]]$train.dexes
     
-    fc.ev <- exp[ , eval.dexes, drop = FALSE]
+    fc.ev <- exp_cor[ , eval.dexes, drop = FALSE] ## modified line (exp_cor instead of exp)
+        ##  fc.ev is used to evaluate (not train; train should be done with exp (hindcast))
     fc.tr <- exp[ , train.dexes]
     obs.tr <- obs[train.dexes , drop = FALSE] 
     
     if(cal.method == "bias"){
 	    var.cor.fc[ , eval.dexes] <- fc.ev + mean(obs.tr, na.rm = na.rm) - mean(fc.tr, na.rm = na.rm)
-	  } else if(cal.method == "evmos"){
+	  } else if(cal.method == "evmos"){ # forecast correction implemented
 	    #calculate ensemble and observational characteristics
 	    quant.obs.fc.tr <- .calc.obs.fc.quant(obs = obs.tr, fc = fc.tr, na.rm = na.rm)
       #calculate value for regression parameters

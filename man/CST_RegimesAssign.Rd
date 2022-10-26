@@ -19,8 +19,8 @@ CST_RegimesAssign(
 
 \item{ref_maps}{a 's2dv_cube' object as the output of CST_WeatherRegimes.}
 
-\item{method}{whether the matching will be performed in terms of minimum distance (default = ’distance’) or 
-the maximum spatial correlation (method = ’ACC’) between the maps.}
+\item{method}{whether the matching will be performed in terms of minimum distance (default = 'distance') or 
+the maximum spatial correlation (method = 'ACC') between the maps.}
 
 \item{composite}{a logical parameter indicating if the composite maps are computed or not (default = FALSE).}
 
@@ -40,13 +40,13 @@ A list with two elements \code{$data} (a 's2dv_cube' object containing the compo
 This function performs the matching between a field of anomalies and a set
 of maps which will be used as a reference. The anomalies will be assigned to the reference map 
 for which the minimum Eucledian distance (method=’distance’) or highest spatial correlation 
-(method=‘ACC’) is obtained.
+(method = 'ACC') is obtained.
 }
 \examples{
 \dontrun{
-regimes <- CST_WeatherRegimes(data = lonlat_data$obs, EOFs = FALSE, ncenters = 4)
-res1 <- CST_RegimesAssign(data = lonlat_data$exp, ref_maps = regimes, composite = FALSE)
-res2 <- CST_RegimesAssign(data = lonlat_data$exp, ref_maps = regimes, composite = TRUE)
+regimes <- CST_WeatherRegimes(data = lonlat_temp$obs, EOFs = FALSE, ncenters = 4)
+res1 <- CST_RegimesAssign(data = lonlat_temp$exp, ref_maps = regimes, composite = FALSE)
+res2 <- CST_RegimesAssign(data = lonlat_temp$exp, ref_maps = regimes, composite = TRUE)
 }
 }
 \references{

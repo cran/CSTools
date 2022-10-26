@@ -20,11 +20,13 @@ PlotCombinedMap(
   bar_titles = NULL,
   legend_scale = 1,
   cex_bar_titles = 1.5,
+  plot_margin = NULL,
   fileout = NULL,
   width = 8,
   height = 5,
   size_units = "in",
   res = 100,
+  drawleg = T,
   ...
 )
 }
@@ -64,6 +66,11 @@ layers via the parameter 'dot_symbol'.}
 
 \item{cex_bar_titles}{Scale factor for the sizes of the bar titles. Takes 1.5 by default.}
 
+\item{plot_margin}{Numeric vector of length 4 for the margin sizes in the 
+following order: bottom, left, top, and right. If not specified, use the 
+default of par("mar"), c(5.1, 4.1, 4.1, 2.1). Used as 'margin_scale' in 
+s2dv::PlotEquiMap.}
+
 \item{fileout}{File where to save the plot. If not specified (default) a graphics device will pop up. Extensions allowed: eps/ps, jpeg, png, pdf, bmp and tiff}
 
 \item{width}{File width, in the units specified in the parameter size_units (inches by default). Takes 8 by default.}
@@ -73,6 +80,13 @@ layers via the parameter 'dot_symbol'.}
 \item{size_units}{Units of the size of the device (file or window) to plot in. Inches ('in') by default. See ?Devices and the creator function of the corresponding device.}
 
 \item{res}{Resolution of the device (file or window) to plot in. See ?Devices and the creator function of the corresponding device.}
+
+\item{drawleg}{Where to draw the common colour bar. Can take values TRUE, 
+FALSE or:\cr
+'up', 'u', 'U', 'top', 't', 'T', 'north', 'n', 'N'\cr
+'down', 'd', 'D', 'bottom', 'b', 'B', 'south', 's', 'S' (default)\cr
+'right', 'r', 'R', 'east', 'e', 'E'\cr
+'left', 'l', 'L', 'west', 'w', 'W'}
 
 \item{...}{Additional parameters to be passed on to \code{PlotEquiMap}.}
 }
@@ -87,12 +101,14 @@ b <- (1 - x) * 0.6
 c <- 1 - (a + b)
 lons <- seq(0, 359.5, length = 20)
 lats <- seq(-89.5, 89.5, length = 10)
+\dontrun{
 PlotCombinedMap(list(a, b, c), lons, lats, 
                toptitle = 'Maximum map',
                map_select_fun = max,
                display_range = c(0, 1),
                bar_titles = paste('\% of belonging to', c('a', 'b', 'c')), 
                brks = 20, width = 10, height = 8)
+}
 
 Lon <- c(0:40, 350:359)
 Lat <- 51:26
@@ -100,9 +116,11 @@ data <- rnorm(51 * 26 * 3)
 dim(data) <- c(map = 3, lon = 51, lat = 26)
 mask <-  sample(c(0,1), replace = TRUE, size = 51 * 26)
 dim(mask) <- c(lat = 26, lon = 51)
+\dontrun{
 PlotCombinedMap(data, lon = Lon, lat = Lat, map_select_fun = max,
                display_range = range(data), mask = mask,
                width = 12, height = 8) 
+}
 
 }
 \seealso{

@@ -22,10 +22,10 @@ RegimesAssign(
 
 \item{lat}{a vector of latitudes corresponding to the positions provided in data and ref_maps.}
 
-\item{method}{whether the matching will be performed in terms of minimum distance (default = ’distance’) or 
-the maximum spatial correlation (method=’ACC’) between the maps.}
+\item{method}{whether the matching will be performed in terms of minimum distance (default = 'distance') or 
+the maximum spatial correlation (method = 'ACC') between the maps.}
 
-\item{composite}{a logical parameter indicating if the composite maps are computed or not (default=FALSE).}
+\item{composite}{a logical parameter indicating if the composite maps are computed or not (default = FALSE).}
 
 \item{memb}{a logical value indicating whether to compute composites for separate members (default FALSE) or as unique ensemble (TRUE).
 This option is only available for when parameter 'composite' is set to TRUE and the data object has a dimension named 'member'.}
@@ -42,15 +42,15 @@ A list with elements \code{$composite} (3-d array (lon, lat, k) containing the c
 \description{
 This function performs the matching between a field of anomalies and a set
 of maps which will be used as a reference. The anomalies will be assigned to the reference map 
-for which the minimum Eucledian distance (method=’distance’) or highest spatial correlation 
-(method=‘ACC’) is obtained.
+for which the minimum Eucledian distance (method = 'distance') or highest spatial correlation 
+(method = 'ACC') is obtained.
 }
 \examples{
 \dontrun{
-regimes <- WeatherRegime(data = lonlat_data$obs$data, lat = lonlat_data$obs$lat,
+regimes <- WeatherRegime(data = lonlat_temp$obs$data, lat = lonlat_temp$obs$lat,
                         EOFs = FALSE, ncenters = 4)$composite
-res1 <- RegimesAssign(data = lonlat_data$exp$data, ref_maps = drop(regimes), 
-                     lat = lonlat_data$exp$lat, composite = FALSE)
+res1 <- RegimesAssign(data = lonlat_temp$exp$data, ref_maps = drop(regimes), 
+                     lat = lonlat_temp$exp$lat, composite = FALSE)
 }	
 }
 \references{

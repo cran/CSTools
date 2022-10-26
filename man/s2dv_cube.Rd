@@ -11,32 +11,58 @@ s2dv_cube(
   Variable = NULL,
   Datasets = NULL,
   Dates = NULL,
+  time_dims = NULL,
   when = NULL,
   source_files = NULL
 )
 }
 \arguments{
-\item{data}{an array with any number of named dimensions, typically an object output from CST_Load, with the following dimensions: dataset, member, sdate, ftime, lat and lon.}
+\item{data}{an array with any number of named dimensions, typically an object
+output from CST_Load, with the following dimensions: dataset, member, sdate, 
+ftime, lat and lon.}
 
-\item{lon}{an array with one dimension containing the longitudes and attributes: dim, cdo_grid_name, data_across_gw, array_across_gw, first_lon, last_lon and projection.}
+\item{lon}{an array with one dimension containing the longitudes and 
+attributes: dim, cdo_grid_name, data_across_gw, array_across_gw, first_lon, 
+last_lon and projection.}
 
-\item{lat}{an array with one dimension containing the latitudes and attributes: dim, cdo_grid_name, first_lat, last_lat and projection.}
+\item{lat}{an array with one dimension containing the latitudes and 
+attributes: dim, cdo_grid_name, first_lat, last_lat and projection.}
 
-\item{Variable}{a list of two elements: \code{varName} a character string indicating the abbreviation of a variable name and \code{level} a character string indicating the level (e.g., "2m"), if it is not required it could be set as NULL.}
+\item{Variable}{a list of two elements: \code{varName} a character string 
+indicating the abbreviation of a variable name and \code{level} a character 
+string indicating the level (e.g., "2m"), if it is not required it could be
+set as NULL.}
 
-\item{Datasets}{a named list with the dataset model with two elements: \code{InitiatlizationDates}, containing a list of the start dates for each member named with the names of each member, and \code{Members} containing a vector with the member names (e.g., "Member_1")}
+\item{Datasets}{a named list with the dataset model with two elements: 
+\code{InitiatlizationDates}, containing a list of the start dates for each 
+member named with the names of each member, and \code{Members} containing a 
+vector with the member names (e.g., "Member_1")}
 
-\item{Dates}{a named list of two elements: \code{start}, an array of dimensions (sdate, time) with the POSIX initial date of each forecast time of each starting date, and \code{end}, an array of dimensions (sdate, time) with the POSIX final date of each forecast time of each starting date.}
+\item{Dates}{a named list of one to two elements: The first element, 
+\code{start}, is an array of dimensions (sdate, time) with the POSIX initial 
+date of each forecast time of each starting date. The second element, 
+\code{end} (optional), is an array of dimensions (sdate, time) with the POSIX}
 
-\item{when}{a time stamp of the date issued by the Load() call to obtain the data.}
+\item{time_dims}{a vector of strings containing the names of the temporal 
+dimensions found in \code{data}.}
 
-\item{source_files}{a vector of character strings with complete paths to all the found files involved in the Load() call.}
+\item{when}{a time stamp of the date issued by the Load() call to obtain the 
+data.}
+
+\item{source_files}{a vector of character strings with complete paths to all 
+the found files involved in the Load() call.}
 }
 \value{
 The function returns an object of class 's2dv_cube'.
 }
 \description{
-This function allows to create a 's2dv_cube' object by passing information through its parameters. This function will be needed if the data hasn't been loaded using CST_Load or has been transformed with other methods. A 's2dv_cube' object has many different components including metadata. This function will allow to create 's2dv_cube' objects even if not all elements are defined and for each expected missed parameter a warning message will be returned.
+This function allows to create a 's2dv_cube' object by passing 
+information through its parameters. This function will be needed if the data 
+hasn't been loaded using CST_Load or has been transformed with other methods. 
+A 's2dv_cube' object has many different components including metadata. This 
+function will allow to create 's2dv_cube' objects even if not all elements 
+are defined and for each expected missed parameter a warning message will be 
+returned.
 }
 \examples{
 exp_original <- 1:100
@@ -84,7 +110,7 @@ exp8 <- s2dv_cube(data = exp_original, lon = seq(-10, 10, 5), lat = c(45, 50),
 class(exp8)
 }
 \seealso{
-\code{\link[s2dverification]{Load}} and \code{\link{CST_Load}}
+\code{\link[s2dv]{Load}} and \code{\link{CST_Load}}
 }
 \author{
 Perez-Zanon Nuria, \email{nuria.perez@bsc.es}

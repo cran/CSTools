@@ -24,10 +24,9 @@ To run this vignette, the following R packages should be installed and loaded:
 ```r
 library(CSTools)
 library(s2dv)
-library(s2dverification)
-library(multiApply)
 library(zeallot)
 library(easyVerification)
+library(ClimProjDiags)
 ```
 
 
@@ -126,17 +125,16 @@ The seasonal mean of both forecasts and observations are computed by averaging o
 
 
 ```r
-ano_exp$data <- MeanDims(Ano_Exp$data, 'ftime')
-ano_obs$data <- MeanDims(Ano_Obs$data, 'ftime')
+Ano_Exp$data <- MeanDims(Ano_Exp$data, 'ftime')
+Ano_Obs$data <- MeanDims(Ano_Obs$data, 'ftime')
 ```
 
 
-Finally, the probabilities of each tercile are computed by evaluating which tercile is forecasted by each ensemble member for the latest forecast (2020) using the function `ProbBins` in **s2dverification** and then averaging the results along the member dimension to obtain the probability of each tercile.
+Finally, the probabilities of each tercile are computed by evaluating which tercile is forecasted by each ensemble member for the latest forecast (2020) using the function `ProbBins` in **s2dv** and then averaging the results along the member dimension to obtain the probability of each tercile.
 
 
 ```r
-PB <- ProbBins(ano_exp$data, fcyr = numyears, thr = c(1/3, 2/3), quantile = TRUE,
-               posdates = 3, posdim = 2, compPeriod = "Without fcyr")
+PB <- ProbBins(Ano_Exp$data, fcyr = numyears, thr = c(1/3, 2/3), compPeriod = "Without fcyr")
 prob_map <- MeanDims(PB, c('sdate', 'member', 'dataset'))
 ```
 
@@ -149,9 +147,10 @@ We then plot the most likely quantile using the **CSTools** function `PlotMostLi
 
 ```
 PlotMostLikelyQuantileMap(probs = prob_map, lon = Lon, lat = Lat,
-                          coast_width=1.5, legend_scale = 0.8, 
+                          coast_width = 1.5, legend_scale = 0.5, 
                           toptitle = paste0('Most likely tercile - ', clim_var,
-                                            ' - ECMWF System5 - JJA 2020'))
+                                            ' - ECMWF System5 - JJA 2020'), 
+                          width = 10, height = 8)
 ```
 
 ![](./Figures/MostLikelyTercile_fig1.png)
@@ -190,10 +189,7 @@ From the RPSS, we create a mask: regions with RPSS <= 0 will be masked.
 
 
 ```r
-mask_rpss <- RPSS[[1]]
-mask_rpss[RPSS[[1]] <= 0] <- 1
-mask_rpss[is.na(RPSS[[1]])] <- 1
-mask_rpss[RPSS[[1]] > 0] <- 0
+mask_rpss <- ifelse((RPSS$data$skillscore <= 0) | is.na(RPSS$data$skillscore), 1, 0)
 ```
 
 Finally, we plot the latest forecast, as in the previous step, but add the mask we just created.
@@ -201,9 +197,10 @@ Finally, we plot the latest forecast, as in the previous step, but add the mask 
 
 ```r
 PlotMostLikelyQuantileMap(probs = prob_map, lon = Lon, lat = Lat, coast_width = 1.5,
-                          legend_scale = 0.8, mask = t(mask_rpss),
+                          legend_scale = 0.5, mask = mask_rpss[ , , 1],
                           toptitle = paste('Most likely tercile -', clim_var,
-                                           '- ECMWF System5 - JJA 2020'))
+                                           '- ECMWF System5 - JJA 2020'),
+                          width = 10, height = 8)
 ```
 
 ![](./Figures/MostLikelyTercile_fig3.png) 

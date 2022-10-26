@@ -51,7 +51,7 @@
 #'  to plot in. See ?Devices and the creator function of the corresponding device.
 #'@param figure.width a numeric value to control the width of the plot.
 #'@param ... The additional parameters to be passed to function ColorBar() in 
-#'  s2dverification for color legend creation.
+#'  s2dv for color legend creation.
 #'@return A figure in popup window by default, or saved to the specified path.
 #'
 #'@author History:\cr

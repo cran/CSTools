@@ -51,8 +51,8 @@ c(ano_exp, ano_obs) \%<-\% CST_Anomaly(exp = exp, obs = obs, cross = TRUE, memb 
 a <- CST_MultiMetric(exp = ano_exp, obs = ano_obs)
 str(a)
 \donttest{
-exp <- lonlat_data$exp
-obs <- lonlat_data$obs
+exp <- lonlat_temp$exp
+obs <- lonlat_temp$obs
 a <- CST_MultiMetric(exp, obs, metric = 'rpss', multimodel = FALSE)
 a <- CST_MultiMetric(exp, obs, metric = 'correlation')
 a <- CST_MultiMetric(exp, obs, metric = 'rms')
@@ -60,7 +60,7 @@ a <- CST_MultiMetric(exp, obs, metric = 'rmsss')
 }
 }
 \references{
-Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31.\url{https://link.springer.com/10.1007/s00382-018-4404-z}
+Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31.\url{https://link.springer.com/article/10.1007/s00382-018-4404-z}
 }
 \seealso{
 \code{\link[s2dv]{Corr}}, \code{\link[s2dv]{RMS}}, \code{\link[s2dv]{RMSSS}} and \code{\link{CST_Load}}

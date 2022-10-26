@@ -29,7 +29,7 @@
 #'    depending on the weather types \code{wt_exp}
 #'
 #'@import qmap
-#'@importFrom s2dverification Subset
+#'@importFrom ClimProjDiags Subset
 #'@import multiApply
 #'@import abind
 #'@examples
@@ -38,8 +38,8 @@
 #'dim(wt_exp) <- c(dataset=1, member=15, sdate=6, ftime=3)
 #'wt_obs <- sample(1:3, 6*3, replace=T)
 #'dim(wt_obs) <- c(dataset=1, member=1, sdate=6, ftime=3)
-#'exp_corr <- CST_AdamontQQCorr(exp=lonlat_data$exp, wt_exp=wt_exp, 
-#'    obs=lonlat_data$obs, wt_obs=wt_obs, 
+#'exp_corr <- CST_AdamontQQCorr(exp = lonlat_temp$exp, wt_exp = wt_exp, 
+#'    obs=lonlat_temp$obs, wt_obs = wt_obs, 
 #'    corrdims = c('dataset','member','sdate','ftime'))
 #'}
 CST_AdamontQQCorr <- function(exp, wt_exp, obs, wt_obs, 
@@ -136,7 +136,7 @@ CST_AdamontQQCorr <- function(exp, wt_exp, obs, wt_obs,
 #'the weather types \code{wt_exp}
 #'
 #'@import qmap
-#'@importFrom s2dverification Subset
+#'@importFrom ClimProjDiags Subset
 #'@import multiApply
 #'@import abind
 #'@examples
@@ -145,8 +145,8 @@ CST_AdamontQQCorr <- function(exp, wt_exp, obs, wt_obs,
 #'dim(wt_exp) <- c(dataset=1, member=15, sdate=6, ftime=3)
 #'wt_obs <- sample(1:3, 6*3, replace=T)
 #'dim(wt_obs) <- c(dataset=1, member=1, sdate=6, ftime=3)
-#'exp_corr <- AdamontQQCorr(exp=lonlat_data$exp$data, wt_exp=wt_exp, 
-#'    obs=lonlat_data$obs$data, wt_obs=wt_obs, 
+#'exp_corr <- AdamontQQCorr(exp=lonlat_temp$exp$data, wt_exp=wt_exp, 
+#'    obs=lonlat_temp$obs$data, wt_obs=wt_obs, 
 #'    corrdims = c('dataset','member','sdate','ftime'))
 #'}
 AdamontQQCorr <- function(exp, wt_exp, obs, wt_obs, 
@@ -252,11 +252,11 @@ AdamontQQCorr <- function(exp, wt_exp, obs, wt_obs,
 			     method='RQUANT')
       res <- MergeDims(res,c('time','index'))
       ## Remove the extra NA values added previously
-      res <- Subset(res,along='time',indices=1:numtexp)
+      res <- Subset(res,along = 'time', indices = 1:numtexp)
    } else {
       ## Apply QuantileMapping to exp_corr depending on weather type
-      res <- QuantileMapping(exp=exp_corr,obs=obs,sample_dims='time',
-			     samplemethod='RQUANT')
+      res <- QuantileMapping(exp = exp_corr, obs = obs, sample_dims = 'time',
+			     samplemethod = 'RQUANT')
    }
    rm(exp_corr) # Save space in memory
    ## Reshape exp_corr data onto time dimension before 'Split'
@@ -307,7 +307,7 @@ AdamontQQCorr <- function(exp, wt_exp, obs, wt_obs,
 #'          imin_lon: array of dimensions \code{obs$lon} giving the longitude index of closest gridpoint in exp
 #'          imin_lat: array of dimensions \code{obs$lat} giving the latitude index of closest gridpoint in exp
 #'
-#'@importFrom s2dverification Subset
+#'@importFrom ClimProjDiags Subset
 #'@import ncdf4
 #'@noRd
 .NearestNeighbors <- function (exp, obs, method='ADA') {

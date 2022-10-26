@@ -61,13 +61,13 @@ str(anom3)
 anom4 <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = FALSE)
 str(anom4)
 
-anom5 <- CST_Anomaly(lonlat_data$exp)
+anom5 <- CST_Anomaly(lonlat_temp$exp)
 
-anom6 <- CST_Anomaly(obs = lonlat_data$obs)
+anom6 <- CST_Anomaly(obs = lonlat_temp$obs)
 
 }
 \seealso{
-\code{\link[s2dverification]{Ano_CrossValid}}, \code{\link[s2dverification]{Clim}} and \code{\link{CST_Load}}
+\code{\link[s2dv]{Ano_CrossValid}}, \code{\link[s2dv]{Clim}} and \code{\link{CST_Load}}
 }
 \author{
 Perez-Zanon Nuria, \email{nuria.perez@bsc.es}

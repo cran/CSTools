@@ -66,7 +66,7 @@ RainFARM can compute automatically its only free parameter, i.e. the spatial spe
 In this example we would like to compute this slope as an average over the _member_ and _ftime_ dimensions, while we will use different slopes for the remaining _dataset_ and _sdate_ dimensions (a different choice may be more appropriate in a real application). To obtain this we specify the parameter `time_dim = c("member", "ftime")`. The slope is computed starting from the wavenumber corresponding to the box, `kmin=1`. We create 3 stochastic realizations for each dataset, member, starting date and forecast time with `nens=5`. The command to donwscale and the resulting fields are:
 
 ```{r}  
-exp_down <- CST_RainFARM(exp, nf=20, kmin = 1, nens = 3,
+exp_down <- CST_RainFARM(exp, nf = 20, kmin = 1, nens = 3,
                          time_dim = c("member", "ftime"))
 
 dim(exp_down$data)
@@ -179,8 +179,8 @@ dim(slopes)
 #    dataset   sdate 
 #          1       3   
 slopes
-#         [,1]     [,2]     [,3]
-#[1,] 1.532351 1.664028 1.459252
+        [,1]     [,2]     [,3]
+[1,] 1.09958 1.768862 1.190185
 ```
 which return an array of spectral slopes, one for each "dataset" and starting date "sdate".
 

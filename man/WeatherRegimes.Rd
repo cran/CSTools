@@ -62,7 +62,7 @@ included in the hclust (stats package).
 }
 \examples{
 \dontrun{
-res <- WeatherRegime(data = lonlat_data$obs$data, lat = lonlat_data$obs$lat,
+res <- WeatherRegime(data = lonlat_temp$obs$data, lat = lonlat_temp$obs$lat,
                     EOFs = FALSE, ncenters = 4)
 }
 }
