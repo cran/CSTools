@@ -16,34 +16,34 @@ CST_Analogs(
   time_obsL = NULL,
   nAnalogs = NULL,
   AnalogsInfo = FALSE,
-  ncores = 1
+  ncores = NULL
 )
 }
 \arguments{
-\item{expL}{an 's2dv_cube' object containing the experimental field on the 
+\item{expL}{An 's2dv_cube' object containing the experimental field on the 
 large scale for which the analog is aimed. This field is used to in all the
 criterias. If parameter 'expVar' is not provided, the function will return 
 the expL analog. The element 'data' in the 's2dv_cube' object must have, at
 least, latitudinal and longitudinal dimensions. The object is expect to be 
 already subset for the desired large scale region.}
 
-\item{obsL}{an 's2dv_cube' object containing the observational field on the
+\item{obsL}{An 's2dv_cube' object containing the observational field on the
 large scale. The element 'data' in the 's2dv_cube' object must have the same 
 latitudinal and longitudinal dimensions as parameter 'expL' and a temporal 
 dimension with the maximum number of available observations.}
 
-\item{expVar}{an 's2dv_cube' object containing the experimental field on the
+\item{expVar}{An 's2dv_cube' object containing the experimental field on the
 local scale, usually a different variable to the parameter 'expL'. If it is 
 not NULL (by default, NULL), the returned field by this function will be the 
 analog of parameter 'expVar'.}
 
-\item{obsVar}{an 's2dv_cube' containing the field of the same variable as the 
+\item{obsVar}{An 's2dv_cube' containing the field of the same variable as the 
 passed in parameter 'expVar' for the same region.}
 
-\item{region}{a vector of length four indicating the minimum longitude, 
+\item{region}{A vector of length four indicating the minimum longitude, 
 the maximum longitude, the minimum latitude and the maximum latitude.}
 
-\item{criteria}{a character string indicating the criteria to be used for the
+\item{criteria}{A character string indicating the criteria to be used for the
 selection of analogs:
 \itemize{
 \item{Large_dist} minimum Euclidean distance in the large scale pattern; 
@@ -55,21 +55,21 @@ correlation in the local variable to downscale.}
 Criteria 'Large_dist' is recommended for CST_Analogs, for an advanced use of 
 the criterias 'Local_dist' and 'Local_cor' use 'Analogs' function.}
 
-\item{excludeTime}{an array of N named dimensions (coinciding with time 
+\item{excludeTime}{An array of N named dimensions (coinciding with time 
 dimensions in expL)of character string(s) indicating the date(s) of the 
 observations in the format "dd/mm/yyyy" to be excluded during the search of 
 analogs. It can be NULL but if expL is not a forecast (time_expL contained in
 time_obsL), by default time_expL will be removed during the search of analogs.}
 
-\item{time_expL}{a character string indicating the date of the experiment 
+\item{time_expL}{A character string indicating the date of the experiment 
 in the same format than time_obsL (i.e. "yyyy-mm-dd"). By default it is NULL 
 and dates are taken from element \code{$Dates$start} from expL.}
 
-\item{time_obsL}{a character string indicating the date of the observations 
+\item{time_obsL}{A character string indicating the date of the observations 
 in the date format (i.e. "yyyy-mm-dd"). By default it is NULL and dates are 
 taken from element \code{$Dates$start} from obsL.}
 
-\item{nAnalogs}{number of Analogs to be selected to apply the criterias 
+\item{nAnalogs}{Number of Analogs to be selected to apply the criterias 
 'Local_dist' or 'Local_cor'. This is not the necessary the number of analogs 
 that the user can get, but the number of events with minimum distance in 
 which perform the search of the best Analog. The default value for the 
@@ -79,22 +79,24 @@ NULL for 'Local_dist' and 'Local_cor' the default value will be set at the
 length of 'time_obsL'. If AnalogsInfo is FALSE the function returns just 
 the best analog.}
 
-\item{AnalogsInfo}{TRUE to get a list with two elements: 1) the downscaled 
-field and 2) the AnalogsInfo which contains: a) the number of the best 
-analogs, b) the corresponding value of the metric used in the selected 
-criteria (distance values for Large_dist and Local_dist,correlation values 
-for Local_cor), c)dates of the analogs). The analogs are listed in decreasing
-order, the first one is the best analog (i.e if the selected criteria is 
-Local_cor the best analog will be the one with highest correlation, while for
-Large_dist criteria the best analog will be the day with minimum Euclidean 
-distance). Set to FALSE to get a single analog, the best analog, for instance
-for downscaling.}
+\item{AnalogsInfo}{A logical value. TRUE to get a list with two elements: 
+1) the downscaled field and 2) the AnalogsInfo which contains: 
+a) the number of the best analogs, b) the corresponding value of the metric 
+used in the selected criteria (distance values for Large_dist and Local_dist, 
+correlation values for Local_cor), c)dates of the analogs). The analogs are 
+listed in decreasing order, the first one is the best analog (i.e if the 
+selected criteria is Local_cor the best analog will be the one with highest 
+correlation, while for Large_dist criteria the best analog will be the day 
+with minimum Euclidean distance). Set to FALSE to get a single analog, the 
+best analog, for instance for downscaling.}
 
 \item{ncores}{The number of cores to use in parallel computation}
 }
 \value{
-An 'array' object containing the dowscaled values of the best 
-analogs.
+An 's2dv_cube' object containing an array with the dowscaled values of 
+the best analogs in element 'data'. If 'AnalogsInfo' is TRUE, 'data' is a list 
+with an array of the downscaled fields and the analogs information in 
+elements 'analogs', 'metric' and 'dates'.
 }
 \description{
 This function perform a downscaling using Analogs. To compute 
@@ -124,10 +126,10 @@ function within 'CSTools' package.
 }
 \examples{
 expL <- rnorm(1:200)
-dim(expL) <- c(member=10,lat = 4, lon = 5)
+dim(expL) <- c(member = 10,lat = 4, lon = 5)
 obsL <- c(rnorm(1:180),expL[1,,]*1.2)
 dim(obsL) <- c(time = 10,lat = 4, lon = 5)
-time_obsL <- paste(rep("01", 10), rep("01", 10), 1994 : 2003, sep = "-")
+time_obsL <- paste(rep("01", 10), rep("01", 10), 1994:2003, sep = "-")
 time_expL <- time_obsL[1]
 lon <- seq(-1,5,1.5)
 lat <- seq(30,35,1.5)
@@ -137,6 +139,7 @@ obsL <- s2dv_cube(data = obsL, lat = lat, lon = lon,
                  Dates = list(start = time_obsL, end = time_obsL))
 region <- c(min(lon), max(lon), min(lat), max(lat))
 downscaled_field <- CST_Analogs(expL = expL, obsL = obsL, region = region)
+
 }
 \references{
 Yiou, P., T. Salameh, P. Drobinski, L. Menut, R. Vautard,

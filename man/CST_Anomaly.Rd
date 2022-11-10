@@ -7,35 +7,65 @@
 CST_Anomaly(
   exp = NULL,
   obs = NULL,
+  dim_anom = "sdate",
   cross = FALSE,
+  memb_dim = "member",
   memb = TRUE,
+  dat_dim = c("dataset", "member"),
   filter_span = NULL,
-  dim_anom = 3
+  ftime_dim = "ftime",
+  ncores = NULL
 )
 }
 \arguments{
-\item{exp}{an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the seasonal forecast experiment data in the element named \code{$data}.}
+\item{exp}{An object of class \code{s2dv_cube} as returned by \code{CST_Load} 
+function, containing the seasonal forecast experiment data in the element 
+named \code{$data}.}
 
-\item{obs}{an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the observed data in the element named \code{$data}.'}
+\item{obs}{An object of class \code{s2dv_cube} as returned by \code{CST_Load} 
+function, containing the observed data in the element named \code{$data}.}
 
-\item{cross}{A logical value indicating whether cross-validation should be applied or not. Default = FALSE.}
+\item{dim_anom}{A character string indicating the name of the dimension 
+along which the climatology will be computed. The default value is 'sdate'.}
 
-\item{memb}{A logical value indicating whether Clim() computes one climatology for each experimental data 
-product member(TRUE) or it computes one sole climatology for all members (FALSE). Default = TRUE.}
+\item{cross}{A logical value indicating whether cross-validation should be 
+applied or not. Default = FALSE.}
 
-\item{filter_span}{a numeric value indicating the degree of smoothing. This option is only available if parameter \code{cross} is set to FALSE.}
+\item{memb_dim}{A character string indicating the name of the member 
+dimension. It must be one dimension in 'exp' and 'obs'. If there is no 
+member dimension, set NULL. The default value is 'member'.}
 
-\item{dim_anom}{An integer indicating the dimension along which the climatology will be computed. It 
-usually corresponds to 3 (sdates) or 4 (ftime). Default = 3.}
+\item{memb}{A logical value indicating whether to subtract the climatology 
+based on the individual members (TRUE) or the ensemble mean over all
+members (FALSE) when calculating the anomalies. The default value is TRUE.}
+
+\item{dat_dim}{A character vector indicating the name of the dataset and 
+member dimensions. If there is no dataset dimension, it can be NULL.
+The default value is "c('dataset', 'member')".}
+
+\item{filter_span}{A numeric value indicating the degree of smoothing. This 
+option is only available if parameter \code{cross} is set to FALSE.}
+
+\item{ftime_dim}{A character string indicating the name of the temporal 
+dimension where the smoothing with 'filter_span' will be applied. It cannot
+be NULL if 'filter_span' is provided. The default value is 'ftime'.}
+
+\item{ncores}{An integer indicating the number of cores to use for parallel 
+computation. The default value is NULL. It will be used only when 
+'filter_span' is not NULL.}
 }
 \value{
-A list with two S3 objects, 'exp' and 'obs', of the class 's2dv_cube', containing experimental and date-corresponding observational anomalies, respectively. These 's2dv_cube's can be ingested by other functions in CSTools.
+A list with two S3 objects, 'exp' and 'obs', of the class 
+'s2dv_cube', containing experimental and date-corresponding observational 
+anomalies, respectively. These 's2dv_cube's can be ingested by other functions 
+in CSTools.
 }
 \description{
-This function computes the anomalies relative to a climatology computed along the 
-selected dimension (usually starting dates or forecast time) allowing the application or not of
-crossvalidated climatologies. The computation is carried out independently for experimental and 
-observational data products.
+This function computes the anomalies relative to a climatology 
+computed along the selected dimension (usually starting dates or forecast 
+time) allowing the application or not of crossvalidated climatologies. The 
+computation is carried out independently for experimental and observational 
+data products.
 }
 \examples{
 # Example 1:
@@ -51,18 +81,10 @@ attr(exp, 'class') <- 's2dv_cube'
 attr(obs, 'class') <- 's2dv_cube'
 
 anom1 <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = TRUE)
-str(anom1)
 anom2 <- CST_Anomaly(exp = exp, obs = obs, cross = TRUE, memb = TRUE)
-str(anom2)
-
 anom3 <- CST_Anomaly(exp = exp, obs = obs, cross = TRUE, memb = FALSE)
-str(anom3)
-
 anom4 <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = FALSE)
-str(anom4)
-
 anom5 <- CST_Anomaly(lonlat_temp$exp)
-
 anom6 <- CST_Anomaly(obs = lonlat_temp$obs)
 
 }

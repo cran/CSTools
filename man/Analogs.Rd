@@ -20,56 +20,56 @@ Analogs(
   region = NULL,
   nAnalogs = NULL,
   AnalogsInfo = FALSE,
-  ncores = 1
+  ncores = NULL
 )
 }
 \arguments{
-\item{expL}{an array of N named dimensions containing the experimental field
+\item{expL}{An array of N named dimensions containing the experimental field
 on the large scale for which the analog is aimed. This field is used to in 
 all the criterias. If parameter 'expVar' is not provided, the function will
 return the expL analog. The element 'data' in the 's2dv_cube' object must 
-have, at least, latitudinal and longitudinal dimensions. The object is expect
-to be already subset for the desired large scale region.}
+have, at least, latitudinal and longitudinal dimensions. The object is 
+expect to be already subset for the desired large scale region.}
 
-\item{obsL}{an array of N named dimensions containing the observational field 
+\item{obsL}{An array of N named dimensions containing the observational field 
 on the large scale. The element 'data' in the 's2dv_cube' object must have 
 the same latitudinal and longitudinal dimensions as parameter 'expL' and a 
 single temporal dimension with the maximum number of available observations.}
 
-\item{time_obsL}{a character string indicating the date of the observations 
+\item{time_obsL}{A character string indicating the date of the observations 
 in the format "dd/mm/yyyy". Reference time to search for analogs.}
 
-\item{time_expL}{an array of N named dimensions (coinciding with time 
+\item{time_expL}{An array of N named dimensions (coinciding with time 
 dimensions in expL) of character string(s) indicating the date(s) of the 
 experiment in the format "dd/mm/yyyy". Time(s) to find the analogs.}
 
-\item{lonL}{a vector containing the longitude of parameter 'expL'.}
+\item{lonL}{A vector containing the longitude of parameter 'expL'.}
 
-\item{latL}{a vector containing the latitude of parameter 'expL'.}
+\item{latL}{A vector containing the latitude of parameter 'expL'.}
 
-\item{expVar}{an array of N named dimensions containing the experimental 
+\item{expVar}{An array of N named dimensions containing the experimental 
 field on the local scale, usually a different variable to the parameter 
 'expL'. If it is not NULL (by default, NULL), the returned field by this 
 function will be the analog of parameter 'expVar'.}
 
-\item{obsVar}{an array of N named dimensions containing the field of the 
+\item{obsVar}{An array of N named dimensions containing the field of the 
 same variable as the passed in parameter 'expVar' for the same region.}
 
 \item{criteria}{a character string indicating the criteria to be used for the
 selection of analogs:
-\itemize{
-\item{Large_dist} minimum Euclidean distance in the large scale pattern; 
-\item{Local_dist} minimum Euclidean distance in the large scale pattern 
-and minimum Euclidean distance in the local scale pattern; and
-\item{Local_cor} minimum Euclidean distance in the large scale pattern, 
-minimum Euclidean distance in the local scale pattern and highest 
-correlation in the local variable to downscale.}}
+ \itemize{\item{Large_dist} minimum Euclidean distance in the large scale pattern; 
+          \item{Local_dist} minimum Euclidean distance in the large scale pattern 
+           and minimum Euclidean distance in the local scale pattern; and
+          \item{Local_cor} minimum Euclidean distance in the large scale pattern, 
+           minimum Euclidean distance in the local scale pattern and highest 
+           correlation in the local variable to downscale.}}
 
-\item{excludeTime}{an array of N named dimensions (coinciding with time 
+\item{excludeTime}{An array of N named dimensions (coinciding with time 
 dimensions in expL) of character string(s) indicating the date(s) of the 
 observations in the format "dd/mm/yyyy" to be excluded during the search of 
-analogs. It can be NULL but if expL is not a forecast (time_expL contained in 
-time_obsL),by default time_expL will be removed during the search of analogs.}
+analogs. It can be NULL but if expL is not a forecast (time_expL contained 
+in time_obsL), by default time_expL will be removed during the search of 
+analogs.}
 
 \item{lonVar}{a vector containing the longitude of parameter 'expVar'.}
 
@@ -88,23 +88,25 @@ NULL for 'Local_dist' and 'Local_cor' the default value will be set at the
 length of 'time_obsL'. If AnalogsInfo is FALSE the function returns just 
 the best analog.}
 
-\item{AnalogsInfo}{TRUE to get a list with two elements: 1) the downscaled 
-field and 2) the AnalogsInfo which contains: a) the number of the best 
+\item{AnalogsInfo}{A logical value. If it is TRUE it returns a list
+with two elements: 1) the downscaled field and
+2) the AnalogsInfo which contains: a) the number of the best 
 analogs, b) the corresponding value of the metric used in the selected 
 criteria (distance values for Large_dist and Local_dist,correlation values 
-for Local_cor), c)dates of the analogs). The analogs are listed in decreasing
-order, the first one is the best analog (i.e if the selected criteria is 
-Local_cor the best analog will be the one with highest correlation, while for
-Large_dist criteria the best analog will be the day with minimum Euclidean 
-distance). Set to FALSE to get a single analog, the best analog, for instance
-for downscaling.}
+for Local_cor), c)dates of the analogs). The analogs are listed in 
+decreasing order, the first one is the best analog (i.e if the selected 
+criteria is Local_cor the best analog will be the one with highest 
+correlation, while for Large_dist criteria the best analog will be the day 
+with minimum Euclidean distance). Set to FALSE to get a single analog, the 
+best analog, for instance for downscaling.}
 
 \item{ncores}{the number of cores to use in parallel computation.}
 }
 \value{
-AnalogsFields, dowscaled values of the best analogs for the criteria 
-selected. If AnalogsInfo is set to TRUE the function also returns a 
-list with the dowsncaled field and the Analogs Information.
+An array with the dowscaled values of the best analogs for the criteria 
+selected. If 'AnalogsInfo' is set to TRUE it returns a list with an array 
+of the dowsncaled field and the analogs information in elements 'analogs', 
+'metric' and 'dates'.
 }
 \description{
 This function perform a downscaling using Analogs. To compute 
@@ -156,7 +158,7 @@ downscale_field <- Analogs(expL = expSLP, obsL = obsSLP, obsVar = obs.pr,
 obsSLP <- c(rnorm(1:1980), expSLP * 1.5)
 dim(obsSLP) <- c(lat = 4, lon = 5, time = 100)
 time_obsSLP <- paste(rep("01", 100), rep("01", 100), 1920 : 2019, sep = "-")
-downscale_field<- Analogs(expL = expSLP, obsL = obsSLP, time_obsSLP,
+downscale_field <- Analogs(expL = expSLP, obsL = obsSLP, time_obsSLP,
                          nAnalogs = 5, time_expL = "01-01-2003", 
                          AnalogsInfo = TRUE, excludeTime = "01-01-2003")
 
@@ -170,7 +172,7 @@ downscale_field <- Analogs(expL = expSLP, obsL = obsSLP, obsVar = obs.pr,
 
 # Example 5: Downscaling using criteria 'Local_dist' and 2 variables:
 # analogs of local scale using criteria 2
-region=c(lonmin = -1 ,lonmax = 2, latmin = 30, latmax = 33)
+region = c(lonmin = -1 ,lonmax = 2, latmin = 30, latmax = 33)
 Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
                       obsVar = obs.pr, criteria = "Local_dist", 
                       lonL = seq(-1, 5, 1.5),latL = seq(30, 35, 1.5), 

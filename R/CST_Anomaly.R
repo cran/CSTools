@@ -2,23 +2,43 @@
 #'
 #'@author Perez-Zanon Nuria, \email{nuria.perez@bsc.es}
 #'@author Pena Jesus, \email{jesus.pena@bsc.es}
-#'@description This function computes the anomalies relative to a climatology computed along the 
-#'selected dimension (usually starting dates or forecast time) allowing the application or not of
-#'crossvalidated climatologies. The computation is carried out independently for experimental and 
-#'observational data products.
+#'@description This function computes the anomalies relative to a climatology 
+#'computed along the selected dimension (usually starting dates or forecast 
+#'time) allowing the application or not of crossvalidated climatologies. The 
+#'computation is carried out independently for experimental and observational 
+#'data products.
 #'
-#'@param exp an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the seasonal forecast experiment data in the element named \code{$data}.
-#'@param obs an object of class \code{s2dv_cube} as returned by \code{CST_Load} function, containing the observed data in the element named \code{$data}.'
-#'@param cross A logical value indicating whether cross-validation should be applied or not. Default = FALSE.
-#'@param memb A logical value indicating whether Clim() computes one climatology for each experimental data 
-#'product member(TRUE) or it computes one sole climatology for all members (FALSE). Default = TRUE.
-#'@param filter_span a numeric value indicating the degree of smoothing. This option is only available if parameter \code{cross} is set to FALSE.  
-#'@param dim_anom An integer indicating the dimension along which the climatology will be computed. It 
-#'usually corresponds to 3 (sdates) or 4 (ftime). Default = 3.
+#'@param exp An object of class \code{s2dv_cube} as returned by \code{CST_Load} 
+#'  function, containing the seasonal forecast experiment data in the element 
+#'  named \code{$data}.
+#'@param obs An object of class \code{s2dv_cube} as returned by \code{CST_Load} 
+#'  function, containing the observed data in the element named \code{$data}.
+#'@param dim_anom A character string indicating the name of the dimension 
+#'  along which the climatology will be computed. The default value is 'sdate'.
+#'@param cross A logical value indicating whether cross-validation should be 
+#'  applied or not. Default = FALSE.
+#'@param memb_dim A character string indicating the name of the member 
+#'  dimension. It must be one dimension in 'exp' and 'obs'. If there is no 
+#'  member dimension, set NULL. The default value is 'member'.
+#'@param memb A logical value indicating whether to subtract the climatology 
+#'  based on the individual members (TRUE) or the ensemble mean over all
+#'  members (FALSE) when calculating the anomalies. The default value is TRUE.
+#'@param dat_dim A character vector indicating the name of the dataset and 
+#'  member dimensions. If there is no dataset dimension, it can be NULL.
+#'  The default value is "c('dataset', 'member')".
+#'@param filter_span A numeric value indicating the degree of smoothing. This 
+#'  option is only available if parameter \code{cross} is set to FALSE.
+#'@param ftime_dim A character string indicating the name of the temporal 
+#'  dimension where the smoothing with 'filter_span' will be applied. It cannot
+#'  be NULL if 'filter_span' is provided. The default value is 'ftime'.
+#'@param ncores An integer indicating the number of cores to use for parallel 
+#'  computation. The default value is NULL. It will be used only when 
+#'  'filter_span' is not NULL.
 #'
-#' @return A list with two S3 objects, 'exp' and 'obs', of the class 's2dv_cube', containing experimental and date-corresponding observational anomalies, respectively. These 's2dv_cube's can be ingested by other functions in CSTools.
-#'
-#'@importFrom s2dv InsertDim Clim Ano_CrossValid
+#'@return A list with two S3 objects, 'exp' and 'obs', of the class 
+#''s2dv_cube', containing experimental and date-corresponding observational 
+#'anomalies, respectively. These 's2dv_cube's can be ingested by other functions 
+#'in CSTools.
 #'
 #'@examples
 #'# Example 1:
@@ -34,78 +54,69 @@
 #'attr(obs, 'class') <- 's2dv_cube'
 #'
 #'anom1 <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = TRUE)
-#'str(anom1)
 #'anom2 <- CST_Anomaly(exp = exp, obs = obs, cross = TRUE, memb = TRUE)
-#'str(anom2)
-#'
 #'anom3 <- CST_Anomaly(exp = exp, obs = obs, cross = TRUE, memb = FALSE)
-#'str(anom3)
-#'
 #'anom4 <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = FALSE)
-#'str(anom4)
-#'
 #'anom5 <- CST_Anomaly(lonlat_temp$exp)
-#'
 #'anom6 <- CST_Anomaly(obs = lonlat_temp$obs)
 #'
 #'@seealso \code{\link[s2dv]{Ano_CrossValid}}, \code{\link[s2dv]{Clim}} and \code{\link{CST_Load}}
 #'
-#'
+#'@import multiApply
+#'@importFrom s2dv InsertDim Clim Ano_CrossValid Reorder
 #'@export
-CST_Anomaly <- function(exp = NULL, obs = NULL, cross = FALSE, memb = TRUE,
-                        filter_span = NULL, dim_anom = 3) {
- 
+CST_Anomaly <- function(exp = NULL, obs = NULL, dim_anom = 'sdate', cross = FALSE, 
+                        memb_dim = 'member', memb = TRUE, dat_dim = c('dataset', 'member'), 
+                        filter_span = NULL, ftime_dim = 'ftime', ncores = NULL) {
+  # s2dv_cube
   if (!inherits(exp, 's2dv_cube') & !is.null(exp) || 
       !inherits(obs, 's2dv_cube') & !is.null(obs)) {
     stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube', ",
          "as output by CSTools::CST_Load.")
   }
-
- if (!is.null(obs)) {
-    if (dim(obs$data)['member'] != 1) {
-    stop("The length of the dimension 'member' in the component 'data' ",
-         "of the parameter 'obs' must be equal to 1.")
-    }
-  }
-  case_exp = case_obs = 0
-  if (is.null(exp) & is.null(obs)) {
+  # exp and obs
+  if (is.null(exp$data) & is.null(obs$data)) {
     stop("One of the parameter 'exp' or 'obs' cannot be NULL.")
   }
+  case_exp = case_obs = 0
   if (is.null(exp)) {
     exp <- obs 
     case_obs = 1
-    warning("Parameter 'exp' is not provided and will be recycled.")
+    warning("Parameter 'exp' is not provided and 'obs' will be used instead.")
   }  
   if (is.null(obs)) {
     obs <- exp 
     case_exp = 1
-    warning("Parameter 'obs' is not provided and will be recycled.")
+    warning("Parameter 'obs' is not provided and 'exp' will be used instead.")
   }
-
-
-  if (!is.null(names(dim(exp$data))) & !is.null(names(dim(obs$data)))) {
-    if (all(names(dim(exp$data)) %in% names(dim(obs$data)))) {
-      dimnames <- names(dim(exp$data))
-    } else {
-      stop("Dimension names of element 'data' from parameters 'exp'",
-           " and 'obs' should have the same name dimmension.")
-    }
-  } else {
-    stop("Element 'data' from parameters 'exp' and 'obs'",
-         " should have dimmension names.")
+  if(any(is.null(names(dim(exp$data))))| any(nchar(names(dim(exp$data))) == 0) |
+     any(is.null(names(dim(obs$data))))| any(nchar(names(dim(obs$data))) == 0)) {
+    stop("Parameter 'exp' and 'obs' must have dimension names in element 'data'.")
+  }
+  if(!all(names(dim(exp$data)) %in% names(dim(obs$data))) |
+     !all(names(dim(obs$data)) %in% names(dim(exp$data)))) {
+    stop("Parameter 'exp' and 'obs' must have same dimension names in element 'data'.")
   }
   dim_exp <- dim(exp$data)
   dim_obs <- dim(obs$data)
-
   dimnames_data <- names(dim_exp)
-  if (dim_exp[dim_anom] == 1 | dim_obs[dim_anom] == 1) {
+  # dim_anom
+  if (is.numeric(dim_anom) & length(dim_anom) == 1) {
+    warning("Parameter 'dim_anom' must be a character string and a numeric value will not be ",
+            "accepted in the next release. The corresponding dimension name is assigned.")
+    dim_anom <- dimnames_data[dim_anom]
+  }
+  if (!is.character(dim_anom)) {
+    stop("Parameter 'dim_anom' must be a character string.")
+  }
+  if (!dim_anom %in% names(dim_exp) | !dim_anom %in% names(dim_obs)) {
+    stop("Parameter 'dim_anom' is not found in 'exp' or in 'obs' dimension in element 'data'.")
+  }
+  if (dim_exp[dim_anom] <= 1 | dim_obs[dim_anom] <= 1) {
     stop("The length of dimension 'dim_anom' in label 'data' of the parameter ",
          "'exp' and 'obs' must be greater than 1.")
   }
-  if (!any(names(dim_exp)[dim_anom] == c('sdate', 'time', 'ftime'))) {
-    warning("Parameter 'dim_anom' correspond to a position name different ",
-            "than 'sdate', 'time' or 'ftime'.")
-  } 
+  # cross
   if (!is.logical(cross) | !is.logical(memb) ) {
     stop("Parameters 'cross' and 'memb' must be logical.")
   }
@@ -114,89 +125,97 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, cross = FALSE, memb = TRUE,
     warning("Parameter 'cross' has length greater than 1 and only the first element",
             "will be used.")
   }
+  # memb
   if (length(memb) > 1) {
      memb <- memb[1]
      warning("Parameter 'memb' has length greater than 1 and only the first element",
              "will be used.")
   }
-  
-  # Selecting time dimension through dimensions permutation
-  if (dim_anom != 3) {
-    dimperm <- 1 : length(dim_exp)
-    dimperm[3] <- dim_anom
-    dimperm[dim_anom] <- 3
-    
-    var_exp <- aperm(exp$data, perm = dimperm)
-    var_obs <- aperm(obs$data, perm = dimperm)
-    
-    #Updating permuted dimensions
-    dim_exp <- dim(exp$data)
-    dim_obs <- dim(obs$data)
+  # memb_dim
+  if (!is.null(memb_dim)) {
+    if (!is.character(memb_dim) | length(memb_dim) > 1) {
+      stop("Parameter 'memb_dim' must be a character string.")
+    }
+    if (!memb_dim %in% names(dim_exp) | !memb_dim %in% names(dim_obs)) {
+      stop("Parameter 'memb_dim' is not found in 'exp' or in 'obs' dimension.")
+    }
   }
-  
+  # dat_dim
+  if (!is.null(dat_dim)) {
+    if (!is.character(dat_dim)) {
+      stop("Parameter 'dat_dim' must be a character vector.")
+    }
+    if (!all(dat_dim %in% names(dim_exp)) | !all(dat_dim %in% names(dim_obs))) {
+      stop("Parameter 'dat_dim' is not found in 'exp' or 'obs' dimension in element 'data'.",
+           " Set it as NULL if there is no dataset dimension.")
+    }
+  }
+  # filter_span
+  if (!is.null(filter_span)) {
+    if (!is.numeric(filter_span)) {
+      warning("Paramater 'filter_span' is not numeric and any filter",
+                " is being applied.")
+      filter_span <- NULL
+    }
+    # ncores
+    if (!is.null(ncores)) {
+      if (!is.numeric(ncores) | ncores %% 1 != 0 | ncores <= 0 |
+        length(ncores) > 1) {
+        stop("Parameter 'ncores' must be a positive integer.")
+      }
+    }
+    # ftime_dim
+    if (!is.character(ftime_dim)) {
+      stop("Parameter 'ftime_dim' must be a character string.")
+    }
+    if (!ftime_dim %in% names(dim_exp) | !memb_dim %in% names(dim_obs)) {
+      stop("Parameter 'ftime_dim' is not found in 'exp' or in 'obs' dimension in element 'data'.")
+    }
+  }
   
   # Computating anomalies
   #----------------------
   
   # With cross-validation
   if (cross) {
-    ano <- Ano_CrossValid(exp = exp$data, obs = obs$data, memb = memb)
-    # reorder dimension back
-    ano$exp <- aperm(ano$exp, match(names(dim(exp$data)), names(dim(ano$exp))))
-    ano$obs <- aperm(ano$obs, match(names(dim(obs$data)), names(dim(ano$obs))))
+    ano <- Ano_CrossValid(exp = exp$data, obs = obs$data, time_dim = dim_anom, memb_dim = memb_dim, memb = memb, dat_dim = dat_dim)
    
     #  Without cross-validation 
   } else {
-    tmp <- Clim(exp = exp$data, obs = obs$data, memb = memb)
+    tmp <- Clim(exp = exp$data, obs = obs$data, time_dim = dim_anom, memb_dim = memb_dim, memb = memb, dat_dim = dat_dim)
     if (!is.null(filter_span)) {
-        if (is.numeric(filter_span)) {
-            pos_dims <- names(dim(tmp$clim_exp))
-            reorder <- match(pos_dims, c('ftime',
-                             pos_dims[-which(pos_dims == 'ftime')]))
-            tmp$clim_obs <- aperm(apply(tmp$clim_obs, c(1 : 
-               length(dim(tmp$clim_obs)))[-which(names(dim(tmp$clim_obs)) == 'ftime')],
-               .Loess, loess_span = filter_span), reorder)
-            tmp$clim_exp <- aperm(apply(tmp$clim_exp, c(1 :
-               length(dim(tmp$clim_exp)))[-which(names(dim(tmp$clim_exp)) == 'ftime')],
-               .Loess, loess_span = filter_span), reorder)
-        } else {
-            warning("Paramater 'filter_span' is not numeric and any filter",
-                    " is being applied.")
-        }
+      tmp$clim_exp <- Apply(tmp$clim_exp, 
+                            target_dims = c(ftime_dim),
+                            output_dims = c(ftime_dim),
+                            fun = .Loess,
+                            loess_span = filter_span, 
+                            ncores = ncores)$output1
+      tmp$clim_obs <- Apply(tmp$clim_obs, 
+                            target_dims = c(ftime_dim),
+                            output_dims = c(ftime_dim),
+                            fun = .Loess,
+                            loess_span = filter_span, 
+                            ncores = ncores)$output1
     }
     if (memb) { 
       clim_exp <- tmp$clim_exp
       clim_obs <- tmp$clim_obs
     } else {
-      clim_exp <- InsertDim(tmp$clim_exp, 2, dim_exp[2]) 
-      clim_obs <- InsertDim(tmp$clim_obs, 2, dim_obs[2]) 
+      clim_exp <- InsertDim(tmp$clim_exp, 1,  dim_exp[memb_dim]) 
+      clim_obs <- InsertDim(tmp$clim_obs, 1,  dim_obs[memb_dim]) 
     }
-   
-    clim_exp <- InsertDim(clim_exp, 3, dim_exp[3]) 
-    clim_obs <- InsertDim(clim_obs, 3, dim_obs[3]) 
-    ano <- NULL    
+    clim_exp <- InsertDim(clim_exp, 1, dim_exp[dim_anom]) 
+    clim_obs <- InsertDim(clim_obs, 1, dim_obs[dim_anom])
+    ano <- NULL
+
+    # Permuting back dimensions to original order
+    clim_exp <- Reorder(clim_exp, dimnames_data)
+    clim_obs <- Reorder(clim_obs, dimnames_data)
+
     ano$exp <- exp$data - clim_exp
     ano$obs <- obs$data - clim_obs 
   }
 
-  # Permuting back dimensions to original order
-  if  (dim_anom != 3) {
-    
-    if (case_obs == 0) {
-      ano$exp <- aperm(ano$exp, perm = dimperm)
-    } 
-    if (case_exp == 0) {
-      ano$obs <- aperm(ano$obs, perm = dimperm)
-    }
-        
-    #Updating back permuted dimensions
-    dim_exp <- dim(exp$data)
-    dim_obs <- dim(obs$data)
-  }
-  
-  # Adding dimensions names
-  attr(ano$exp, 'dimensions') <- dimnames_data
-  attr(ano$obs, 'dimensions') <- dimnames_data
   exp$data <- ano$exp
   obs$data <- ano$obs
   
@@ -212,6 +231,7 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, cross = FALSE, memb = TRUE,
     return(list(exp = exp, obs = obs)) 
   }
 }
+
 .Loess <- function(clim, loess_span) {
   data <- data.frame(ensmean = clim, day = 1 : length(clim))
   loess_filt <- loess(ensmean ~ day, data, span = loess_span)

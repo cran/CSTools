@@ -1,3 +1,10 @@
+### CSTools 4.1.1
+**Submission date to CRAN: 10-11-2022**
+- Fixes:
+    + CST_Analogs corrected input of ClimProjDiags::Subset()
+    + PlotCombinedMap corrected use of 'cex_bar_titles' parameter
+    + CST_Anomaly added 'memb_dim', 'dat_dim' and 'ftime_dim' and improved use for 'dim_anom' parameters
+
 ### CSTools 4.1.0
 **Submission date to CRAN: 25-10-2022**
 - New features:
