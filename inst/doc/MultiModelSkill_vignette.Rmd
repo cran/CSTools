@@ -1,6 +1,8 @@
 ---
 author: "Nuria Perez"
 date: "`r Sys.Date()`"
+revisor: "Eva Rifà"
+revision date: "March 2023"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteEngine{knitr::knitr}
@@ -11,7 +13,7 @@ vignette: >
 Multi-model Skill Assessment
 -----------------------------------------
 
-**reference**: Mishra, N., Prodhomme, C., & Guemas, V. (2018). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31. <https://link.springer.com/article/10.1007/s00382-018-4404-z>
+**reference**: Mishra, N., Prodhomme, C., & Guemas, V. (2018). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31. <https://doi.org/10.1007/s00382-018-4404-z>
 
 
 The R package s2dv should be loaded by running:
@@ -20,7 +22,6 @@ The R package s2dv should be loaded by running:
 library(s2dv)
 ```
 
-
 Library *CSTools*, should be installed from CRAN and loaded:
 
 
@@ -28,7 +29,6 @@ Library *CSTools*, should be installed from CRAN and loaded:
 install.packages("CSTools")
 library(CSTools)
 ```
-
 
 ### 1.- Load data
 
@@ -43,11 +43,11 @@ clim_var = 'tas'
 ```
 
 
-The simulations available for these models are covering the period 1992-2012. So, the starting and ending dates can be defined by running the following lines:
+The simulations available for these models are covering the period 1993-2012. So, the starting and ending dates can be defined by running the following lines:
 
 
 ```r
-ini <- 1992
+ini <- 1993
 fin <- 2012
 start <- as.Date(paste(ini, mth, "01", sep = ""), "%Y%m%d")
 end <- as.Date(paste(fin, mth, "01", sep = ""), "%Y%m%d")
@@ -69,7 +69,7 @@ Ask nuria.perez at bsc.es to achieve the data to run the recipe.
 ```r
 require(zeallot)
 
-glosea5 <- '/esarchive/exp/glosea5/glosea5c3s/$STORE_FREQ$_mean/$VAR_NAME$_f6h/$VAR_NAME$_$START_DATE$.nc'
+glosea5 <- '/esarchive/exp/glosea5/glosea5c3s/$STORE_FREQ$_mean/$VAR_NAME$_f6h/$VAR_NAME$_$YEAR$$MONTH$.nc'
 
 c(exp, obs) %<-% 
    CST_Load(var = clim_var, exp = list(list(name = 'glosea5', path = glosea5), 
@@ -80,13 +80,13 @@ c(exp, obs) %<-%
                   storefreq = "monthly", sampleperiod = 1,  nmember = 9, 
                   output = "lonlat", method = "bilinear", 
                   grid = paste("r", grid, sep = ""))
-#save(exp, obs, file = "../tas_toydata.RData")   
+# save(exp, obs, file = "../tas_toydata.RData")   
 
 # Or use the following line to load the file provided in .RData format:
-load(file = "./tas_toydata.RData")
+# load(file = "./tas_toydata.RData")
 ```
 
-There should be two new elements loaded in the R working environment: `exp` and `obs`, containing the experimental and the observed data for temperature. It's possible to check that they are of class `sd2v_cube` by running:
+There should be two new elements loaded in the R working environment: `exp` and `obs`, containing the experimental and the observed data for temperature. It is possible to check that they are of class `sd2v_cube` by running:
 
 
 ```
@@ -99,19 +99,17 @@ The corresponding data is saved in the element `data` of each object, while othe
 ```r
 > dim(exp$data)
 dataset  member   sdate   ftime     lat     lon 
-      3       9      21       3      35      64 
+      3       9      20       3      35      64 
 > dim(obs$data)
 dataset  member   sdate   ftime     lat     lon 
-      1       1      21       3      35      64 
-Lat <- exp$lat
-Lon <- exp$lon
+      1       1      20       3      35      64 
+Lat <- exp$coords$lat
+Lon <- exp$coords$lon
 ```
-
 
 ### 2.- Computing and plotting Anomaly Correlation Coefficient
 
 The Anomaly Correlation Coefficient (ACC) is the most widely used skill metric for Seasonal Climate Forecast quality (Mishra et al., 2018). 
-
 
 First step is to compute the anomalies over the loaded data applying cross validation technique on individual members by running:
 
@@ -123,11 +121,9 @@ The dimensions are preserved:
 
 ```
 > str(ano_exp$data)
- num [1:3, 1:9, 1:21, 1:3, 1:35, 1:64] -1.647 -0.478 -0.096 1.575 1.086 ...
- - attr(*, "dimensions")= chr [1:6] "dataset" "member" "sdate" "ftime" ...
+ num [1:20, 1:3, 1:9, 1:3, 1:35, 1:64] -1.3958 -0.0484 -0.1326 0.3621 -5.6905 ...
 > str(ano_obs$data)
- num [1, 1, 1:21, 1:3, 1:35, 1:64] 0.0235 1.546 1.3885 -0.344 -5.972 ...
- - attr(*, "dimensions")= chr [1:6] "dataset" "member" "sdate" "ftime" ...
+ num [1:20, 1, 1, 1:3, 1:35, 1:64] 1.551 1.393 -0.344 -5.986 -0.27 ...
 ```
 
 The ACC is obtained by running the `CST_MultiMetric` function defining the parameter 'metric' as correlation. The function also includes the option of computing the Multi-Model Mean ensemble (MMM).
@@ -135,9 +131,8 @@ The ACC is obtained by running the `CST_MultiMetric` function defining the param
 
 ```r
 AnomDJF <- CST_MultiMetric(exp = ano_exp, obs = ano_obs, metric = 'correlation', 
-                          multimodel = TRUE)
+                           multimodel = TRUE)
 ```
-
 
 The output of the function `CST_MultiMetric` is a object of class `s2dv_cube`, it contains the result of the metric, in this case correlation, in the `data` element (including the correlation for the MMM in the latest position).
 While other relevant data is being stored in the corresponding element of the object:
@@ -146,14 +141,13 @@ While other relevant data is being stored in the corresponding element of the ob
 ```r
 > str(AnomDJF$data)
 List of 4
- $ corr      : num [1:4, 1, 1:35, 1:64] 0.586 0.614 0.143 0.501 0.419 ...
- $ p.val     : num [1:4, 1, 1:35, 1:64] 0.0026 0.00153 0.26805 0.01036 0.02931 ...
- $ conf.lower: num [1:4, 1, 1:35, 1:64] 0.2073 0.2485 -0.3076 0.0883 -0.0154 ...
- $ conf.upper: num [1:4, 1, 1:35, 1:64] 0.812 0.827 0.541 0.767 0.72 ...
+ $ corr      : num [1:4, 1, 1:35, 1:64] 0.584 0.649 0.131 0.565 0.484 ...
+ $ p.val     : num [1:4, 1, 1:35, 1:64] 0.0034 0.000989 0.291589 0.00475 0.015262 ...
+ $ conf.lower: num [1:4, 1, 1:35, 1:64] 0.192 0.289 -0.331 0.163 0.053 ...
+ $ conf.upper: num [1:4, 1, 1:35, 1:64] 0.816 0.848 0.542 0.806 0.763 ...
 > names(AnomDJF)
-[1] "data"            "lon"             "lat"             "Variable"        "Datasets"        "Dates"          
-[7] "when"            "source_files"    "load_parameters"
-> names(AnomDJF$Datasets)
+[1] "data"   "dims"   "coords" "attrs" 
+> names(AnomDJF$attrs$Datasets)
 [1] "glosea5"                "ecmwf/system4_m1"       "meteofrance/system5_m1" "erainterim"    
 ```
  
@@ -169,15 +163,14 @@ PlotCombinedMap(AnomDJF$data$corr[,1,,], lon = Lon, lat = Lat, map_select_fun = 
                             c('white', 'darkblue'),
                             c('white', 'darkred'),
                             c('white', 'darkorange')),
-                bar_titles = c("MMM", names(AnomDJF$Datasets)),
-                fileout = "./vignettes/Figures/MultiModelSkill_cor_tas_1992-2012.png",
+                bar_titles = c("MMM", names(AnomDJF$attrs$Datasets)),
                 width = 14, height = 8)                
 ```
 
-The next figure is the map of the maximum positive Anomaly Correlation Coefficient (ACC) among the three individual models from EUROSIP and the multimodel ensemble. ACC for each model is calculated between their respective predicted ensemble mean anomalies and the anomalies of the observed temperature obtained from ERAINT for winter (DJF) seasons over the period 1992-2012. Blue, red, yellow and black colors indicate that the maximum correlation is obtained for GloSea5, ECMWF, MF and the Multi-Model Mean respectively (similar to figure 3 in Mishra et al., 2018).
+The next figure is the map of the maximum positive Anomaly Correlation Coefficient (ACC) among the three individual models from EUROSIP and the multimodel ensemble. ACC for each model is calculated between their respective predicted ensemble mean anomalies and the anomalies of the observed temperature obtained from ERAINT for winter (DJF) seasons over the period 1993-2012. Blue, red, yellow and black colors indicate that the maximum correlation is obtained for GloSea5, ECMWF, MF and the Multi-Model Mean respectively (similar to figure 3 in Mishra et al., 2018).
 
 
-![Max Skills Correlation](../vignettes/Figures/MultiModelSkill_cor_tas_1992-2012.png)
+![Max Skills Correlation](./Figures/MultiModelSkill_cor_tas_1993-2012.png)
 
 
 
@@ -187,7 +180,7 @@ The same function can be used to compute the RMS error by defining the parameter
 
 ```r
 AnomDJF <- CST_MultiMetric(exp = ano_exp, obs = ano_obs, metric = 'rms', 
-                          multimodel = TRUE)
+                           multimodel = TRUE)
 ```
 
 The following lines are necessary to obtain the plot which visualizes the best model given this metric for each grid point. 
@@ -201,12 +194,11 @@ PlotCombinedMap(AnomDJF$data$rms[,1,,], lon = Lon, lat = Lat, map_select_fun = m
                             c('darkblue', 'white'),
                             c('darkred', 'white'),
                             c('darkorange', 'white')),
-                bar_titles = c("MMM", names(AnomDJF$Datasets)), 
-                fileout = "./vignettes/Figures/MultiModelSkill_rms_tas_1992-2012.png",
+                bar_titles = c("MMM", names(AnomDJF$attrs$Datasets)), 
                 width = 14, height = 8)              
 ```
 
-![Max Skills RMS](../vignettes/Figures/MultiModelSkill_rms_tas_1992-2012.png)
+![Max Skills RMS](./Figures/MultiModelSkill_rms_tas_1993-2012.png)
 
 
 ### 4.- Computing and plotting Root Mean Square error Skill Scores (RMSSS)
@@ -230,9 +222,8 @@ PlotCombinedMap(AnomDJF$data$rmsss[,1,,], lon = Lon, lat = Lat,
                             c('white', 'darkblue'),
                             c('white', 'darkred'),
                             c('white', 'darkorange')),
-                bar_titles = c("MMM", names(AnomDJF$Datasets)), 
-                fileout = "./vignettes/Figures/MultiModelSkill_rmsss_tas_1992-2012.png",
+                bar_titles = c("MMM", names(AnomDJF$attrs$Datasets)), 
                 width = 14, height = 8)                
 ```
 
-![Max Skills RMSSS](../vignettes/Figures/MultiModelSkill_rmsss_tas_1992-2012.png)
+![Max Skills RMSSS](./Figures/MultiModelSkill_rmsss_tas_1993-2012.png)

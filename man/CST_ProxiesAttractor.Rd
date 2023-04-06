@@ -7,12 +7,13 @@
 CST_ProxiesAttractor(data, quanti, ncores = NULL)
 }
 \arguments{
-\item{data}{a s2dv_cube object with the data to create the attractor. Must be a matrix with the timesteps in nrow 
-and the grids in ncol(dat(time,grids)}
+\item{data}{An s2dv_cube object with the data to create the attractor. Must be 
+a matrix with the timesteps in nrow and the grids in ncol(dat(time,grids)}
 
-\item{quanti}{a number lower than 1 indicating the quantile to perform the computation of local dimension and theta}
+\item{quanti}{A number lower than 1 indicating the quantile to perform the 
+computation of local dimension and theta.}
 
-\item{ncores}{The number of cores to use in parallel computation}
+\item{ncores}{The number of cores to use in parallel computation.}
 }
 \value{
 dim and theta
@@ -21,20 +22,27 @@ dim and theta
 This function computes two dinamical proxies of the attractor: 
 The local dimension (d) and the inverse of the persistence (theta) for an
 's2dv_cube' object.
-These two parameters will be used as a condition for the computation of dynamical 
-scores to measure predictability and to compute bias correction conditioned  by
-the dynamics with the function DynBiasCorrection  
-Funtion based on the matlab code (davide.faranda@lsce.ipsl.fr) used in
+These two parameters will be used as a condition for the computation of 
+dynamical scores to measure predictability and to compute bias correction 
+conditioned  by the dynamics with the function DynBiasCorrection Function 
+based on the matlab code (davide.faranda@lsce.ipsl.fr) used in
 }
 \examples{
 # Example 1: Computing the attractor using simple s2dv data
-attractor <- CST_ProxiesAttractor(data = lonlat_temp$obs, quanti = 0.6)
-
+obs <- rnorm(2 * 3 * 4 * 8 * 8)
+dim(obs) <- c(dataset = 1, member = 2, sdate = 3, ftime = 4, lat = 8, lon = 8)
+lon <- seq(10, 13.5, 0.5)
+lat <- seq(40, 43.5, 0.5)
+coords <- list(lon = lon, lat = lat)
+data <- list(data = obs, coords = coords)
+class(data) <- "s2dv_cube"
+attractor <- CST_ProxiesAttractor(data = data, quanti = 0.6)
 }
 \references{
-Faranda, D., Alvarez-Castro, M.C., Messori, G., Rodriguez, D., and Yiou, P. (2019). 
-The hammam effect or how a warm ocean enhances large scale atmospheric predictability.
-Nature Communications, 10(1), 1316. DOI = https://doi.org/10.1038/s41467-019-09305-8 "
+Faranda, D., Alvarez-Castro, M.C., Messori, G., Rodriguez, D., 
+and Yiou, P. (2019). The hammam effect or how a warm ocean enhances large 
+scale atmospheric predictability. Nature Communications, 10(1), 1316. 
+\doi{10.1038/s41467-019-09305-8}"
 
 Faranda, D., Gabriele Messori and Pascal Yiou. (2017).
 Dynamical proxies of North Atlantic predictability and extremes. 

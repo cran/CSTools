@@ -12,19 +12,23 @@ MergeDims(
 )
 }
 \arguments{
-\item{data}{an n-dimensional array with named dimensions}
+\item{data}{An n-dimensional array with named dimensions}
 
-\item{merge_dims}{a character vector indicating the names of the dimensions to merge}
+\item{merge_dims}{A character vector indicating the names of the dimensions to 
+merge.}
 
-\item{rename_dim}{a character string indicating the name of the output dimension. If left at NULL, the first dimension name provided in parameter \code{merge_dims} will be used.}
+\item{rename_dim}{A character string indicating the name of the output 
+dimension. If left at NULL, the first dimension name provided in parameter 
+\code{merge_dims} will be used.}
 
-\item{na.rm}{a logical indicating if the NA values should be removed or not.}
+\item{na.rm}{A logical indicating if the NA values should be removed or not.}
 }
 \description{
-This function merges two dimensions of an array into one. The user can select the dimensions to merge and provide the final name of the dimension. The user can select to remove NA values or keep them.
+This function merges two dimensions of an array into one. The 
+user can select the dimensions to merge and provide the final name of the 
+dimension. The user can select to remove NA values or keep them.
 }
 \examples{
-
 data <- 1 : 20
 dim(data) <- c(time = 10, lat = 2)
 new_data <- MergeDims(data, merge_dims = c('time', 'lat'))

@@ -23,43 +23,47 @@ which must be greater than 2.}
 \item{index_hind1}{Index (e.g. NAO index) array from a SFS (named SFS1)
 with at least two dimensions (time , member) or (time, statistic). 
 The temporal dimension, by default 'time', must be greater than 2. 
-The dimension 'member' must be greater than 1. 
-The dimension 'statistic' must be equal to 2, for containing the two paramenters of 
-a normal distribution (mean and sd) representing the ensemble of a SFS.
-It is not possible to have the dimension 'member' and 'statistic' at the same time.}
+The dimension 'member' must be greater than 1. The dimension 'statistic' 
+must be equal to 2, for containing the two paramenters of a normal 
+distribution (mean and sd) representing the ensemble of a SFS. It is not 
+possible to have the dimension 'member' and 'statistic' 
+at the same time.}
 
 \item{index_hind2}{Index (e.g. NAO index) array from a SFS (named SFS2)
 with at least two dimensions (time , member) or (time, statistic). 
 The temporal dimension, by default 'time', must be greater than 2. 
 The dimension 'member' must be greater than 1. 
-The dimension 'statistic' must be equal to 2, for containing the two paramenters of 
-a normal distribution (mean and sd) representing the ensemble of a SFS.
-It is not possible to have the dimension 'member' and  'statistic' together.}
+The dimension 'statistic' must be equal to 2, for containing the two 
+paramenters of a normal distribution (mean and sd) representing the ensemble 
+of a SFS. It is not possible to have the dimension 'member' and  'statistic' 
+together.}
 
-\item{index_fcst1}{(optional, default = NULL) Index (e.g. NAO index) array from forescating of SFS1
-with at least two dimensions (time , member) or (time, statistic). 
-The temporal dimension, by default 'time', must be equal to 1, the forecast year target. 
-The dimension 'member' must be greater than 1. 
-The dimension 'statistic' must be equal to 2, for containing the two paramenters of 
-a normal distribution (mean and sd) representing the ensemble of a SFS.
-It is not possible to have the dimension 'member' and  'statistic' together.}
+\item{index_fcst1}{(optional, default = NULL) Index (e.g. NAO index) array 
+from forescating of SFS1 with at least two dimensions (time , member) or 
+(time, statistic). The temporal dimension, by default 'time', must be equal 
+to 1, the forecast year target. The dimension 'member' must be greater than 
+1. The dimension 'statistic' must be equal to 2, for containing the two 
+paramenters of a normal distribution (mean and sd) representing the ensemble 
+of a SFS. It is not possible to have the dimension 'member' and  'statistic' 
+together.}
 
-\item{index_fcst2}{(optional, default = NULL) Index (e.g. NAO index) array from forescating of SFS2
-with at least two dimensions (time , member) or (time, statistic). 
-The temporal dimension, by default 'time', must be equal to 1, the forecast year target. 
-The dimension 'member' must be greater than 1. 
-The dimension 'statistic' must be equal to 2, for containing the two paramenters of 
-a normal distribution (mean and sd) representing the ensemble of a SFS.
-It is not possible to have the dimension 'member' and  'statistic' together.}
+\item{index_fcst2}{(optional, default = NULL) Index (e.g. NAO index) array 
+from forescating of SFS2 with at least two dimensions (time , member) or 
+(time, statistic). The temporal dimension, by default 'time', must be equal 
+to 1, the forecast year target. The dimension 'member' must be greater than 
+1. The dimension 'statistic' must be equal to 2, for containing the two 
+paramenters of a normal distribution (mean and sd) representing the ensemble 
+of a SFS. It is not possible to have the dimension 'member' and  'statistic' 
+together.}
 
 \item{method_BC}{A character vector of maximun length 2 indicating the bias 
 correction methodology to be applied on each SFS. If it is 'none' or any of 
-its elements is 'none', the bias correction won't be applied. 
-Available methods developped are "ME" (a bias correction scheme based on the
-mean error or bias between observation and predictions to correct the 
-predicted values), and "LMEV" (a bias correction scheme based on a linear 
-model using ensemble variance of index as predictor). (see Sanchez-Garcia, 
-E. et al (2019), https://doi.org/10.5194/asr-16-165-2019 for more details).}
+its elements is 'none', the bias correction won't be applied. Available 
+methods developped are "ME" (a bias correction scheme based on the mean 
+error or bias between observation and predictions to correct the predicted 
+values), and "LMEV" (a bias correction scheme based on a linear model using 
+ensemble variance of index as predictor). (see Sanchez-Garcia, E. et al 
+(2019), \doi{10.5194/asr-16-165-2019} for more details).}
 
 \item{time_dim_name}{A character string indicating the name of the temporal 
 dimension, by default 'time'.}
@@ -69,20 +73,19 @@ dimension, by default 'time'.}
 \value{
 BEI_PDFBest() returns an array with the parameters that caracterize
 the PDFs, with at least a temporal dimension, by default 'time' and dimension 
-'statistic' equal to 2.
-The firt statistic is the parameter 'mean' of the PDF for the best estimation
-combining the two SFSs PDFs.
-The second statistic is the parameter 'standard deviation' of the PDF for
-the best estimation combining the two SFSs PDFs.
-If index_fcst1 and/or index_fcst2 are null, returns the values for hindcast period. 
-Otherwise, it returns the values for a forecast year.
+'statistic' equal to 2. The firt statistic is the parameter 'mean' of the PDF 
+for the best estimation combining the two SFSs PDFs. The second statistic is 
+the parameter 'standard deviation' of the PDF for the best estimation 
+combining the two SFSs PDFs. If index_fcst1 and/or index_fcst2 are null, 
+returns the values for hindcast period. Otherwise, it returns the values for a 
+forecast year.
 }
 \description{
 This function implements the computation to obtain the index 
 Probability Density Functions (PDFs) (e.g. NAO index) obtained to combining 
 the Index PDFs for two Seasonal Forecast Systems (SFSs), the Best Index 
 estimation (see Sanchez-Garcia, E. et al (2019), 
-https://doi.org/10.5194/asr-16-165-2019 for more details about the 
+\doi{10.5194/asr-16-165-2019} for more details about the 
 methodology applied to estimate the Best Index).
 }
 \examples{
@@ -99,10 +102,7 @@ index_fcst2 <- rnorm(18, mean = -0.5, sd = 4)
 dim(index_fcst2) <- c(time = 1, member = 9, season = 2)
 method_BC <- 'ME'
 res <- BEI_PDFBest(index_obs, index_hind1, index_hind2, index_fcst1, 
-index_fcst2, method_BC) 
-dim(res)
-# time statistic    season
-#    1         2         2 
+index_fcst2, method_BC)  
 # Example 2 for the BEI_PDFBest function
 index_obs<- rnorm(10, sd = 3)
 dim(index_obs) <- c(time = 5, season = 2)
@@ -115,15 +115,13 @@ dim(index_fcst1) <- c(time = 1, member = 8, season = 2)
 index_fcst2 <- rnorm(18, mean = -0.5, sd = 4)
 dim(index_fcst2) <- c(time = 1, member = 9, season = 2)
 method_BC <- c('LMEV', 'ME')
-res <- BEI_PDFBest(index_obs, index_hind1, index_hind2, index_fcst1, index_fcst2, method_BC) 
-dim(res)
-# time statistic    season
-#    1         2         2 
+res <- BEI_PDFBest(index_obs, index_hind1, index_hind2, index_fcst1, 
+                   index_fcst2, method_BC) 
 }
 \references{
 Regionally improved seasonal forecast of precipitation through 
 Best estimation of winter NAO, Sanchez-Garcia, E. et al.,
-Adv. Sci. Res., 16, 165174, 2019, https://doi.org/10.5194/asr-16-165-2019
+Adv. Sci. Res., 16, 165174, 2019, \doi{10.5194/asr-16-165-2019}
 }
 \author{
 Eroteida Sanchez-Garcia - AEMET, \email{esanchezg@aemet.es}

@@ -10,15 +10,15 @@ RFSlope(
   time_dim = NULL,
   lon_dim = "lon",
   lat_dim = "lat",
-  ncores = 1
+  ncores = NULL
 )
 }
 \arguments{
 \item{data}{Array containing the spatial precipitation fields to downscale.
-The input array is expected to have at least two dimensions named "lon" and "lat" by default
-(these default names can be changed with the \code{lon_dim} and \code{lat_dim} parameters)
-and one or more dimensions over which to average the slopes,
-which can be specified by parameter \code{time_dim}.}
+The input array is expected to have at least two dimensions named "lon" and 
+"lat" by default (these default names can be changed with the \code{lon_dim} 
+and \code{lat_dim} parameters) and one or more dimensions over which to 
+average the slopes, which can be specified by parameter \code{time_dim}.}
 
 \item{kmin}{First wavenumber for spectral slope (default \code{kmin=1}).}
 
@@ -33,7 +33,8 @@ with more than one element is chosen.}
 
 \item{lat_dim}{Name of lat dimension ("lat" by default).}
 
-\item{ncores}{is an integer that indicates the number of cores for parallel computations using multiApply function. The default value is one.}
+\item{ncores}{is an integer that indicates the number of cores for parallel 
+computations using multiApply function. The default value is one.}
 }
 \value{
 RFSlope() returns spectral slopes using the RainFARM convention
@@ -51,19 +52,9 @@ to be used for RainFARM stochastic precipitation downscaling method.
 # 3 starting dates and 20 ensemble members.
 pr <- 1:(4*3*8*8*20)
 dim(pr) <- c(ensemble = 4, sdate = 3, lon = 8, lat = 8, ftime = 20)
-
 # Compute the spectral slopes ignoring the wavenumber
 # corresponding to the largest scale (the box)
-slopes <- RFSlope(pr, kmin=2)
-dim(slopes)
-#  ensemble    sdate 
-#         4        3
-slopes
-#         [,1]     [,2]     [,3]
-#[1,] 1.893503 1.893503 1.893503
-#[2,] 1.893503 1.893503 1.893503
-#[3,] 1.893503 1.893503 1.893503
-#[4,] 1.893503 1.893503 1.893503
+slopes <- RFSlope(pr, kmin = 2, time_dim = 'ftime')
 }
 \author{
 Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}

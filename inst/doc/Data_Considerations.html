@@ -214,9 +214,14 @@ hr {
 
 <ul>
 <li>$data element is an N-dimensional array with named dimensions containing the data (e.g.: temperature values), </li>
-<li>$lat($lon) element is a vector indicating the latitudinal(longitudinal) values of the region in $data, </li>
-<li>$Variable describes the variable name and its units</li>
+<li>$coords is a named list with elements of the coordinates vectors corresponding to the dimensions of the $data, </li>
+<li>$attrs is a named list with elements corresponding to attributes of the object. It has the following elements:
+
+<ul>
+<li>$Variable is a list with the variable name in element $varName and with the metadata of all the variables in the $metadata element, </li>
+<li>$Dates is an array of dates of the $data element, </li>
 <li>other elements for extra metadata information </li>
+</ul></li>
 </ul>
 
 <p>It is possible to visualize an example of the structure of &#39;s2dv_cube&#39; object by opening an R session and running:</p>
@@ -283,7 +288,7 @@ object_size(exp)
 object_size(obs)
 # 3.09 MB
 library(s2dv)
-PlotEquiMap(exp$data[1,1,1,1,,], lon = exp$lon, lat= exp$lat,
+PlotEquiMap(exp$data[1,1,1,1,,], lon = exp$coords$lon, lat= exp$coords$lat,
             filled.continents = FALSE, fileout = &quot;Meteofrance_r360x180.png&quot;)
 </code></pre>
 

@@ -14,14 +14,15 @@
 #'@param sdate_dim A character string indicating the dimension name in which 
 #'  cross-validation would be applied when exp_cor is not provided. 'sdate' by 
 #'  default.
-#'@param memb_dim A character string indicating the dimension name where 
-#'  ensemble members are stored in the experimental arrays. 'member' by default.
+#'@param memb_dim A character string indicating the dimension name where
+#'  ensemble members are stored in the experimental arrays. It can be NULL if 
+#'  there is no ensemble member dimension. It is set as 'member' by default.
 #'@param window_dim A character string indicating the dimension name where 
 #'  samples have been stored. It can be NULL (default) in case all samples are 
 #'  used. 
-#'@param method A character string indicating the method to be used:'PTF',
-#'  'DIST','RQUANT','QUANT','SSPLIN'. By default, the empirical quantile mapping
-#'  'QUANT' is used.
+#'@param method A character string indicating the method to be used:'PTF', 
+#'  'DIST', 'RQUANT', 'QUANT', 'SSPLIN'. By default, the empirical quantile 
+#'  mapping 'QUANT' is used.
 #'@param na.rm A logical value indicating if missing values should be removed   
 #'  (FALSE by default).
 #'@param ncores An integer indicating the number of cores for parallel 
@@ -40,28 +41,12 @@
 #'dim(exp$data) <- c(dataset = 1, member = 3, sdate = 5, ftime = 4,
 #'                   lat = 3, lon = 2)
 #'class(exp) <- 's2dv_cube'
+#'obs <- NULL
 #'obs$data <- 101 : c(100 + 1 * 1 * 5 * 4 * 3 * 2)
 #'dim(obs$data) <- c(dataset = 1, member = 1, sdate = 5, ftime = 4,
 #'                   lat = 3, lon = 2)
 #'class(obs) <- 's2dv_cube'
 #'res <- CST_QuantileMapping(exp, obs)
-#'
-#'# Use data in package
-#'\donttest{
-#'exp <- lonlat_temp$exp
-#'exp$data <- exp$data[, , 1:4, , 1:2, 1:3]
-#'dim(exp$data) <- c(dataset = 1, member = 15, sdate = 4, ftime = 3, 
-#'                   lat = 2, lon = 3)
-#'obs <- lonlat_temp$obs
-#'obs$data <- obs$data[, , 1:4, , 1:2, 1:3]
-#'dim(obs$data) <- c(dataset = 1, member = 1, sdate = 4, ftime = 3, 
-#'                   lat = 2, lon = 3)
-#'exp_cor <- lonlat_temp$exp
-#'exp_cor$data <- exp_cor$data[, 1, 5:6, , 1:2, 1:3]
-#'dim(exp_cor$data) <- c(dataset = 1, member = 1, sdate = 2, ftime = 3, 
-#'                       lat = 2, lon = 3)
-#'res <- CST_QuantileMapping(exp, obs, exp_cor, window_dim = 'ftime')
-#'}
 #'
 #'@import qmap 
 #'@import multiApply 
@@ -71,36 +56,36 @@ CST_QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
                                 memb_dim = 'member', window_dim = NULL, 
                                 method = 'QUANT', na.rm = FALSE, 
                                 ncores = NULL, ...) {
-    if (!inherits(exp, 's2dv_cube') || !inherits(obs, 's2dv_cube')) {
-        stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube', ",
-             "as output by CSTools::CST_Load.")
+  # Check 's2dv_cube'
+  if (!inherits(exp, 's2dv_cube') || !inherits(obs, 's2dv_cube')) {
+    stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube', ",
+         "as output by CSTools::CST_Load.")
+  }
+  if (!is.null(exp_cor)) {
+    if (!inherits(exp_cor, 's2dv_cube')) {
+      stop("Parameter 'exp_cor' must be of the class 's2dv_cube', ",
+           "as output by CSTools::CST_Load.")
     }
-    if (!is.null(exp_cor)) {
-      if (!inherits(exp_cor, 's2dv_cube')) {
-        stop("Parameter 'exp_cor' must be of the class 's2dv_cube', ",
-             "as output by CSTools::CST_Load.")
-      }
-    }
+  }
 
-    QMapped <- QuantileMapping(exp = exp$data, obs = obs$data, 
-                               exp_cor = exp_cor$data,
-                               sdate_dim = sdate_dim, memb_dim = memb_dim,
-                               window_dim = window_dim, method = method,
-                               na.rm = na.rm, ncores = ncores, ...)
-    if (is.null(exp_cor)) {
-      exp$data <- QMapped
-      exp$Datasets <- c(exp$Datasets, obs$Datasets)
-      exp$source_files <- c(exp$source_files, obs$source_files)
-      return(exp)
-
-    } else {
-      exp_cor$data <- QMapped
-      exp_cor$Datasets <- c(exp_cor$Datasets, exp$Datasets, obs$Datasets)
-      exp_cor$source_files <- c(exp_cor$source_files, exp$source_files, obs$source_files)
-      return(exp_cor)
-    }
-    
-    
+  QMapped <- QuantileMapping(exp = exp$data, obs = obs$data, 
+                             exp_cor = exp_cor$data,
+                             sdate_dim = sdate_dim, memb_dim = memb_dim,
+                             window_dim = window_dim, method = method,
+                             na.rm = na.rm, ncores = ncores, ...)
+  if (is.null(exp_cor)) {
+    exp$data <- QMapped
+    exp$attrs$Datasets <- c(exp$attrs$Datasets, obs$attrs$Datasets)
+    exp$attrs$source_files <- c(exp$attrs$source_files, obs$attrs$source_files)
+    return(exp)
+  } else {
+    exp_cor$data <- QMapped
+    exp_cor$attrs$Datasets <- c(exp_cor$attrs$Datasets, exp$attrs$Datasets, 
+                                obs$attrs$Datasets)
+    exp_cor$attrs$source_files <- c(exp_cor$attrs$source_files, exp$attrs$source_files, 
+                                    obs$attrs$source_files)
+    return(exp_cor)
+  }
 }
 
 #'Quantile Mapping for seasonal or decadal forecast data
@@ -122,14 +107,14 @@ CST_QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
 #'  cross-validation would be applied when exp_cor is not provided. 'sdate' by
 #'  default.
 #'@param memb_dim A character string indicating the dimension name where
-#'  ensemble members are stored in the experimental arrays. 'member' by 
-#'  default. 
+#'  ensemble members are stored in the experimental arrays. It can be NULL if 
+#'  there is no ensemble member dimension. It is set as 'member' by default.
 #'@param window_dim A character string indicating the dimension name where 
 #'  samples have been stored. It can be NULL (default) in case all samples are
 #'  used. 
 #'@param method A character string indicating the method to be used: 'PTF',
-#'  'DIST','RQUANT','QUANT','SSPLIN'. By default, the empirical quantile mapping
-#'  'QUANT' is used. 
+#'  'DIST', 'RQUANT', 'QUANT', 'SSPLIN'. By default, the empirical quantile 
+#'  mapping 'QUANT' is used. 
 #'@param na.rm A logical value indicating if missing values should be removed  
 #'  (FALSE by default). 
 #'@param ncores An integer indicating the number of cores for parallel 
@@ -151,28 +136,14 @@ CST_QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
 #'              lat = 3, lon = 2)
 #'res <- QuantileMapping(exp, obs)
 #'
-#'# Use data in package
-#'\donttest{
-#'exp <- lonlat_temp$exp$data[, , 1:4, , 1:2, 1:3]
-#'dim(exp) <- c(dataset = 1, member = 15, sdate = 4, ftime = 3, 
-#'              lat = 2, lon = 3)
-#'obs <- lonlat_temp$obs$data[, , 1:4, , 1:2, 1:3]
-#'dim(obs) <- c(dataset = 1, member = 1, sdate = 4, ftime = 3, 
-#'              lat = 2, lon = 3)
-#'exp_cor <- lonlat_temp$exp$data[, 1, 5:6, , 1:2, 1:3]
-#'dim(exp_cor) <- c(dataset = 1, member = 1, sdate = 2, ftime = 3, 
-#'                  lat = 2, lon = 3)
-#'res <- QuantileMapping(exp, obs, exp_cor, window_dim = 'ftime')
-#'}
-#'
 #'@import qmap 
 #'@import multiApply 
 #'@import s2dv
 #'@export
 QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
                             memb_dim = 'member', window_dim = NULL, 
-                            method = 'QUANT',
-                            na.rm = FALSE, ncores = NULL, ...) {
+                            method = 'QUANT', na.rm = FALSE, 
+                            ncores = NULL, ...) {
   # exp and obs
   obsdims <- names(dim(obs))
   expdims <- names(dim(exp))
@@ -213,12 +184,27 @@ QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
          "'PTF', 'DIST', 'RQUANT', 'QUANT', 'SSPLIN'.")
   }
   # memb_dim
-  if (!all(memb_dim %in% obsdims)) {
-    obs <- InsertDim(obs, posdim = 1, lendim = 1,
-                     name = memb_dim[!(memb_dim %in% obsdims)])
-  }
-  if (any(!memb_dim %in% expdims)) {
-    stop("Parameter 'memb_dim' is not found in 'exp' dimensions.")
+  if (is.null(memb_dim)) {
+    remove_member <- TRUE
+    memb_dim <- "temp_memb_dim"
+    exp <- InsertDim(exp, posdim = 1, lendim = 1, name = "temp_memb_dim")
+    obs <- InsertDim(obs, posdim = 1, lendim = 1, name = "temp_memb_dim")
+    obsdims <- names(dim(obs))
+    expdims <- names(dim(exp))
+    if (!is.null(exp_cor)) {
+      exp_cor <- InsertDim(exp_cor, posdim = 1, lendim = 1, name = "temp_memb_dim")
+    }
+  } else {
+    remove_member <- FALSE
+    if (!all(memb_dim %in% obsdims)) {
+      obs <- InsertDim(obs, posdim = 1, lendim = 1,
+                       name = memb_dim[!(memb_dim %in% obsdims)])
+      obsdims <- names(dim(obs))
+    }
+    if (any(!memb_dim %in% expdims)) {
+      stop(paste0("Parameter 'memb_dim' is not found in 'exp' dimensions. ", 
+                  "Set it as NULL if there is no member dimension."))
+    }
   }
   sample_dims <- c(memb_dim, sdate_dim)
   # window_dim
@@ -245,7 +231,6 @@ QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
   }
 
   ###############################
-
   if (!is.null(exp_cor)) {
     qmaped <- Apply(list(exp, obs, exp_cor), target_dims = sample_dims, 
                     fun = .qmapcor, method = method, sdate_dim = sdate_dim,
@@ -256,12 +241,17 @@ QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
                     fun = .qmapcor, exp_cor = NULL, method = method,
                     sdate_dim = sdate_dim, na.rm = na.rm, ...,                
                     ncores = ncores)$output1
-  } 
+  }
+  # remove added 'temp_memb_dim'
+  if (remove_member) {
+    dim(qmaped) <- dim(qmaped)[-which(names(dim(qmaped)) == "temp_memb_dim")]
+  }
+
   return(qmaped)
 }
 
-.qmapcor <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate', method = 'QUANT', 
-                     na.rm = FALSE, ...) {
+.qmapcor <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate', 
+                     method = 'QUANT', na.rm = FALSE, ...) {
 
   # exp: [memb (+ window), sdate]
   # obs: [memb (+ window), sdate] 

@@ -1,140 +1,193 @@
-#' @rdname CST_WeatherRegimes
-#' @title Function for Calculating the Cluster analysis
+#'@rdname CST_WeatherRegimes
+#'@title Function for Calculating the Cluster analysis
 #'
-#' @author Verónica Torralba - BSC, \email{veronica.torralba@bsc.es}
+#'@author Verónica Torralba - BSC, \email{veronica.torralba@bsc.es}
 #'
-#' @description This function computes the weather regimes from a cluster analysis.
-#'It is applied on the array \code{data} in a 's2dv_cube' object. The dimensionality of this object can be also reduced
-#'by using PCs obtained from the application of the #'EOFs analysis to filter the dataset.
-#'The cluster analysis can be performed with the traditional k-means or those methods
+#'@description This function computes the weather regimes from a cluster 
+#'analysis. It is applied on the array \code{data} in a 's2dv_cube' object. The 
+#'dimensionality of this object can be also reduced by using PCs obtained from 
+#'the application of the #'EOFs analysis to filter the dataset. The cluster 
+#'analysis can be performed with the traditional k-means or those methods
 #'included in the hclust (stats package).
 #'
-#'@references Cortesi, N., V., Torralba, N., González-Reviriego, A., Soret, and F.J., Doblas-Reyes (2019).
-#' Characterization of European wind speed variability using weather regimes. Climate Dynamics,53,
-#' 4961–4976, doi:10.1007/s00382-019-04839-5.
-#'@references Torralba, V. (2019) Seasonal climate prediction for the wind energy sector: methods and tools
-#' for the development of a climate service. Thesis. Available online: \url{https://eprints.ucm.es/56841/}
+#'@references Cortesi, N., V., Torralba, N., González-Reviriego, A., Soret, and 
+#'F.J., Doblas-Reyes (2019). Characterization of European wind speed variability 
+#'using weather regimes. Climate Dynamics,53, 4961–4976, 
+#'\doi{10.1007/s00382-019-04839-5}.
+#'@references Torralba, V. (2019) Seasonal climate prediction for the wind 
+#'energy sector: methods and tools for the development of a climate service. 
+#'Thesis. Available online: \url{https://eprints.ucm.es/56841/}.
 #'
-#'@param data a 's2dv_cube' object
-#'@param ncenters Number of clusters to be calculated with the clustering function.
-#'@param EOFs Whether to compute the EOFs (default = 'TRUE') or not (FALSE) to filter the data.
-#'@param neofs number of modes to be kept (default = 30).
-#'@param varThreshold Value with the percentage of variance to be explained by the PCs.
-#' Only sufficient PCs to explain this much variance will be used in the clustering.
-#'@param method Different options to estimate the clusters. The most traditional approach is the k-means analysis (default=’kmeans’)
-#'but the function also support the different methods included in the hclust . These methods are:
-#'"ward.D", "ward.D2", "single", "complete", "average" (= UPGMA), "mcquitty" (= WPGMA), "median" (= WPGMC) or "centroid" (= UPGMC).
-#' For more details about these methods see the hclust function documentation included in the stats package.
-#'@param iter.max Parameter to select the maximum number of iterations allowed (Only if method='kmeans' is selected).
-#'@param nstart Parameter for the cluster analysis determining how many random sets to choose (Only if method='kmeans' is selected).
+#'@param data An 's2dv_cube' object.
+#'@param ncenters Number of clusters to be calculated with the clustering 
+#'  function.
+#'@param EOFs Whether to compute the EOFs (default = 'TRUE') or not (FALSE) to 
+#'  filter the data.
+#'@param neofs Number of modes to be kept (default = 30).
+#'@param varThreshold Value with the percentage of variance to be explained by 
+#'  the PCs. Only sufficient PCs to explain this much variance will be used in 
+#'  the clustering.
+#'@param method Different options to estimate the clusters. The most traditional 
+#'  approach is the k-means analysis (default=’kmeans’) but the function also 
+#'  support the different methods included in the hclust . These methods are:
+#'  "ward.D", "ward.D2", "single", "complete", "average" (= UPGMA), "mcquitty" 
+#'  (= WPGMA), "median" (= WPGMC) or "centroid" (= UPGMC). For more details 
+#'  about these methods see the hclust function documentation included in the 
+#'  stats package.
+#'@param iter.max Parameter to select the maximum number of iterations allowed 
+#'  (Only if method='kmeans' is selected).
+#'@param nstart Parameter for the cluster analysis determining how many random 
+#'  sets to choose (Only if method='kmeans' is selected).
 #'@param ncores The number of multicore threads to use for parallel computation. 
-#'@return A list with two elements \code{$data} (a 's2dv_cube' object containing the composites cluster=1,..,K for case (*1)
-# or only k=1 for any specific cluster, i.e., case (*2)) and \code{$statistics} that includes
-#'         \code{$pvalue} (array with the same structure as \code{$data} containing the pvalue of the composites obtained through a t-test that accounts for the serial dependence.),
-#'          \code{cluster} (A matrix or vector with integers (from 1:k) indicating the cluster to which each time step is allocated.),
-#'         \code{persistence} (Percentage of days in a month/season before a cluster is replaced for a new one (only if method=’kmeans’ has been selected.)),
-#'         \code{frequency} (Percentage of days in a month/season belonging to each cluster (only if method=’kmeans’ has been selected).),
+#'@return A list with two elements \code{$data} (a 's2dv_cube' object containing 
+#'the composites cluster = 1,..,K for case (*1) or only k = 1 for any specific 
+#'cluster, i.e., case (*2)) and \code{$statistics} that includes \code{$pvalue} 
+#'(array with the same structure as \code{$data} containing the pvalue of the 
+#'composites obtained through a t-test that accounts for the serial dependence.),
+#'\code{cluster} (A matrix or vector with integers (from 1:k) indicating the 
+#'cluster to which each time step is allocated.), \code{persistence} (Percentage 
+#'of days in a month/season before a cluster is replaced for a new one (only if 
+#'method=’kmeans’ has been selected.)), \code{frequency} (Percentage of days in 
+#'a month/season belonging to each cluster (only if method=’kmeans’ has been 
+#'selected).),
+#'@examples
+#'data <- array(abs(rnorm(1280, 283.7, 6)), dim = c(dataset = 2, member = 2, 
+#'                                                  sdate = 3, ftime = 3, 
+#'                                                  lat = 4, lon = 4))
+#'coords <- list(lon = seq(0, 3), lat = seq(47, 44))
+#'obs <- list(data = data, coords = coords)
+#'class(obs) <- 's2dv_cube'
+#'
+#'res1 <- CST_WeatherRegimes(data = obs, EOFs = FALSE, ncenters = 4)
+#'res2 <- CST_WeatherRegimes(data = obs, EOFs = TRUE, ncenters = 3)
+#'
 #'@importFrom s2dv EOF
 #'@import multiApply
-#'@examples
-#'\dontrun{
-#'res1 <- CST_WeatherRegimes(data = lonlat_temp$obs, EOFs = FALSE, ncenters = 4)
-#'res2 <- CST_WeatherRegimes(data = lonlat_temp$obs, EOFs = TRUE, ncenters = 3)
-#'}
 #'@export
-#'
 CST_WeatherRegimes <- function(data, ncenters = NULL,
-                              EOFs = TRUE, neofs = 30,
-                              varThreshold = NULL,
-                              method = "kmeans",
-                              iter.max = 100, nstart = 30,
-                              ncores = NULL)  {
+                               EOFs = TRUE, neofs = 30,
+                               varThreshold = NULL,
+                               method = "kmeans",
+                               iter.max = 100, nstart = 30,
+                               ncores = NULL)  {
+  # Check 's2dv_cube'
   if (!inherits(data, 's2dv_cube')) {
     stop("Parameter 'data' must be of the class 's2dv_cube', ",
          "as output by CSTools::CST_Load.")
   }
-  if ('lon' %in% names(data)){
-    lon <- data$lon
-  }else {
-    lon <- NULL
+  # Check 'exp' object structure
+  if (!all(c('data', 'coords') %in% names(data))) {
+    stop("Parameter 'data' must have 'data' and 'coords' elements ",
+         "within the 's2dv_cube' structure.")
   }
-  result <- WeatherRegime(data$data,ncenters = ncenters,
+  # Check coordinates
+  if (!any(names(data$coords) %in% .KnownLonNames()) | 
+      !any(names(data$coords) %in% .KnownLatNames())) {
+    stop("Spatial coordinate names do not match any of the names accepted ",
+         "the package.")
+  } else {
+    lon_name <- names(data$coords)[[which(names(data$coords) %in% .KnownLonNames())]]
+    lat_name <- names(data$coords)[[which(names(data$coords) %in% .KnownLatNames())]]
+    lon <- as.vector(data$coords[[lon_name]])
+    lat <- as.vector(data$coords[[lat_name]])
+  }
+
+  result <- WeatherRegime(data$data, ncenters = ncenters,
                           EOFs = EOFs, neofs = neofs,
                           varThreshold = varThreshold, lon = lon,
-                          lat = data$lat, method = method,
-                          iter.max=iter.max, nstart = nstart,
+                          lat = lat, method = method,
+                          iter.max = iter.max, nstart = nstart,
                           ncores = ncores)
   data$data <- result$composite
   data$statistics <- result[-1]
   return(data)
 }
 
-#' @rdname WeatherRegimes
-#' @title Function for Calculating the Cluster analysis
+#'@rdname WeatherRegimes
+#'@title Function for Calculating the Cluster analysis
 #'
-#' @author Verónica Torralba - BSC, \email{veronica.torralba@bsc.es}
+#'@author Verónica Torralba - BSC, \email{veronica.torralba@bsc.es}
 #'
-#' @description This function computes the weather regimes from a cluster analysis.
-#'It can be applied over the dataset with dimensions
-#'c(year/month, month/day, lon, lat), or by using PCs obtained from the application of the
-#'EOFs analysis to filter the dataset.
-#'The cluster analysis can be performed with the traditional k-means or those methods
-#'included in the hclust (stats package).
+#'@description This function computes the weather regimes from a cluster analysis.
+#'It can be applied over the dataset with dimensions c(year/month, month/day, 
+#'lon, lat), or by using PCs obtained from the application of the EOFs analysis 
+#'to filter the dataset. The cluster analysis can be performed with the 
+#'traditional k-means or those methods included in the hclust (stats package).
 #'
-#'@references Cortesi, N., V., Torralba, N., González-Reviriego, A., Soret, and F.J., Doblas-Reyes (2019).
-#' Characterization of European wind speed variability using weather regimes. Climate Dynamics,53,
-#' 4961–4976, doi:10.1007/s00382-019-04839-5.
-#'@references Torralba, V. (2019) Seasonal climate prediction for the wind energy sector: methods and tools
-#' for the development of a climate service. Thesis. Available online: \url{https://eprints.ucm.es/56841/}
+#'@references Cortesi, N., V., Torralba, N., González-Reviriego, A., Soret, and 
+#'F.J., Doblas-Reyes (2019). Characterization of European wind speed variability 
+#'using weather regimes. Climate Dynamics,53, 4961–4976, 
+#'\doi{10.1007/s00382-019-04839-5}.
+#'@references Torralba, V. (2019) Seasonal climate prediction for the wind 
+#'energy sector: methods and tools for the development of a climate service. 
+#'Thesis. Available online: \url{https://eprints.ucm.es/56841/}
 #'
-#'@param data an array containing anomalies with named dimensions with at least start date 'sdate', forecast time 'ftime', latitude 'lat' and longitude 'lon'.
-#'@param ncenters Number of clusters to be calculated with the clustering function.
-#'@param EOFs Whether to compute the EOFs (default = 'TRUE') or not (FALSE) to filter the data.
-#'@param neofs number of modes to be kept only if EOFs = TRUE has been selected. (default = 30).
-#'@param varThreshold Value with the percentage of variance to be explained by the PCs.
-#' Only sufficient PCs to explain this much variance will be used in the clustering. 
+#'@param data An array containing anomalies with named dimensions with at least 
+#'  start date 'sdate', forecast time 'ftime', latitude 'lat' and longitude 
+#'  'lon'.
+#'@param ncenters Number of clusters to be calculated with the clustering 
+#'  function.
+#'@param EOFs Whether to compute the EOFs (default = 'TRUE') or not (FALSE) to 
+#'  filter the data.
+#'@param neofs Number of modes to be kept only if EOFs = TRUE has been selected. 
+#'  (default = 30).
+#'@param varThreshold Value with the percentage of variance to be explained by 
+#'  the PCs. Only sufficient PCs to explain this much variance will be used in 
+#'  the clustering. 
 #'@param lon Vector of longitudes.
 #'@param lat Vector of latitudes.
-#'@param method Different options to estimate the clusters. The most traditional approach is the k-means analysis (default=’kmeans’)
-#'but the function also support the different methods included in the hclust . These methods are:
-#'"ward.D", "ward.D2", "single", "complete", "average" (= UPGMA), "mcquitty" (= WPGMA), "median" (= WPGMC) or "centroid" (= UPGMC).
-#' For more details about these methods see the hclust function documentation included in the stats package.
-#'@param iter.max Parameter to select the maximum number of iterations allowed (Only if method='kmeans' is selected).
-#'@param nstart Parameter for the cluster analysis determining how many random sets to choose (Only if method='kmeans' is selected).
+#'@param method Different options to estimate the clusters. The most traditional 
+#'  approach is the k-means analysis (default=’kmeans’) but the function also 
+#'  support the different methods included in the hclust . These methods are:
+#'  "ward.D", "ward.D2", "single", "complete", "average" (= UPGMA), "mcquitty" 
+#'  (= WPGMA), "median" (= WPGMC) or "centroid" (= UPGMC). For more details 
+#'  about these methods see the hclust function documentation included in the 
+#'  stats package.
+#'@param iter.max Parameter to select the maximum number of iterations allowed 
+#'  (Only if method = 'kmeans' is selected).
+#'@param nstart Parameter for the cluster analysis determining how many random 
+#'  sets to choose (Only if method='kmeans' is selected).
 #'@param ncores The number of multicore threads to use for parallel computation. 
-#'@return A list with elements \code{$composite} (array with at least 3-d ('lat', 'lon', 'cluster') containing the composites k=1,..,K for case (*1)
-# or only k=1 for any specific cluster, i.e., case (*2)),
-#'         \code{pvalue} (array with at least 3-d ('lat','lon','cluster') with the pvalue of the composites obtained through a t-test that accounts for the serial
-# dependence of the data with the same structure as Composite.),
-#'         \code{cluster} (A matrix or vector with integers (from 1:k) indicating the cluster to which each time step is allocated.),
-#'         \code{persistence} (Percentage of days in a month/season before a cluster is replaced for a new one (only if method=’kmeans’ has been selected.)),
-#'         \code{frequency} (Percentage of days in a month/season belonging to each cluster (only if method=’kmeans’ has been selected).),
+#'@return A list with elements \code{$composite} (array with at least 3-d ('lat', 
+#''lon', 'cluster') containing the composites k = 1,..,K for case (*1) or only k = 1 
+#'for any specific cluster, i.e., case (*2)), \code{pvalue} (array with at least 
+#'3-d ('lat','lon','cluster') with the pvalue of the composites obtained through 
+#'a t-test that accounts for the serial dependence of the data with the same 
+#'structure as Composite.), \code{cluster} (A matrix or vector with integers 
+#'(from 1:k) indicating the cluster to which each time step is allocated.),
+#'\code{persistence} (Percentage of days in a month/season before a cluster is 
+#'replaced for a new one (only if method=’kmeans’ has been selected.)),
+#'\code{frequency} (Percentage of days in a month/season belonging to each 
+#'cluster (only if method=’kmeans’ has been selected).),
+#'@examples
+#'data <- array(abs(rnorm(1280, 283.7, 6)), dim = c(dataset = 2, member = 2,  
+#'                                                  sdate = 3, ftime = 3, 
+#'                                                  lat = 4, lon = 4))
+#'lat <- seq(47, 44)
+#'res <- WeatherRegime(data = data, lat = lat,  
+#'                     EOFs = FALSE, ncenters = 4)
 #'@importFrom s2dv EOF
 #'@import multiApply
-#'@examples
-#'\dontrun{
-#'res <- WeatherRegime(data = lonlat_temp$obs$data, lat = lonlat_temp$obs$lat,
-#'                     EOFs = FALSE, ncenters = 4)
-#'}
 #'@export
-
 WeatherRegime <- function(data, ncenters = NULL,
-                          EOFs = TRUE,neofs = 30,
+                          EOFs = TRUE, neofs = 30,
                           varThreshold = NULL, lon = NULL,
                           lat = NULL, method = "kmeans",
-                          iter.max=100, nstart = 30,
+                          iter.max = 100, nstart = 30,
                           ncores = NULL) {
-  
+  ## Check inputs
+  # data
   if (is.null(names(dim(data)))) {
     stop("Parameter 'data' must be an array with named dimensions.")
   }
-  
+  if (EOFs  == TRUE && is.null(lon)) {
+    stop("Parameter 'lon' must be specified.")
+  }
   if (is.null(lat)) {
     stop("Parameter 'lat' must be specified.")
   }
-  
   dimData <- names(dim(data))
-
+  # temporal dimensions
   if ('sdate' %in% dimData && 'ftime' %in% dimData) {
     nsdates <- dim(data)['sdate']
     nftimes <- dim(data)['ftime']
@@ -148,17 +201,35 @@ WeatherRegime <- function(data, ncenters = NULL,
          stop("Parameter 'data' must have temporal dimensions.")
       }
   }
-  
+  # spatial dimensions
+  if (!any(names(dim(data)) %in% .KnownLonNames()) | 
+      !any(names(dim(data)) %in% .KnownLatNames())) {
+    stop("Spatial coordinate names do not match any of the names accepted ",
+         "by the package.")
+  }
+
+  lon_name <- names(dim(data))[[which(names(dim(data)) %in% .KnownLonNames())]]
+  lat_name <- names(dim(data))[[which(names(dim(data)) %in% .KnownLatNames())]]
+
+  if (!is.null(lat) && dim(data)[lat_name] != length(lat)) {
+    stop("The length of the paramter 'lat' does not match with the ['lat'] dimension of 
+         the parameter 'data'.")
+  }
+  # ncenters
+  if (is.null(ncenters)) {
+    stop("Parameter 'ncenters' must be specified.")
+  }
 
   output <- Apply(data = list(data),
-                  target_dims = c('time','lat','lon'),
+                  target_dims = c('time', lat_name, lon_name),
                   fun = .WeatherRegime,
                   EOFs = EOFs,  neofs = neofs,
                   varThreshold = varThreshold,
                   lon = lon, lat = lat,
                   ncenters = ncenters,
                   method = method,
-                  ncores = ncores)
+                  ncores = ncores, 
+                  lon_name = lon_name, lat_name = lat_name)
   
   if (method == 'kmeans' && 'sdate' %in% dimData && 'ftime' %in% dimData) {
 
@@ -186,31 +257,15 @@ WeatherRegime <- function(data, ncenters = NULL,
 .WeatherRegime <- function(data, ncenters = NULL, EOFs = TRUE, neofs = 30,
                            varThreshold = NULL, lon = NULL,
                            lat = NULL, method = "kmeans",
-                           iter.max=100, nstart = 30) {
+                           iter.max = 100, nstart = 30, lon_name = 'lon', 
+                           lat_name = 'lat') {
   
-  if (is.null(names(dim(data)))) {
-    stop("Parameter 'data' must be an array with 'time', 'lat' and 'lon' dimensions.")
-  }
-  
-  if (!is.null(lat) && dim(data)['lat'] != length(lat)) {
-    stop("The length of the paramter 'lat' does not match with the ['lat'] dimension of 
-         the parameter 'data'.")
-  }
-  if (is.null(ncenters)) {
-    stop("Parameter 'ncenters' must be specified.")
-  }
-  if (EOFs  == TRUE && is.null(lon)) {
-    stop("Parameter 'lon' must be specified.")
-  }
-  if (is.null(lat)) {
-    stop("Parameter 'lat' must be specified.")
-  }
-  
-  nlon <- dim(data)['lat']
-  nlat <- dim(data)['lon']
+
+  nlon <- dim(data)[lat_name]
+  nlat <- dim(data)[lon_name]
   
   if (any(is.na(data))){
-    nas_test <- MergeDims(data, merge_dims = c('lat','lon'),
+    nas_test <- MergeDims(data, merge_dims = c(lat_name,lon_name),
                           rename_dim = 'space', na.rm = TRUE)
     if (dim(nas_test)['space']== c(nlat*nlon)){
       stop("Parameter 'data' contains NAs in the 'time' dimensions.")
@@ -240,12 +295,12 @@ WeatherRegime <- function(data, ncenters = NULL,
     }
   } else {
   
-    dataW <- aperm(Apply(data, target_dims = 'lat', 
+    dataW <- aperm(Apply(data, target_dims = lat_name, 
                          function (x, la) {
                            x * cos(la * pi / 180)},
                          la = lat)[[1]], c(2, 1, 3))
     
-    cluster_input <- MergeDims(dataW, merge_dims = c('lat','lon'),
+    cluster_input <- MergeDims(dataW, merge_dims = c(lat_name, lon_name),
                                rename_dim = 'space',na.rm = TRUE)
 
   }
@@ -270,7 +325,7 @@ WeatherRegime <- function(data, ncenters = NULL,
   }
   result <- lapply(1:length(result),
                    function (n) {
-                     names(dim(result[[n]])) <- c("lat", "lon", "cluster")
+                     names(dim(result[[n]])) <- c(lat_name, lon_name, "cluster")
                      return (result[[n]])
                    })
   

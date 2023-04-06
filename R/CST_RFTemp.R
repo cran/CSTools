@@ -1,75 +1,79 @@
-#' @rdname CST_RFTemp
-#' @title Temperature downscaling of a CSTools object using lapse rate
-#' correction or a reference field
-#' @author Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}
-#' @description This function implements a simple lapse rate correction of a
-#' temperature field (an object of class 's2dv_cube' as provided by
-#' `CST_Load`) as input.
-#' The input lon grid must be increasing (but can be modulo 360).
-#' The input lat grid can be irregularly spaced (e.g. a Gaussian grid)
-#' The output grid can be irregularly spaced in lon and/or lat.
-#' @references Method described in ERA4CS MEDSCOPE milestone M3.2: 
-#' High-quality climate prediction data available to WP4
-#' [https://www.medscope-project.eu/the-project/deliverables-reports/]([https://www.medscope-project.eu/the-project/deliverables-reports/)
-#' and in H2020 ECOPOTENTIAL Deliverable No. 8.1:
-#' High resolution (1-10 km) climate, land use and ocean change scenarios
-#' [https://www.ecopotential-project.eu/images/ecopotential/documents/D8.1.pdf](https://www.ecopotential-project.eu/images/ecopotential/documents/D8.1.pdf)
-#' @param data An object of the class 's2dv_cube' as returned by `CST_Load`,
-#' containing the temperature fields to downscale.
-#' The data object is expected to have an element named \code{$data}
-#' with at least two spatial dimensions named "lon" and "lat".
-#' (these default names can be changed with the \code{lon_dim} and
-#' \code{lat_dim} parameters)
-#' @param oro An object of the class 's2dv_cube' as returned by `CST_Load`,
-#' containing fine scale orography (in meters).
-#' The destination downscaling area must be contained in the orography field.
-#' @param xlim vector with longitude bounds for downscaling;
-#' the full input field is downscaled if `xlim` and `ylim` are not specified.
-#' @param ylim vector with latitude bounds for downscaling
-#' @param lapse float with environmental lapse rate
-#' @param lon_dim string with name of longitude dimension
-#' @param lat_dim string with name of latitude dimension
-#' @param time_dim a vector of character string indicating the name of temporal dimension. By default, it is set to NULL and it considers "ftime", "sdate" and "time" as temporal dimensions.
-#' @param verbose logical if to print diagnostic output
-#' @param nolapse logical, if true `oro` is interpreted as a fine-scale
-#' climatology and used directly for bias correction
-#' @param compute_delta logical if true returns only a delta to be used for
-#' out-of-sample forecasts. Returns an object of the class 's2dv_cube',
-#' containing a delta. Activates `nolapse = TRUE`.
-#' @param delta An object of the class 's2dv_cube', containing a delta
-#' to be applied to the downscaled input data. Activates `nolapse = TRUE`.
-#' The grid of this object must coincide with that of the required output.
-#' @param method string indicating the method used for interpolation:
-#' "nearest" (nearest neighbours followed by smoothing with a circular
-#' uniform weights kernel), "bilinear" (bilinear interpolation)
-#' The two methods provide similar results, but nearest is slightly better
-#' provided that the fine-scale grid is correctly centered as a subdivision
-#' of the large-scale grid
-#' @return CST_RFTemp() returns a downscaled CSTools object
-#' (i.e., of the class 's2dv_cube').
-#' @export
-#' @import multiApply
-#' @examples
-#' # Generate simple synthetic data and downscale by factor 4
-#' t <- rnorm(7 * 6 * 2 * 3 * 4)*10 + 273.15 + 10
-#' dim(t) <- c(dataset = 1, member = 2, sdate = 3, ftime = 4, lat = 6, lon = 7)
-#' lon <- seq(3, 9, 1)
-#' lat <- seq(42, 47, 1)
-#' exp <- list(data = t, lat = lat, lon = lon)
-#' attr(exp, 'class') <- 's2dv_cube'
-#' o <- runif(29*29)*3000
-#' dim(o) <- c(lat = 29, lon = 29)
-#' lon <- seq(3, 10, 0.25)
-#' lat <- seq(41, 48, 0.25)
-#' oro <- list(data = o, lat = lat, lon = lon)
-#' attr(oro, 'class') <- 's2dv_cube'
-#' res <- CST_RFTemp(exp, oro, xlim=c(4,8), ylim=c(43, 46), lapse=6.5)
-
+#'@rdname CST_RFTemp
+#'@title Temperature downscaling of a CSTools object using lapse rate
+#'correction or a reference field
+#'@author Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}
+#'@description This function implements a simple lapse rate correction of a
+#'temperature field (an object of class 's2dv_cube' as provided by
+#'`CST_Load`) as input.
+#'The input lon grid must be increasing (but can be modulo 360).
+#'The input lat grid can be irregularly spaced (e.g. a Gaussian grid)
+#'The output grid can be irregularly spaced in lon and/or lat.
+#'@references Method described in ERA4CS MEDSCOPE milestone M3.2: 
+#'High-quality climate prediction data available to WP4 here: 
+#'\url{https://www.medscope-project.eu/the-project/deliverables-reports/}
+#'and in H2020 ECOPOTENTIAL Deliverable No. 8.1:
+#'High resolution (1-10 km) climate, land use and ocean change scenarios available 
+#'here: \url{https://ec.europa.eu/research/participants/documents/downloadPublic?documentIds=080166e5b6cd2324&appId=PPGMS}
+#'@param data An object of the class 's2dv_cube' as returned by `CST_Load`,
+#'  containing the temperature fields to downscale. The data object is expected 
+#'  to have an element named \code{$data} with at least two spatial dimensions 
+#'  named "lon" and "lat". (these default names can be changed with the 
+#'  \code{lon_dim} and \code{lat_dim} parameters).
+#'@param oro An object of the class 's2dv_cube' as returned by `CST_Load`,
+#'  containing fine scale orography (in meters). The destination downscaling 
+#'  area must be contained in the orography field.
+#'@param xlim Vector with longitude bounds for downscaling; the full input
+#'  field is downscaled if `xlim` and `ylim` are not specified.
+#'@param ylim Vector with latitude bounds for downscaling
+#'@param lapse Float with environmental lapse rate
+#'@param lon_dim String with name of longitude dimension
+#'@param lat_dim String with name of latitude dimension
+#'@param time_dim A vector of character string indicating the name of temporal 
+#'  dimension. By default, it is set to NULL and it considers "ftime", "sdate" 
+#'  and "time" as temporal dimensions.
+#'@param verbose Logical if to print diagnostic output.
+#'@param nolapse Logical, if true `oro` is interpreted as a fine-scale
+#'  climatology and used directly for bias correction.
+#'@param compute_delta Logical if true returns only a delta to be used for
+#'  out-of-sample forecasts. Returns an object of the class 's2dv_cube',
+#'  containing a delta. Activates `nolapse = TRUE`.
+#'@param delta An object of the class 's2dv_cube', containing a delta
+#'  to be applied to the downscaled input data. Activates `nolapse = TRUE`.
+#'  The grid of this object must coincide with that of the required output.
+#'@param method String indicating the method used for interpolation:
+#'  "nearest" (nearest neighbours followed by smoothing with a circular
+#'  uniform weights kernel), "bilinear" (bilinear interpolation)
+#'  The two methods provide similar results, but nearest is slightly better
+#'  provided that the fine-scale grid is correctly centered as a subdivision
+#'  of the large-scale grid.
+#'@return CST_RFTemp() returns a downscaled CSTools object (i.e., of the class 
+#''s2dv_cube').
+#'@examples
+#'# Generate simple synthetic data and downscale by factor 4
+#'t <- rnorm(7 * 6 * 2 * 3 * 4)*10 + 273.15 + 10
+#'dim(t) <- c(dataset = 1, member = 2, sdate = 3, ftime = 4, lat = 6, lon = 7)
+#'lon <- seq(3, 9, 1)
+#'lat <- seq(42, 47, 1)
+#'coords <- list(lat = lat, lon = lon)
+#'exp <- list(data = t, coords = coords)
+#'attr(exp, 'class') <- 's2dv_cube'
+#'o <- runif(29*29)*3000
+#'dim(o) <- c(lats = 29, lons = 29)
+#'lon <- seq(3, 10, 0.25)
+#'lat <- seq(41, 48, 0.25)
+#'coords <- list(lat = lat, lon = lon)
+#'oro <- list(data = o, coords = coords)
+#'attr(oro, 'class') <- 's2dv_cube'
+#'res <- CST_RFTemp(data = exp, oro = oro, xlim = c(4,8), ylim = c(43, 46), 
+#'                  lapse = 6.5, time_dim = 'ftime',
+#'                  lon_dim = 'lon', lat_dim = 'lat')
+#'@import multiApply
+#'@export
 CST_RFTemp <- function(data, oro, xlim = NULL, ylim = NULL, lapse = 6.5,
                        lon_dim = "lon", lat_dim = "lat", time_dim = NULL,
                        nolapse = FALSE, verbose = FALSE, compute_delta = FALSE,
                        method = "bilinear", delta = NULL) {
-
+  # Check 's2dv_cube'
   if (!inherits(data, "s2dv_cube")) {
     stop("Parameter 'data' must be of the class 's2dv_cube', ",
          "as output by CSTools::CST_Load.")
@@ -79,95 +83,130 @@ CST_RFTemp <- function(data, oro, xlim = NULL, ylim = NULL, lapse = 6.5,
          "as output by CSTools::CST_Load.")
   }
   if (!is.null(delta)) {
-      if (!inherits(delta, "s2dv_cube")) {
-          stop("Parameter 'delta' must be of the class 's2dv_cube', ",
-               "as output by CSTools::CST_Load.")
-      }
+    if (!inherits(delta, "s2dv_cube")) {
+      stop("Parameter 'delta' must be of the class 's2dv_cube', ",
+           "as output by CSTools::CST_Load.")
+    }
+  }
+  # Check 's2dv_cube' structure
+  if (!all(c('data', 'coords') %in% names(data))) {
+    stop("Parameter 'data' must have 'data' and 'coords' elements ",
+         "within the 's2dv_cube' structure.")
+  }
+  if (!all(c('data', 'coords') %in% names(oro))) {
+    stop("Parameter 'oro' must have 'data' and 'coords' elements ",
+         "within the 's2dv_cube' structure.")
+  }
+  # Check coordinates
+  if (!any(names(data$coords) %in% .KnownLonNames()) | 
+      !any(names(data$coords) %in% .KnownLatNames())) {
+    stop("Spatial coordinate names of 'data' do not match any of the names ",
+         "accepted by the package.")
+  }
+  if (!any(names(oro$coords) %in% .KnownLonNames()) | 
+      !any(names(oro$coords) %in% .KnownLatNames())) {
+    stop("Spatial coordinate names of 'oro' do not match any of the names ",
+         "accepted by the package.")
   }
 
-  res <- RFTemp(data$data, data$lon, data$lat,
-                oro$data, oro$lon, oro$lat, xlim, ylim, lapse,
+  lon_data <- names(data$coords)[[which(names(data$coords) %in% .KnownLonNames())]]
+  lat_data <- names(data$coords)[[which(names(data$coords) %in% .KnownLatNames())]]
+
+  lon_oro <- names(oro$coords)[[which(names(oro$coords) %in% .KnownLonNames())]]
+  lat_oro <- names(oro$coords)[[which(names(oro$coords) %in% .KnownLatNames())]]
+
+  res <- RFTemp(data = data$data, 
+                lon = as.vector(data$coords[[lon_data]]),
+                lat = as.vector(data$coords[[lat_data]]),
+                oro = oro$data, 
+                lonoro = as.vector(oro$coords[[lon_oro]]), 
+                latoro = as.vector(oro$coords[[lat_oro]]), 
+                xlim = xlim, ylim = ylim, lapse = lapse,
                 lon_dim = lon_dim, lat_dim = lat_dim, time_dim = time_dim,
                 nolapse = nolapse, verbose = verbose, method = method,
                 compute_delta = compute_delta, delta = delta$data)
 
   data$data <- res$data
-  data$lon <- res$lon
-  data$lat <- res$lat
+  data$coords[[lon_data]] <- res$coords[[lon_dim]]
+  data$coords[[lat_data]] <- res$coords[[lat_dim]]
 
   return(data)
 }
 
-#' @rdname RFTemp
-#' @title Temperature downscaling of a CSTools object using lapse rate
-#' correction (reduced version)
-#' @author Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}
-#' @description This function implements a simple lapse rate correction of a
-#' temperature field (a multidimensional array) as input.
-#' The input lon grid must be increasing (but can be modulo 360).
-#' The input lat grid can be irregularly spaced (e.g. a Gaussian grid)
-#' The output grid can be irregularly spaced in lon and/or lat.
-#' @references Method described in ERA4CS MEDSCOPE milestone M3.2: 
-#' High-quality climate prediction data available to WP4
-#' [https://www.medscope-project.eu/the-project/deliverables-reports/]([https://www.medscope-project.eu/the-project/deliverables-reports/)
-#' and in H2020 ECOPOTENTIAL Deliverable No. 8.1:
-#' High resolution (1-10 km) climate, land use and ocean change scenarios
-#' [https://www.ecopotential-project.eu/images/ecopotential/documents/D8.1.pdf](https://www.ecopotential-project.eu/images/ecopotential/documents/D8.1.pdf)
-#' @param data Temperature array to downscale.
-#' The input array is expected to have at least two dimensions named
-#' "lon" and "lat" by default
-#' (these default names can be changed with the \code{lon_dim} and
-#' \code{lat_dim} parameters)
-#' @param lon Vector or array of longitudes.
-#' @param lat Vector or array of latitudes.
-#' @param lonoro Vector or array of longitudes corresponding to the fine orography.
-#' @param latoro Vector or array of latitudes corresponding to the fine orography.
-#' @param oro Array containing fine-scale orography (in m)
-#' The destination downscaling area must be contained in the orography field.
-#' @param xlim vector with longitude bounds for downscaling;
-#' the full input field is downscaled if `xlim` and `ylim` are not specified.
-#' @param ylim vector with latitude bounds for downscaling
-#' @param lapse float with environmental lapse rate
-#' @param lon_dim string with name of longitude dimension
-#' @param lat_dim string with name of latitude dimension
-#' @param time_dim a vector of character string indicating the name of temporal dimension. By default, it is set to NULL and it considers "ftime", "sdate" and "time" as temporal dimensions.
-#' @param verbose logical if to print diagnostic output
-#' @param nolapse logical, if true `oro` is interpreted as a
-#' fine-scale climatology and used directly for bias correction
-#' @param compute_delta logical if true returns only a delta to be used for
-#' out-of-sample forecasts.
-#' @param delta matrix containing a delta to be applied to the downscaled
-#' input data. The grid of this matrix is supposed to be same as that of
-#' the required output field
-#' @param method string indicating the method used for interpolation:
-#' "nearest" (nearest neighbours followed by smoothing with a circular
-#' uniform weights kernel), "bilinear" (bilinear interpolation)
-#' The two methods provide similar results, but nearest is slightly better
-#' provided that the fine-scale grid is correctly centered as a subdivision
-#' of the large-scale grid
-#' @return CST_RFTemp() returns a downscaled CSTools object
-#' @return RFTemp() returns a list containing the fine-scale
-#' longitudes, latitudes and the downscaled fields.
-#' @export
-#' @import multiApply
-#' @examples
-#' # Generate simple synthetic data and downscale by factor 4
-#' t <- rnorm(7 * 6 * 4 * 3) * 10 + 273.15 + 10
-#' dim(t) <- c(sdate = 3, ftime = 4, lat = 6, lon = 7)
-#' lon <- seq(3, 9, 1)
-#' lat <- seq(42, 47, 1)
-#' o <- runif(29 * 29) * 3000
-#' dim(o) <- c(lat = 29, lon = 29)
-#' lono <- seq(3, 10, 0.25)
-#' lato <- seq(41, 48, 0.25)
-#' res <- RFTemp(t, lon, lat, o, lono, lato, xlim = c(4, 8), ylim = c(43, 46),
-#'               lapse = 6.5)
-
+#'@rdname RFTemp
+#'@title Temperature downscaling of a CSTools object using lapse rate
+#'correction (reduced version)
+#'@author Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}
+#'@description This function implements a simple lapse rate correction of a
+#'temperature field (a multidimensional array) as input.
+#'The input lon grid must be increasing (but can be modulo 360).
+#'The input lat grid can be irregularly spaced (e.g. a Gaussian grid)
+#'The output grid can be irregularly spaced in lon and/or lat.
+#'@references Method described in ERA4CS MEDSCOPE milestone M3.2: 
+#'High-quality climate prediction data available to WP4 here:
+#'\ url{https://www.medscope-project.eu/the-project/deliverables-reports/}
+#'and in H2020 ECOPOTENTIAL Deliverable No. 8.1:
+#'High resolution (1-10 km) climate, land use and ocean change scenarios here: 
+#'\url{https://ec.europa.eu/research/participants/documents/downloadPublic?documentIds=080166e5b6cd2324&appId=PPGMS}.
+#'@param data Temperature array to downscale. The input array is expected to 
+#'  have at least two dimensions named "lon" and "lat" by default (these default 
+#'  names can be changed with the \code{lon_dim} and \code{lat_dim} parameters).
+#'@param lon Vector or array of longitudes.
+#'@param lat Vector or array of latitudes.
+#'@param lonoro Vector or array of longitudes corresponding to the fine orography.
+#'@param latoro Vector or array of latitudes corresponding to the fine orography.
+#'@param oro Array containing fine-scale orography (in m). The destination 
+#'  downscaling area must be contained in the orography field.
+#'@param xlim Vector with longitude bounds for downscaling; the full input field 
+#'  is downscaled if `xlim` and `ylim` are not specified.
+#'@param ylim Vector with latitude bounds for downscaling.
+#'@param lapse Float with environmental lapse rate.
+#'@param lon_dim String with name of longitude dimension.
+#'@param lat_dim String with name of latitude dimension.
+#'@param time_dim A vector of character string indicating the name of temporal 
+#'  dimension. By default, it is set to NULL and it considers "ftime", "sdate" 
+#'  and "time" as temporal dimensions.
+#'@param verbose Logical if to print diagnostic output.
+#'@param nolapse Logical, if true `oro` is interpreted as a fine-scale 
+#'  climatology and used directly for bias correction.
+#'@param compute_delta Logical if true returns only a delta to be used for
+#'  out-of-sample forecasts.
+#'@param delta Matrix containing a delta to be applied to the downscaled
+#'  input data. The grid of this matrix is supposed to be same as that of
+#'  the required output field.
+#'@param method String indicating the method used for interpolation:
+#'  "nearest" (nearest neighbours followed by smoothing with a circular
+#'  uniform weights kernel), "bilinear" (bilinear interpolation)
+#'  The two methods provide similar results, but nearest is slightly better
+#'  provided that the fine-scale grid is correctly centered as a subdivision
+#'  of the large-scale grid.
+#'@return CST_RFTemp() returns a downscaled CSTools object.
+#'@return RFTemp() returns a list containing the fine-scale
+#'longitudes, latitudes and the downscaled fields.
+#'@examples
+#'# Generate simple synthetic data and downscale by factor 4
+#'t <- rnorm(7 * 6 * 4 * 3) * 10 + 273.15 + 10
+#'dim(t) <- c(sdate = 3, ftime = 4, lat = 6, lon = 7)
+#'lon <- seq(3, 9, 1)
+#'lat <- seq(42, 47, 1)
+#'o <- runif(29 * 29) * 3000
+#'dim(o) <- c(lat = 29, lon = 29)
+#'lono <- seq(3, 10, 0.25)
+#'lato <- seq(41, 48, 0.25)
+#'res <- RFTemp(t, lon, lat, o, lono, lato, xlim = c(4, 8), ylim = c(43, 46),
+#'              lapse = 6.5, time_dim = 'ftime')
+#'@import multiApply
+#'@export
 RFTemp <- function(data, lon, lat, oro, lonoro, latoro,
                    xlim = NULL, ylim = NULL, lapse = 6.5,
                    lon_dim = "lon", lat_dim = "lat", time_dim = NULL,
                    nolapse = FALSE, verbose = FALSE, compute_delta = FALSE,
                    method = "bilinear", delta = NULL) {
+  # Check 'lon_dim' and 'lat_dim' parameters
+  if (!all(c(lon_dim, lat_dim) %in% names(dim(data)))) {
+    stop("Parameters 'lon_dim' and 'lat_dim' do not match with 'data' ", 
+         "dimension names.")
+  }
 
   # Check/detect time_dim
   if (is.null(time_dim)) {
@@ -211,45 +250,49 @@ RFTemp <- function(data, lon, lat, oro, lonoro, latoro,
   result$lat <- array(result$lat[1:dim(result$lat)[1]])
   names(dim(result$lon)) <- lon_dim
   names(dim(result$lat)) <- lat_dim
+
+  names(result) <- c('data', lon_dim, lat_dim)
+
   return(result)
 }
 
-#' Lapse-rate temperature correction downscaling
+#'Lapse-rate temperature correction downscaling
 #'
-#' @description Downscales a temperature field using a lapse-rate
-#' correction based on a reference orography. Time-averaging is done on all
-#' dimensions after the first two.
-#' @author Jost von Hardenberg, \email{j.vonhardenberg@isac.cnr.it}
-#' @param lon vector of input longitudes
-#' @param lat vector of input latitudes
-#' @param t matrix of input temperature data
-#' @param lono vector of orography longitudes
-#' @param lato vector of orography latitudes
-#' @param oro matrix of topographical elevations (in meters)
-#' The destination downscaling area must be contained in the orography field.
-#' @param xlim vector of longitude bounds; the full input field is downscaled if `xlim` and `ylim` are not specified.
-#' @param ylim vector of latitude bounds
-#' @param radius smoothing radius expressed in longitude units
-#' (default is half a large-scale pixel)
-#' @param lapse environmental lapse rate (in K/Km)
-#' @param nolapse logical, if true `oro` is interpreted as a fine-scale
-#' climatology and used directly for bias correction
-#' @param compute_delta logical if true returns only a delta to be used for
-#' out-of-sample forecasts.
-#' @param delta matrix containing a delta to be applied to the input data.
-#' The grid of this matrix is supposed to be same as
-#' that of the required output field
-#' @param verbose logical if to print diagnostic output
-#' @return A downscaled temperature matrix
-#' @examples
-#' lon = 5:20
-#' lat = 35:40
-#' t = runif(16 * 6); dim(t) = c(16, 6)
-#' lono = seq(5, 20, 0.1)
-#' lato = seq(35, 40, 0.1)
-#' o = runif(151 * 51) * 2000; dim(o) = c(151, 51)
-#' td = .downscalet(t, lon, lat, o, lono, lato, c(8, 12), c(36, 38))
-#' @noRd
+#'@description Downscales a temperature field using a lapse-rate
+#'correction based on a reference orography. Time-averaging is done on all
+#'dimensions after the first two.
+#'@author Jost von Hardenberg, \email{j.vonhardenberg@isac.cnr.it}
+#'@param lon Vector of input longitudes.
+#'@param lat Vector of input latitudes.
+#'@param t Matrix of input temperature data.
+#'@param lono Vector of orography longitudes.
+#'@param lato Vector of orography latitudes.
+#'@param oro Matrix of topographical elevations (in meters). The destination 
+#'  downscaling area must be contained in the orography field.
+#'@param xlim Vector of longitude bounds; the full input field is downscaled if 
+#'  `xlim` and `ylim` are not specified.
+#'@param ylim Vector of latitude bounds.
+#'@param radius Smoothing radius expressed in longitude units (default is half a 
+#'  large-scale pixel).
+#'@param lapse Environmental lapse rate (in K/Km).
+#'@param nolapse Logical, if true `oro` is interpreted as a fine-scale
+#'  climatology and used directly for bias correction.
+#'@param compute_delta Logical if true returns only a delta to be used for
+#'  out-of-sample forecasts.
+#'@param delta Matrix containing a delta to be applied to the input data.
+#'  The grid of this matrix is supposed to be same as that of the required 
+#'  output field.
+#'@param verbose Logical if to print diagnostic output.
+#'@return A downscaled temperature matrix.
+#'@examples
+#'lon = 5:20
+#'lat = 35:40
+#'t = runif(16 * 6); dim(t) = c(16, 6)
+#'lono = seq(5, 20, 0.1)
+#'lato = seq(35, 40, 0.1)
+#'o = runif(151 * 51) * 2000; dim(o) = c(151, 51)
+#'td = .downscalet(t, lon, lat, o, lono, lato, c(8, 12), c(36, 38))
+#'@noRd
 .downscalet <- function(t, lon, lat, oro, lono, lato,
                         xlim = NULL, ylim = NULL,
                         radius = 0, lapse = 6.5, nolapse = FALSE,
@@ -403,31 +446,31 @@ RFTemp <- function(data, lon, lat, oro, lonoro, latoro,
                        method = method)
 }
 
-#' Nearest neighbour interpolation
+#'Nearest neighbour interpolation
 #'
-#' @description The input field is interpolated onto the output
-#' coordinate grid using nearest neighbours or bilinear interpolation.
-#' The input lon grid must be monotone increasing. 
-#' The input lat grid can be irregularly spaced (e.g. a Gaussian grid)
-#' The output grid can be irregularly spaced in lon and/or lat.
-#' @author Jost von Hardenberg, \email{j.vonhardenberg@isac.cnr.it}
-#' @param z matrix with the input field to interpolate (assumed to
-#' include also a third time dimension)
-#' @param lon vector of input longitudes
-#' @param lat vector of input latitudes
-#' @param lonp vector of output longitudes
-#' @param latp vector of output latitudes
-#' @param method string indicating the interpolation method
-#' ("nearest" or "bilinear" (default))
-#' @return The interpolated field.
-#' @examples
-#' lon = 5:11
-#' lat = 35:40
-#' z = runif(7 * 6 * 2); dim(z) = c(7, 6, 2)
-#' lonp = seq(5, 10, 0.2)
-#' latp = seq(35, 40, 0.2)
-#' zo <- .interp2d(z, lon, lat, lonp, latp, method = "nearest")
-#' @noRd
+#'@description The input field is interpolated onto the output
+#'coordinate grid using nearest neighbours or bilinear interpolation.
+#'The input lon grid must be monotone increasing. 
+#'The input lat grid can be irregularly spaced (e.g. a Gaussian grid)
+#'The output grid can be irregularly spaced in lon and/or lat.
+#'@author Jost von Hardenberg, \email{j.vonhardenberg@isac.cnr.it}
+#'@param z Matrix with the input field to interpolate (assumed to
+#'  include also a third time dimension)
+#'@param lon Vector of input longitudes.
+#'@param lat Vector of input latitudes.
+#'@param lonp Vector of output longitudes.
+#'@param latp Vector of output latitudes.
+#'@param method String indicating the interpolation method ("nearest" or 
+#'  "bilinear" (default)).
+#'@return The interpolated field.
+#'@examples
+#'lon = 5:11
+#'lat = 35:40
+#'z = runif(7 * 6 * 2); dim(z) = c(7, 6, 2)
+#'lonp = seq(5, 10, 0.2)
+#'latp = seq(35, 40, 0.2)
+#'zo <- .interp2d(z, lon, lat, lonp, latp, method = "nearest")
+#'@noRd
 .interp2d <- function(z, lon, lat, lonp, latp, method="bilinear") {
 
     nx <- length(lonp)
@@ -502,21 +545,21 @@ RFTemp <- function(data, lon, lat, oro, lonoro, latoro,
     return(zo)
 }
 
-#' Smoothening using convolution with a circular kernel
+#'Smoothening using convolution with a circular kernel
 #'
-#' @description The input field is convolved with a circular kernel with equal
-#' weights. Takes into account missing values.
-#' @author Jost von Hardenberg, \email{j.vonhardenberg@isac.cnr.it}
-#' @param z matrix with the input field to smoothen, with dimensions `c(ns, ns)`
-#' @param sdim the smoothing kernel radius in pixel
-#' @return The smoothened field.
-#' @examples
-#' z <- rnorm(64 * 64)
-#' dim(z) <- c(64, 64)
-#' zs <- smooth(z, 8)
-#' sd(zs)
-#' # [1] 0.1334648
-#' @noRd
+#'@description The input field is convolved with a circular kernel with equal
+#'weights. Takes into account missing values.
+#'@author Jost von Hardenberg, \email{j.vonhardenberg@isac.cnr.it}
+#'@param z Matrix with the input field to smoothen, with dimensions `c(ns, ns)`
+#'@param sdim The smoothing kernel radius in pixel.
+#'@return The smoothened field.
+#'@examples
+#'z <- rnorm(64 * 64)
+#'dim(z) <- c(64, 64)
+#'zs <- smooth(z, 8)
+#'sd(zs)
+#'# [1] 0.1334648
+#'@noRd
 .smooth <- function(z, sdim) {
   nsx <- dim(z)[1]
   nsy <- dim(z)[2]

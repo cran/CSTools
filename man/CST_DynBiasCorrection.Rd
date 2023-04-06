@@ -16,29 +16,29 @@ CST_DynBiasCorrection(
 )
 }
 \arguments{
-\item{exp}{an s2v_cube object with the experiment data}
+\item{exp}{An s2v_cube object with the experiment data.}
 
-\item{obs}{an s2dv_cube object with the reference data}
+\item{obs}{An s2dv_cube object with the reference data.}
 
-\item{method}{a character string indicating the method to apply bias 
-correction among these ones: "PTF","RQUANT","QUANT","SSPLIN"}
+\item{method}{A character string indicating the method to apply bias 
+correction among these ones: "PTF","RQUANT","QUANT","SSPLIN".}
 
-\item{wetday}{logical indicating whether to perform wet day correction 
+\item{wetday}{Logical indicating whether to perform wet day correction 
 or not OR a numeric threshold below which all values are set to zero (by 
 default is set to 'FALSE').}
 
-\item{proxy}{a character string indicating the proxy for local dimension
+\item{proxy}{A character string indicating the proxy for local dimension
 'dim' or inverse of persistence 'theta' to apply the dynamical 
 conditioned bias correction method.}
 
-\item{quanti}{a number lower than 1 indicating the quantile to perform 
-the computation of local dimension and theta}
+\item{quanti}{A number lower than 1 indicating the quantile to perform 
+the computation of local dimension and theta.}
 
-\item{ncores}{The number of cores to use in parallel computation}
+\item{ncores}{The number of cores to use in parallel computation.}
 }
 \value{
-dynbias an s2dvcube object with a bias correction performed 
-conditioned by local dimension 'dim' or inverse of persistence 'theta'
+dynbias An s2dvcube object with a bias correction performed 
+conditioned by local dimension 'dim' or inverse of persistence 'theta'.
 }
 \description{
 This function perform a bias correction conditioned by the 
@@ -52,36 +52,36 @@ values with lower 'dim', and the same for theta. The function gives two options
 of bias correction: one for 'dim' and/or one for 'theta'
 }
 \examples{
-# example 1: simple data s2dvcube style
-set.seed(1)
 expL <- rnorm(1:2000)
-dim (expL) <- c(time =100,lat = 4, lon = 5)
-obsL <- c(rnorm(1:1980),expL[1,,]*1.2)
-dim (obsL) <- c(time = 100,lat = 4, lon = 5)
-time_obsL <- paste(rep("01", 100), rep("01", 100), 1920 : 2019, sep = "-")
-time_expL <- paste(rep("01", 100), rep("01", 100), 1929 : 2019, sep = "-")
-lon <- seq(-1,5,1.5)
-lat <- seq(30,35,1.5)
-# qm=0.98 # too high for this short dataset, it is possible that doesn't
+dim(expL) <- c(time = 100, lat = 4, lon = 5)
+obsL <- c(rnorm(1:1980), expL[1, , ] * 1.2)
+dim(obsL) <- c(time = 100, lat = 4, lon = 5)
+time_obsL <- as.POSIXct(paste(rep("01", 100), rep("01", 100), 1920:2019, sep = "-"), 
+                       format = "\%d-\%m-\%y")
+time_expL <- as.POSIXct(paste(rep("01", 100), rep("01", 100), 1929:2019, sep = "-"), 
+                       format = "\%d-\%m-\%y")
+lon <- seq(-1, 5, 1.5)
+lat <- seq(30, 35, 1.5)
+# qm = 0.98 #'too high for this short dataset, it is possible that doesn't
 # get the requirement, in that case it would be necessary select a lower qm
-# for instance qm=0.60
-expL <- s2dv_cube(data = expL, lat = lat, lon = lon,
-                Dates = list(start = time_expL, end = time_expL))
-obsL <- s2dv_cube(data = obsL, lat = lat, lon = lon,
-                Dates = list(start = time_obsL, end = time_obsL))
+# for instance qm = 0.60
+expL <- s2dv_cube(data = expL, coords = list(lon = lon, lat = lat),
+                 Dates = time_expL)
+obsL <- s2dv_cube(data = obsL, coords = list(lon = lon, lat = lat),
+                 Dates = time_obsL)
 # to use DynBiasCorrection
 dynbias1 <- DynBiasCorrection(exp = expL$data, obs = obsL$data, proxy= "dim",
-                                 quanti = 0.6)
+                             quanti = 0.6)
 # to use CST_DynBiasCorrection
 dynbias2 <- CST_DynBiasCorrection(exp = expL, obs = obsL, proxy= "dim",
-                                quanti = 0.6)
+                                 quanti = 0.6)
 
 }
 \references{
 Faranda, D., Alvarez-Castro, M.C., Messori, G., Rodriguez, D., 
 and Yiou, P. (2019). The hammam effect or how a warm ocean enhances large 
 scale atmospheric predictability.Nature Communications, 10(1), 1316. 
-DOI = https://doi.org/10.1038/s41467-019-09305-8 "
+\doi{10.1038/s41467-019-09305-8}"
 
 Faranda, D., Gabriele Messori and Pascal Yiou. (2017).
 Dynamical proxies of North Atlantic predictability and extremes. 

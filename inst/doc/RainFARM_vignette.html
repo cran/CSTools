@@ -233,35 +233,35 @@ exp &lt;- lonlat_prec
 <p>This gives us a CSTools object <code>exp</code>, containing an element <code>exp$data</code> with dimensions:</p>
 
 <pre><code class="r">dim(exp$data)
-#dataset  member   sdate   ftime     lat     lon 
-#      1       6       3      31       4      4 
+# dataset  member   sdate   ftime     lat    lon 
+#     1       6       3       31       4      4 
 </code></pre>
 
 <p>There are 6 ensemble members available in the data set, 3 starting dates and 31 forecast times, which refer to daily values in the month of March following starting dates on November 1st in the years 2010, 2011, 2012. Please notice that RainFARM (in this version) only accepts square domains, possibly with an even number of pixels on each side, so we always need to select an appropriate cutout. Also, there are time and memory limitations when a large ensemble of downscaled realizations is generated with RainFARM, so that selecting a smaller target area is advised. On the other hand, if spectral slopes are to be determined from the large scales we will still need enough resolution to allow this estimation. In this example we have preselected a 4x4 pixel cutout at resolution 1 degree in a smaller area lon=[6,9], lat=[44,47] covering Northern Italy.</p>
 
-<pre><code class="r">ilon &lt;- which ( exp$lon %in% 5:12 )
-ilat &lt;- which ( exp$lat %in% 40:47 )
-exp$data &lt;- exp$data[ , , , , ilon, ilat, drop=FALSE]
+<pre><code class="r">ilon &lt;- which(exp$coords$lon %in% 5:12)
+ilat &lt;- which(exp$coords$lat %in% 40:47 )
+exp$data &lt;- exp$data[ , , , , ilon, ilat, drop = FALSE]
 names(dim(exp$data)) &lt;- names(dim(lonlat_prec$data))
-exp$lon &lt;- exp$lon[ilon]
-exp$lat &lt;- exp$lat[ilat]
+exp$coords$lon &lt;- exp$coords$lon[ilon]
+exp$coords$lat &lt;- exp$coords$lat[ilat]
 </code></pre>
 
 <h3>Standard downscaling without climatological weights</h3>
 
 <p>Our goal is to downscale with RainFARM these data from the resolution of 1 degree (about 100 km at these latitudes) to 0.05 degrees (about 5 km) using the <code>CST_RainFARM()</code> function. This means that we need to increase resolution by a factor <code>nf = 20</code>. 
 RainFARM can compute automatically its only free parameter, i.e. the spatial spectral slope, from the large-scale field (here only with size 4x4 pixel, but in general we reccomend selecting at least 8x8 pixels). 
-In this example we would like to compute this slope as an average over the <em>member</em> and <em>ftime</em> dimensions, while we will use different slopes for the remaining <em>dataset</em> and <em>sdate</em> dimensions (a different choice may be more appropriate in a real application). To obtain this we specify the parameter <code>time_dim = c(&quot;member&quot;, &quot;ftime&quot;)</code>. The slope is computed starting from the wavenumber corresponding to the box, <code>kmin=1</code>. We create 3 stochastic realizations for each dataset, member, starting date and forecast time with <code>nens=5</code>. The command to donwscale and the resulting fields are:</p>
+In this example we would like to compute this slope as an average over the <em>member</em> and <em>ftime</em> dimensions, while we will use different slopes for the remaining <em>dataset</em> and <em>sdate</em> dimensions (a different choice may be more appropriate in a real application). To obtain this we specify the parameter <code>time_dim = c(&quot;member&quot;, &quot;ftime&quot;)</code>. The slope is computed starting from the wavenumber corresponding to the box, <code>kmin = 1</code>. We create 3 stochastic realizations for each dataset, member, starting date and forecast time with <code>nens = 5</code>. The command to donwscale and the resulting fields are:</p>
 
 <pre><code class="r">exp_down &lt;- CST_RainFARM(exp, nf = 20, kmin = 1, nens = 3,
                          time_dim = c(&quot;member&quot;, &quot;ftime&quot;))
 
 dim(exp_down$data)
 #    dataset      member realization       sdate       ftime         lat        lon
-#          1           6           3           3          31          80         80
-str(exp_down$lon)
+#          1           6           3           3         31           80         80
+str(exp_down$coords$lon)
 # num [1:80] 5.53 5.58 5.62 5.67 5.72 ...
-str(exp_down$lat)
+str(exp_down$coords$lat)
 # num [1:80] 47.5 47.4 47.4 47.3 47.3 ...
 </code></pre>
 
@@ -269,7 +269,7 @@ str(exp_down$lat)
 
 <p>Alternatively we could have used the &ldquo;reduced&rdquo; function <code>RainFARM</code> which accepts directly a data array (with arbitrary dimensions, provided a longitude, a latitude and a &ldquo;time&rdquo; dimension exist) and two arrays to describe longitudes and latitudes:</p>
 
-<pre><code class="r">downscaled &lt;- RainFARM(exp$data, exp$lon, exp$lat, 
+<pre><code class="r">downscaled &lt;- RainFARM(exp$data, exp$coords$lon, exp$coords$lat, 
                        nf = 20, kmin = 1, nens = 3,
                        time_dim = c(&quot;member&quot;, &quot;ftime&quot;))
 </code></pre>
@@ -280,18 +280,18 @@ str(exp_down$lat)
 
 <!--  
 png("Figures/RainFARM_fig1.png", width = 640, height = 365)
-par(mfrow=c(1,2))
+par(mfrow = c(1,2))
 -->
 
 <pre><code class="r">a &lt;- exp$data[1, 1, 1, 17, , ] * 86400 * 1000
 a[a &gt; 60] &lt;- 60
-image(exp$lon, rev(exp$lat), t(apply(a, 2, rev)), xlab = &quot;lon&quot;, ylab = &quot;lat&quot;,
+image(exp$coords$lon, rev(exp$coords$lat), t(apply(a, 2, rev)), xlab = &quot;lon&quot;, ylab = &quot;lat&quot;,
       col = rev(terrain.colors(20)), zlim = c(0,60))
 map(&quot;world&quot;, add = TRUE)
 title(main = &quot;pr 17/03/2010 original&quot;)
 a &lt;- exp_down$data[1, 1, 1, 1, 17, , ] * 86400 * 1000
 a[a &gt; 60] &lt;- 60
-image(exp_down$lon, rev(exp_down$lat), t(apply(a, 2, rev)), xlab = &quot;lon&quot;, ylab = &quot;lat&quot;, 
+image(exp_down$coords$lon, rev(exp_down$coords$lat), t(apply(a, 2, rev)), xlab = &quot;lon&quot;, ylab = &quot;lat&quot;, 
       col = rev(terrain.colors(20)), zlim = c(0, 60))
 map(&quot;world&quot;, add = TRUE)
 title(main = &quot;pr 17/03/2010 downscaled&quot;)
@@ -307,10 +307,10 @@ title(main = &quot;pr 17/03/2010 downscaled&quot;)
 
 <p>The area of interest in our example presents a complex orography, but the basic RainFARM algorithm used does not consider topographic elevation in deciding how to distribute fine-scale precipitation. A long term climatology of the downscaled fields would have a resolution comparable to that of the original coarse fields and would not resemble the fine-scale structure of an observed climatology. If an external fine-scale climatology of precipitation is available, we can use the method discussed in Terzago et al. (2018) to change the distribution of precipitation by RainFARM for each timestep, so that the long-term average is close to this reference climatology in terms of precipitation distribution (while the total precipitation amount of the original fields to downscale is preserved).</p>
 
-<p>Suitable climatology files could be for example a fine-scale precipitation climatology from a high-resolution regional climate model (see e.g. Terzago et al. 2018), a local high-resolution gridded climatology from observations, or a reconstruction such as those which can be downloaded from the WORLDCLIM (<a href="https://www.worldclim.org">https://www.worldclim.org</a>) or CHELSA (chelsa-climate.org) websites. The latter data will need to be converted to NetCDF format before being used (see for example the GDAL tools (<a href="https://gdal.org">https://gdal.org</a>).
+<p>Suitable climatology files could be for example a fine-scale precipitation climatology from a high-resolution regional climate model (see e.g. Terzago et al. 2018), a local high-resolution gridded climatology from observations, or a reconstruction such as those which can be downloaded from the WORLDCLIM (<a href="https://www.worldclim.org">https://www.worldclim.org</a>) or CHELSA (<a href="https://chelsa-climate.org/">https://chelsa-climate.org/</a>) websites. The latter data will need to be converted to NetCDF format before being used (see for example the GDAL tools (<a href="https://gdal.org/">https://gdal.org/</a>).
 We will assume that a copy of the WORLDCLIM precipitation climatology at 30 arcseconds (about 1km resolution) is available in the local file <code>medscope.nc</code>. From this file we can derive suitable weights to be used with RainFARM using the <code>CST_RFWeights</code> functions as follows:</p>
 
-<pre><code class="r">ww &lt;- CST_RFWeights(&quot;./worldclim.nc&quot;, nf = 20, lon = exp$lon, lat = exp$lat)
+<pre><code class="r">ww &lt;- CST_RFWeights(&quot;./worldclim.nc&quot;, nf = 20, lon = exp$coords$lon, lat = exp$coords$lat)
 </code></pre>
 
 <p>The result is a two-dimensional weights matrix with the same <code>lon</code>and <code>lat</code> dimensions as requested.
@@ -339,19 +339,19 @@ png("Figures/RainFARM_fig2.png", width = 640, height = 243)
 par(mfrow = c(1,3))
 a <- exp_down_weights$data[1, 1, 1, 1, 17, , ] * 86400 * 1000
 a[a > 60] <- 60
-image(exp_down$lon, rev(exp_down$lat), t(apply(a, 2, rev)), xlab = "lon",
+image(exp_down$coords$lon, rev(exp_down$coords$lat), t(apply(a, 2, rev)), xlab = "lon",
       ylab = "lat", col = rev(terrain.colors(20)), zlim = c(0, 60))
 map("world", add = TRUE)
 title(main = "pr 17/03/2010 with weights")
 a <- ad * 86400 * 1000
 a[a > 5] <- 5
-image(exp_down$lon, rev(exp_down$lat), t(apply(a, 2, rev)), xlab = "lon",
-      ylab="lat", col = rev(terrain.colors(20)), zlim = c(0, 5))
+image(exp_down$coords$lon, rev(exp_down$coords$lat), t(apply(a, 2, rev)), xlab = "lon",
+      ylab = "lat", col = rev(terrain.colors(20)), zlim = c(0, 5))
 map("world", add = TRUE)
 title(main = "climatology no weights")
 a <- adw * 86400 * 1000
 a[a > 5] <- 5
-image(exp_down$lon, rev(exp_down$lat), t(apply(a, 2, rev)), xlab = "lon",
+image(exp_down$coords$lon, rev(exp_down$coords$lat), t(apply(a, 2, rev)), xlab = "lon",
       ylab = "lat", col = rev(terrain.colors(20)), zlim = c(0, 5))
 map("world", add = TRUE)
 title(main = "climatology with weights")

@@ -270,9 +270,8 @@ from the stats R package. In this example we have made different assumptions: fo
 
 <p>To plot the composite maps of each regime and the mean frequencies of each cluster, we have employed the <code>PlotLayout()</code> and <code>PlotEquiMap()</code> functions available in s2dv. The object <code>WR_obs$data</code> is divided by 100 to change from Pa to hPa. As the <code>WR_obs$statistics$frequency</code> provides the monthly frequencies, the climatological frequencies are obtained as the average across the 20 years of the monthly frequencies. Note that these frequencies could slightly change as a consequence of the randomness inherent to the iterative processes involved in the k-means.   </p>
 
-<pre><code class="r">clim_frequencies &lt;- paste0(&#39;freq = &#39;,
-                         round(Mean1Dim(WR_obs$statistics$frequency, 1), 1), &#39;%&#39;)
-PlotLayout(PlotEquiMap, c(1, 2), lon = obs$lon, lat = obs$lat,
+<pre><code class="r">clim_frequencies &lt;- paste0(&#39;freq = &#39;, round(Mean1Dim(WR_obs$statistics$frequency, 1), 1), &#39;%&#39;)
+PlotLayout(PlotEquiMap, c(1, 2), lon = obs$coords$lon, lat = obs$coords$lat,
            var = WR_obs$data / 100,
            titles = paste0(paste0(&#39;Cluster &#39;, 1:4), &#39; (&#39;, clim_frequencies,&#39; )&#39;),
            filled.continents = FALSE,
@@ -292,9 +291,9 @@ freq_obs[is.na(freq_obs)] &lt;- 0
 dim(freq_obs) &lt;- c(dimy = 20, dimcat = 4, dimx = 1)
 
 PlotTriangles4Categories(freq_obs, toptitle = &#39;Persistence&#39;,
-             xtitle = &#39;Start Dates&#39;, ytitle = &#39;&#39;, xlab = FALSE,
-             ylabels = substr(sdates, 1, 4), cex_leg = 0.6,
-             lab_legend = c(&#39;AR&#39;, &#39;NAO-&#39;, &#39;BL&#39;, &#39;NAO+&#39;), figure.width = .7)
+                         xtitle = &#39;Start Dates&#39;, ytitle = &#39;&#39;, xlab = FALSE,
+                         ylabels = substr(sdates, 1, 4), cex_leg = 0.6,
+                         lab_legend = c(&#39;AR&#39;, &#39;NAO-&#39;, &#39;BL&#39;, &#39;NAO+&#39;), figure.width = .7)
 
 </code></pre>
 
@@ -315,7 +314,7 @@ PlotTriangles4Categories(freq_obs, toptitle = &#39;Persistence&#39;,
 
 <p>The outputs of <code>RegimesAssign()</code> have been represented to be compared with those obtained for the observational classification (step 5). </p>
 
-<pre><code class="r">PlotLayout(PlotEquiMap, c(1, 2),lon = exp$lon, lat = exp$lat,
+<pre><code class="r">PlotLayout(PlotEquiMap, c(1, 2),lon = exp$coords$lon, lat = exp$coords$lat,
            var = WR_exp$data/100, 
            titles = paste0(paste0(&#39;Cluster &#39;,1:4), &#39; (&#39;,paste0(&#39;freq = &#39;, 
                            round(WR_exp$statistics$frequency,1),&#39;%&#39;),&#39; )&#39;),

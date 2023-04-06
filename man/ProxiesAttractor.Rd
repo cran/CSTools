@@ -7,9 +7,12 @@
 ProxiesAttractor(data, quanti, ncores = NULL)
 }
 \arguments{
-\item{data}{a multidimensional array with named dimensions to create the attractor. It requires a temporal dimension named 'time' and spatial dimensions called 'lat' and 'lon', or 'latitude' and 'longitude' or 'grid'.}
+\item{data}{A multidimensional array with named dimensions to create the 
+attractor. It requires a temporal dimension named 'time' and spatial 
+dimensions called 'lat' and 'lon', or 'latitude' and 'longitude' or 'grid'.}
 
-\item{quanti}{a number lower than 1 indicating the quantile to perform the computation of local dimension and theta}
+\item{quanti}{A number lower than 1 indicating the quantile to perform the 
+computation of local dimension and theta}
 
 \item{ncores}{The number of cores to use in parallel computation.}
 }
@@ -20,7 +23,7 @@ dim and theta
 This function computes two dinamical proxies of the attractor: 
 The local dimension (d) and the inverse of the persistence (theta). 
 These two parameters will be used as a condition for the computation of dynamical 
-scores to measure predictability and to compute bias correction conditioned  by
+scores to measure predictability and to compute bias correction conditioned by
 the dynamics with the function DynBiasCorrection.  
 Funtion based on the matlab code (davide.faranda@lsce.ipsl.fr) used in:
 }
@@ -32,19 +35,14 @@ qm <- 0.90 # imposing a threshold
 Attractor <- ProxiesAttractor(data = mat, quanti = qm)
 # to plot the result
 time = c(1:length(Attractor$theta))
-layout(matrix(c(1, 3, 2, 3), 2, 2))
 plot(time, Attractor$dim, xlab = 'time', ylab = 'd',
     main = 'local dimension', type = 'l')
-plot(time, Attractor$theta, xlab = 'time', ylab = 'theta', main = 'theta') 
-plot(Attractor$dim, Attractor$theta, col = 'blue', 
-    main = "Proxies of the Attractor",
-    xlab = "local dimension", ylab = "theta", lwd = 8, 'p')
-
 }
 \references{
-Faranda, D., Alvarez-Castro, M.C., Messori, G., Rodriguez, D., and Yiou, P. (2019). 
-The hammam effect or how a warm ocean enhances large scale atmospheric predictability.
-Nature Communications, 10(1), 1316. DOI = https://doi.org/10.1038/s41467-019-09305-8 "
+Faranda, D., Alvarez-Castro, M.C., Messori, G., Rodriguez, D., and 
+Yiou, P. (2019). The hammam effect or how a warm ocean enhances large scale 
+atmospheric predictability. Nature Communications, 10(1), 1316. 
+\doi{10.1038/s41467-019-09305-8}"
 
 Faranda, D., Gabriele Messori and Pascal Yiou. (2017).
 Dynamical proxies of North Atlantic predictability and extremes. 

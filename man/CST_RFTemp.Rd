@@ -23,52 +23,53 @@ CST_RFTemp(
 }
 \arguments{
 \item{data}{An object of the class 's2dv_cube' as returned by `CST_Load`,
-containing the temperature fields to downscale.
-The data object is expected to have an element named \code{$data}
-with at least two spatial dimensions named "lon" and "lat".
-(these default names can be changed with the \code{lon_dim} and
-\code{lat_dim} parameters)}
+containing the temperature fields to downscale. The data object is expected 
+to have an element named \code{$data} with at least two spatial dimensions 
+named "lon" and "lat". (these default names can be changed with the 
+\code{lon_dim} and \code{lat_dim} parameters).}
 
 \item{oro}{An object of the class 's2dv_cube' as returned by `CST_Load`,
-containing fine scale orography (in meters).
-The destination downscaling area must be contained in the orography field.}
+containing fine scale orography (in meters). The destination downscaling 
+area must be contained in the orography field.}
 
-\item{xlim}{vector with longitude bounds for downscaling;
-the full input field is downscaled if `xlim` and `ylim` are not specified.}
+\item{xlim}{Vector with longitude bounds for downscaling; the full input
+field is downscaled if `xlim` and `ylim` are not specified.}
 
-\item{ylim}{vector with latitude bounds for downscaling}
+\item{ylim}{Vector with latitude bounds for downscaling}
 
-\item{lapse}{float with environmental lapse rate}
+\item{lapse}{Float with environmental lapse rate}
 
-\item{lon_dim}{string with name of longitude dimension}
+\item{lon_dim}{String with name of longitude dimension}
 
-\item{lat_dim}{string with name of latitude dimension}
+\item{lat_dim}{String with name of latitude dimension}
 
-\item{time_dim}{a vector of character string indicating the name of temporal dimension. By default, it is set to NULL and it considers "ftime", "sdate" and "time" as temporal dimensions.}
+\item{time_dim}{A vector of character string indicating the name of temporal 
+dimension. By default, it is set to NULL and it considers "ftime", "sdate" 
+and "time" as temporal dimensions.}
 
-\item{nolapse}{logical, if true `oro` is interpreted as a fine-scale
-climatology and used directly for bias correction}
+\item{nolapse}{Logical, if true `oro` is interpreted as a fine-scale
+climatology and used directly for bias correction.}
 
-\item{verbose}{logical if to print diagnostic output}
+\item{verbose}{Logical if to print diagnostic output.}
 
-\item{compute_delta}{logical if true returns only a delta to be used for
+\item{compute_delta}{Logical if true returns only a delta to be used for
 out-of-sample forecasts. Returns an object of the class 's2dv_cube',
 containing a delta. Activates `nolapse = TRUE`.}
 
-\item{method}{string indicating the method used for interpolation:
+\item{method}{String indicating the method used for interpolation:
 "nearest" (nearest neighbours followed by smoothing with a circular
 uniform weights kernel), "bilinear" (bilinear interpolation)
 The two methods provide similar results, but nearest is slightly better
 provided that the fine-scale grid is correctly centered as a subdivision
-of the large-scale grid}
+of the large-scale grid.}
 
 \item{delta}{An object of the class 's2dv_cube', containing a delta
 to be applied to the downscaled input data. Activates `nolapse = TRUE`.
 The grid of this object must coincide with that of the required output.}
 }
 \value{
-CST_RFTemp() returns a downscaled CSTools object
-(i.e., of the class 's2dv_cube').
+CST_RFTemp() returns a downscaled CSTools object (i.e., of the class 
+'s2dv_cube').
 }
 \description{
 This function implements a simple lapse rate correction of a
@@ -84,23 +85,27 @@ t <- rnorm(7 * 6 * 2 * 3 * 4)*10 + 273.15 + 10
 dim(t) <- c(dataset = 1, member = 2, sdate = 3, ftime = 4, lat = 6, lon = 7)
 lon <- seq(3, 9, 1)
 lat <- seq(42, 47, 1)
-exp <- list(data = t, lat = lat, lon = lon)
+coords <- list(lat = lat, lon = lon)
+exp <- list(data = t, coords = coords)
 attr(exp, 'class') <- 's2dv_cube'
 o <- runif(29*29)*3000
-dim(o) <- c(lat = 29, lon = 29)
+dim(o) <- c(lats = 29, lons = 29)
 lon <- seq(3, 10, 0.25)
 lat <- seq(41, 48, 0.25)
-oro <- list(data = o, lat = lat, lon = lon)
+coords <- list(lat = lat, lon = lon)
+oro <- list(data = o, coords = coords)
 attr(oro, 'class') <- 's2dv_cube'
-res <- CST_RFTemp(exp, oro, xlim=c(4,8), ylim=c(43, 46), lapse=6.5)
+res <- CST_RFTemp(data = exp, oro = oro, xlim = c(4,8), ylim = c(43, 46), 
+                 lapse = 6.5, time_dim = 'ftime',
+                 lon_dim = 'lon', lat_dim = 'lat')
 }
 \references{
 Method described in ERA4CS MEDSCOPE milestone M3.2: 
-High-quality climate prediction data available to WP4
-[https://www.medscope-project.eu/the-project/deliverables-reports/]([https://www.medscope-project.eu/the-project/deliverables-reports/)
+High-quality climate prediction data available to WP4 here: 
+\url{https://www.medscope-project.eu/the-project/deliverables-reports/}
 and in H2020 ECOPOTENTIAL Deliverable No. 8.1:
-High resolution (1-10 km) climate, land use and ocean change scenarios
-[https://www.ecopotential-project.eu/images/ecopotential/documents/D8.1.pdf](https://www.ecopotential-project.eu/images/ecopotential/documents/D8.1.pdf)
+High resolution (1-10 km) climate, land use and ocean change scenarios available 
+here: \url{https://ec.europa.eu/research/participants/documents/downloadPublic?documentIds=080166e5b6cd2324&appId=PPGMS}
 }
 \author{
 Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}

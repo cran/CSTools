@@ -163,3 +163,36 @@ GradientCatsColorBar <- function(nmap, brks = NULL, cols = NULL, vertical = TRUE
 
 }
 
+.KnownLonNames <- function() {
+  known_lon_names <- c('lon', 'lons', 'longitude', 'x', 'i', 'nav_lon')
+}
+
+.KnownLatNames <- function() {
+  known_lat_names <- c('lat', 'lats', 'latitude', 'y', 'j', 'nav_lat')
+}
+
+.KnownTimeNames <- function() {
+  known_time_names <- c('time', 'ftime', 'sdate', 'sdates', 'syear', 'sweek', 'sday', 'leadtimes')
+}
+
+.KnownForecastTimeNames <- function() {
+  known_time_names <- c('time', 'ftime', 'ltime', 'leadtimes')
+}
+
+.KnownStartDateNames <- function() {
+  known_time_names <- c('sdate', 'sdates', 'syear', 'sweek', 'sday')
+}
+
+.KnownMemberNames <- function() {
+  known_time_names <- c('memb', 'member', 'members', 'ensemble', 'ensembles')
+}
+
+.isNullOb <- function(x) is.null(x) | all(sapply(x, is.null))
+
+.rmNullObs <- function(x) {
+   x <- base::Filter(Negate(.isNullOb), x)
+   lapply(x, function(x) if (is.list(x)) .rmNullObs(x) else x)
+}
+
+# Definition of a global variable to store the warning message used in Calibration
+warning_shown <- FALSE

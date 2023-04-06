@@ -12,32 +12,34 @@ CST_MergeDims(
 )
 }
 \arguments{
-\item{data}{a 's2dv_cube' object}
+\item{data}{An 's2dv_cube' object}
 
-\item{merge_dims}{a character vector indicating the names of the dimensions to merge}
+\item{merge_dims}{A character vector indicating the names of the dimensions to 
+merge.}
 
-\item{rename_dim}{a character string indicating the name of the output dimension. If left at NULL, the first dimension name provided in parameter \code{merge_dims} will be used.}
+\item{rename_dim}{a character string indicating the name of the output 
+dimension. If left at NULL, the first dimension name provided in parameter 
+\code{merge_dims} will be used.}
 
-\item{na.rm}{a logical indicating if the NA values should be removed or not.}
+\item{na.rm}{A logical indicating if the NA values should be removed or not.}
 }
 \description{
-This function merges two dimensions of the array \code{data} in a 's2dv_cube' object into one. The user can select the dimensions to merge and provide the final name of the dimension. The user can select to remove NA values or keep them.
+This function merges two dimensions of the array \code{data} in a 
+'s2dv_cube' object into one. The user can select the dimensions to merge and 
+provide the final name of the dimension. The user can select to remove NA 
+values or keep them.
 }
 \examples{
-
 data <- 1 : c(2 * 3 * 4 * 5 * 6 * 7)
 dim(data) <- c(time = 7, lat = 2, lon = 3, monthly = 4, member = 6,
               dataset = 5, var = 1)
 data[2,,,,,,] <- NA
 data[c(3,27)] <- NA
-data <-list(data = data)
+data <- list(data = data)
 class(data) <- 's2dv_cube'
 new_data <- CST_MergeDims(data, merge_dims = c('time', 'monthly'))
-dim(new_data$data)
 new_data <- CST_MergeDims(data, merge_dims = c('lon', 'lat'), rename_dim = 'grid')
-dim(new_data$data)
 new_data <- CST_MergeDims(data, merge_dims = c('time', 'monthly'), na.rm = TRUE)
-dim(new_data$data)
 }
 \author{
 Nuria Perez-Zanon, \email{nuria.perez@bsc.es}

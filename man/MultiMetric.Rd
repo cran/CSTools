@@ -15,34 +15,57 @@ MultiMetric(
 )
 }
 \arguments{
-\item{exp}{a multidimensional array with named dimensions.}
+\item{exp}{A multidimensional array with named dimensions.}
 
-\item{obs}{a multidimensional array with named dimensions.}
+\item{obs}{A multidimensional array with named dimensions.}
 
-\item{metric}{a character string giving the metric for computing the maximum skill. This must be one of the strings 'correlation', 'rms' or 'rmsss.}
+\item{metric}{A character string giving the metric for computing the maximum 
+skill. This must be one of the strings 'correlation', 'rms' or 'rmsss.}
 
-\item{multimodel}{a logical value indicating whether a Multi-Model Mean should be computed.}
+\item{multimodel}{A logical value indicating whether a Multi-Model Mean should 
+be computed.}
 
-\item{time_dim}{name of the temporal dimension where a mean will be applied. It can be NULL, the default value is 'ftime'.}
+\item{time_dim}{Name of the temporal dimension where a mean will be applied. 
+It can be NULL, the default value is 'ftime'.}
 
-\item{memb_dim}{name of the member dimension. It can be NULL, the default value is 'member'.}
+\item{memb_dim}{Name of the member dimension. It can be NULL, the default 
+value is 'member'.}
 
-\item{sdate_dim}{name of the start date dimension or a dimension name identifiying the different forecast. It can be NULL, the default value is 'sdate'.}
+\item{sdate_dim}{Name of the start date dimension or a dimension name 
+identifiying the different forecast. It can be NULL, the default value is 
+'sdate'.}
 }
 \value{
-a list of arrays containing the statistics of the selected metric in the element \code{$data} which is a list of arrays: for the metric requested and others for statistics about its signeificance. The arrays have two dataset dimensions equal to the 'dataset' dimension in the \code{exp$data} and \code{obs$data} inputs. If \code{multimodel} is TRUE, the greatest position in the first dimension correspons to the Multi-Model Mean.
+A list of arrays containing the statistics of the selected metric in 
+the element \code{$data} which is a list of arrays: for the metric requested 
+and others for statistics about its signeificance. The arrays have two dataset 
+dimensions equal to the 'dataset' dimension in the \code{exp$data} and 
+\code{obs$data} inputs. If \code{multimodel} is TRUE, the greatest position in 
+the first dimension correspons to the Multi-Model Mean.
 }
 \description{
-This function calculates correlation (Anomaly Correlation Coefficient; ACC), root mean square error (RMS) and the root mean square error skill score (RMSSS) of individual anomaly models and multi-models mean (if desired) with the observations on arrays with named dimensions.
+This function calculates correlation (Anomaly Correlation 
+Coefficient; ACC), root mean square error (RMS) and the root mean square error 
+skill score (RMSSS) of individual anomaly models and multi-models mean (if 
+desired) with the observations on arrays with named dimensions.
 }
 \examples{
-res <- MultiMetric(lonlat_temp$exp$data, lonlat_temp$obs$data)
+exp <- array(rnorm(2*2*4*5*2*2), 
+            dim = c(dataset = 2, member = 2, sdate = 4, ftime = 5, lat = 2, 
+                    lon = 2))
+obs <- array(rnorm(1*1*4*5*2*2),
+            dim = c(dataset = 1, member = 1, sdate = 4, ftime = 5, lat = 2, 
+                    lon = 2))
+res <- MultiMetric(exp = exp, obs = obs)
 }
 \references{
-Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31.\url{https://link.springer.com/article/10.1007/s00382-018-4404-z}
+Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill 
+Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 
+29-31. \doi{10.1007/s00382-018-4404-z}
 }
 \seealso{
-\code{\link[s2dv]{Corr}}, \code{\link[s2dv]{RMS}}, \code{\link[s2dv]{RMSSS}} and \code{\link{CST_Load}}
+\code{\link[s2dv]{Corr}}, \code{\link[s2dv]{RMS}}, 
+\code{\link[s2dv]{RMSSS}} and \code{\link{CST_Load}}
 }
 \author{
 Mishra Niti, \email{niti.mishra@bsc.es}

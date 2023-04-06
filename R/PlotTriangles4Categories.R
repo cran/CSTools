@@ -1,11 +1,12 @@
 #'Function to convert any 3-d numerical array to a grid of coloured triangles. 
 #'
 #'This function converts a 3-d numerical data array into a coloured 
-#'grid with triangles. It is useful for a slide or article to present tabular results as 
-#'colors instead of numbers. This can be used to compare the outputs of two or four categories (
-#'e.g. modes  of variability, clusters, or forecast systems). 
+#'grid with triangles. It is useful for a slide or article to present tabular 
+#'results as colors instead of numbers. This can be used to compare the outputs 
+#'of two or four categories (e.g. modes  of variability, clusters, or forecast 
+#'systems). 
 #'
-#'@param data array with three named dimensions: 'dimx', 'dimy', 'dimcat', 
+#'@param data Array with three named dimensions: 'dimx', 'dimy', 'dimcat', 
 #'  containing the values to be displayed in a coloured image with triangles.
 #'@param brks A vector of the color bar intervals. The length must be one more 
 #'  than the parameter 'cols'. Use ColorBar() to generate default values.
@@ -13,14 +14,13 @@
 #'  must be one less than the parameter 'brks'. Use ColorBar() to generate 
 #'  default values.
 #'@param toptitle A string of the title of the grid. Set NULL as default.   
-#'@param sig_data logical array with the same dimensions as 'data' to add layers 
+#'@param sig_data Logical array with the same dimensions as 'data' to add layers 
 #'  to the plot. A value of TRUE at a grid cell will draw a dot/symbol on the 
 #'  corresponding triangle of the plot. Set NULL as default.
-#'@param pch_sig symbol to be used to represent sig_data. Takes 18 
-#' (diamond) by default. See 'pch' in par() for additional 
-#' accepted options.
-#'@param col_sig colour of the symbol to represent sig_data. 
-#'@param cex_sig parameter to increase/reduce the size of the symbols used 
+#'@param pch_sig Symbol to be used to represent sig_data. Takes 18 
+#' (diamond) by default. See 'pch' in par() for additional accepted options.
+#'@param col_sig Colour of the symbol to represent sig_data. 
+#'@param cex_sig Parameter to increase/reduce the size of the symbols used 
 #'  to represent sig_data.
 #'@param xlab A logical value (TRUE) indicating if xlabels should be plotted
 #'@param ylab A logical value (TRUE) indicating if ylabels should be plotted
@@ -37,18 +37,21 @@
 #'@param lab_legend A vector of labels indicating what is represented in each 
 #'category (i.e. triangle). Set the sequence from 1 to the length of 
 #' the categories (2 or 4).  
-#'@param cex_leg a number to indicate the increase/reductuion of the lab_legend used 
-#'  to represent sig_data.
-#'@param col_leg color of the legend (triangles).
-#'@param cex_axis a number to indicate the increase/reduction of the axis labels.
+#'@param cex_leg A number to indicate the increase/reductuion of the lab_legend  
+#'  used to represent sig_data.
+#'@param col_leg Color of the legend (triangles).
+#'@param cex_axis A number to indicate the increase/reduction of the axis labels.
 #'@param fileout A string of full directory path and file name indicating where 
 #'  to save the plot. If not specified (default), a graphics device will pop up. 
-#'@param mar A numerical vector of the form c(bottom, left, top, right) which gives the number of lines of margin to be specified on the four sides of the plot. 
+#'@param mar A numerical vector of the form c(bottom, left, top, right) which 
+#'  gives the number of lines of margin to be specified on the four sides of the 
+#'  plot. 
 #'@param size_units A string indicating the units of the size of the device 
 #'  (file or window) to plot in. Set 'px' as default. See ?Devices and the 
 #'  creator function of the corresponding device.
-#'@param res A positive number indicating resolution of the device (file or window) 
-#'  to plot in. See ?Devices and the creator function of the corresponding device.
+#'@param res A positive number indicating resolution of the device (file or 
+#'  window) to plot in. See ?Devices and the creator function of the 
+#'  corresponding device.
 #'@param figure.width a numeric value to control the width of the plot.
 #'@param ... The additional parameters to be passed to function ColorBar() in 
 #'  s2dv for color legend creation.
@@ -58,19 +61,17 @@
 #'1.0  -  2020-10  (V.Torralba, \email{veronica.torralba@bsc.es})  -  Original code
 #'
 #'@examples 
-#'#Example with random data
-#' arr1<- arr1<- array(runif(n = 12 * 7 * 4, min=-1, max=1),dim = c(12,7,4))
-#' names(dim(arr1)) <- c('dimx','dimy','dimcat')
-#'arr2<- array(TRUE,dim = dim(arr1))
-#'arr2[which(arr1 < 0.3)] = FALSE
+#'# Example with random data
+#'arr1 <- array(runif(n = 4 * 5 * 4, min = -1, max = 1), dim = c(4,5,4))
+#'names(dim(arr1)) <- c('dimx', 'dimy', 'dimcat')
+#'arr2 <- array(TRUE, dim = dim(arr1))
+#'arr2[which(arr1 < 0.3)] <- FALSE
 #'PlotTriangles4Categories(data = arr1,
-#'                   cols = c('white','#fef0d9','#fdd49e','#fdbb84','#fc8d59',
-#'                            '#e34a33','#b30000', '#7f0000'),
-#'                   brks = c(-1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 1), 
-#'                   lab_legend = c('NAO+', 'BL','AR','NAO-'), 
-#'                   xtitle = "Target month", ytitle = "Lead time",
-#'                   xlabels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
-#'                               "Aug", "Sep", "Oct", "Nov", "Dec"))
+#'                         cols = c('white','#fef0d9','#fdd49e','#fdbb84','#fc8d59'),
+#'                         brks = c(-1, 0, 0.1, 0.2, 0.3, 0.4), 
+#'                         lab_legend = c('NAO+', 'BL','AR','NAO-'), 
+#'                         xtitle = "Target month", ytitle = "Lead time",
+#'                         xlabels = c("Jan", "Feb", "Mar", "Apr"))
 #'@importFrom grDevices dev.new dev.off dev.cur 
 #'@importFrom graphics plot points polygon text title axis
 #'@importFrom RColorBrewer brewer.pal

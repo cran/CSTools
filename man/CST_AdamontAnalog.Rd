@@ -33,68 +33,83 @@ AdamontAnalog(
 )
 }
 \arguments{
-\item{exp}{\itemize{
-\item\code{CST_AdamontAnalog}{experiment data an object of class \code{s2dv_cube}, can be output 
-from quantile correction using CST_AdamontQQCorr}
-\item\code{AdamontAnalog}{experiment data array with named dimension}}}
+\item{exp}{A multidimensional array with named dimensions containing the 
+experiment data.}
 
-\item{obs}{\itemize{
-\item\code{CST_AdamontAnalog}{reference data, also of class \code{s2dv_cube}.}
-\item\code{AdamontAnalog}{reference data array with named dimension.}}
-Note that lat/lon dimensions need to be the same as \code{exp}}
+\item{obs}{A multidimensional array with named dimensions containing the 
+reference data. Note that lat/lon dimensions need to be the same as 
+\code{exp}.}
 
-\item{wt_exp}{corresponding weather types (same dimensions as \code{exp$data} 
-but lat/lon)}
+\item{wt_exp}{Corresponding weather types (same dimensions as \code{exp$data} 
+but lat/lon).}
 
-\item{wt_obs}{corresponding weather types (same dimensions as \code{obs$data}
-but lat/lon)}
+\item{wt_obs}{Corresponding weather types (same dimensions as \code{obs$data}
+but lat/lon).}
 
-\item{nanalogs}{integer defining the number of analog values to return
-(default: 5)}
+\item{nanalogs}{Integer defining the number of analog values to return
+(default: 5).}
 
-\item{method}{a character string indicating the method used for analog
-definition
-      Coded are 'pattcorr': pattern correlation
-           'rain1' (for precip patterns): rain occurrence consistency
-           'rain01' (for precip patterns): rain occurrence/non 
-                       occurrence consistency}
+\item{method}{A character string indicating the method used for analog
+definition. It can be:
+\itemize{
+  \item{'pattcorr': pattern correlation.}
+  \item{'rain1' (for precip patterns): rain occurrence consistency.}
+  \item{'rain01' (for precip patterns): rain occurrence/non occurrence 
+  consistency}
+}}
 
-\item{thres}{real number indicating the threshold to define rain 
-occurrence/non occurrence in rain(0)1}
+\item{thres}{Real number indicating the threshold to define rain 
+occurrence/non occurrence in rain (0)1.}
 
-\item{search_obsdims}{list of dimensions in \code{obs} along which analogs are
-searched for}
+\item{search_obsdims}{List of dimensions in \code{obs} along which analogs are
+searched for.}
 
-\item{londim}{name of longitude dimension}
+\item{londim}{Name of longitude dimension.}
 
-\item{latdim}{name of latitude dimension}
+\item{latdim}{Name of latitude dimension.}
 }
 \value{
-analog_vals 
-\itemize{
-\item\code{CST_AdamontAnalog}{an object of class \code{s2dv_cube} containing nanalogs
-analog values for each value of \code{exp} input data}
-\item\code{AdamontAnalog}{an array containing nanalogs analog values}}
+analog_vals An object of class \code{s2dv_cube} containing 
+ nanalogs analog values for each value of \code{exp} input data.
+
+analog_vals An array containing nanalogs analog values.
 }
 \description{
 This function searches for analogs in a reference dataset for 
 experiment data, based on corresponding weather types. The experiment data is
 typically a hindcast, observations are typically provided by reanalysis data.
+
+This function searches for analogs in a reference dataset for 
+experiment data, based on corresponding weather types. The experiment data is
+typically a hindcast, observations are typically provided by reanalysis data.
 }
 \examples{
-\dontrun{
-wt_exp <- sample(1:3, 15*6*3, replace=T)
-dim(wt_exp) <- c(dataset=1, member=15, sdate=6, ftime=3)
-wt_obs <- sample(1:3, 6*3, replace=T)
-dim(wt_obs) <- c(dataset=1, member=1, sdate=6, ftime=3)
-}
-\dontrun{
-wt_exp <- sample(1:3, 15*6*3, replace=T)
-dim(wt_exp) <- c(dataset=1, member=15, sdate=6, ftime=3)
-wt_obs <- sample(1:3, 6*3, replace=T)
-dim(wt_obs) <- c(dataset=1, member=1, sdate=6, ftime=3)
-  obs=lonlat_temp$obs$data, wt_exp=wt_exp, wt_obs=wt_obs, nanalogs=2)
-}
+wt_exp <- sample(1:3, 15*6*3, replace = TRUE)
+dim(wt_exp) <- c(dataset = 1, member = 15, sdate = 6, ftime = 3)
+wt_obs <- sample(1:3, 6*3, replace = TRUE)
+dim(wt_obs) <- c(dataset = 1, member = 1, sdate = 6, ftime = 3)
+exp <- NULL
+exp$data <- 1 : c(1 * 15 * 6 * 3 * 8 * 8)
+dim(exp$data) <- c(dataset = 1, member = 15, sdate = 6, ftime = 3,
+                  lat = 8, lon = 8)
+class(exp) <- 's2dv_cube'
+obs <- NULL
+obs$data <- 101 : c(100 + 1 * 1 * 6 * 3 * 8 * 8)
+dim(obs$data) <- c(dataset = 1, member = 1, sdate = 6, ftime = 3,
+                  lat = 8, lon = 8)
+class(obs) <- 's2dv_cube'
+analog_vals <- CST_AdamontAnalog(exp = exp, obs = obs, wt_exp = wt_exp, 
+                                wt_obs = wt_obs, nanalogs = 2)
+wt_exp <- sample(1:3, 15*6*3, replace = TRUE)
+dim(wt_exp) <- c(dataset = 1, member = 15, sdate = 6, ftime = 3)
+wt_obs <- sample(1:3, 6*3, replace = TRUE)
+dim(wt_obs) <- c(dataset = 1, member = 1, sdate = 6, ftime = 3)
+exp <- 1 : c(1 * 15 * 6 * 3 * 8 * 8)
+dim(exp) <- c(dataset = 1, member = 15, sdate = 6, ftime = 3, lat = 8, lon = 8)
+obs <- 101 : c(100 + 1 * 1 * 6 * 3 * 8 * 8)
+dim(obs) <- c(dataset = 1, member = 1, sdate = 6, ftime = 3, lat = 8, lon = 8)
+analog_vals <- AdamontAnalog(exp = exp, obs = obs, wt_exp = wt_exp, 
+                            wt_obs = wt_obs, nanalogs = 2)
 }
 \author{
 Paola Marson, \email{paola.marson@meteo.fr} for PROSNOW version

@@ -2,7 +2,8 @@
 % Please edit documentation in R/CST_Anomaly.R
 \name{CST_Anomaly}
 \alias{CST_Anomaly}
-\title{Anomalies relative to a climatology along selected dimension with or without cross-validation}
+\title{Anomalies relative to a climatology along selected dimension with or without 
+cross-validation}
 \usage{
 CST_Anomaly(
   exp = NULL,
@@ -68,28 +69,24 @@ computation is carried out independently for experimental and observational
 data products.
 }
 \examples{
-# Example 1:
 mod <- 1 : (2 * 3 * 4 * 5 * 6 * 7)
 dim(mod) <- c(dataset = 2, member = 3, sdate = 4, ftime = 5, lat = 6, lon = 7)
 obs <- 1 : (1 * 1 * 4 * 5 * 6 * 7)
 dim(obs) <- c(dataset = 1, member = 1, sdate = 4, ftime = 5, lat = 6, lon = 7)
 lon <- seq(0, 30, 5)
 lat <- seq(0, 25, 5)
-exp <- list(data = mod, lat = lat, lon = lon)
-obs <- list(data = obs, lat = lat, lon = lon)
+coords <- list(lon = lon, lat = lat)
+exp <- list(data = mod, coords = coords)
+obs <- list(data = obs, coords = coords)
 attr(exp, 'class') <- 's2dv_cube'
 attr(obs, 'class') <- 's2dv_cube'
 
-anom1 <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = TRUE)
-anom2 <- CST_Anomaly(exp = exp, obs = obs, cross = TRUE, memb = TRUE)
-anom3 <- CST_Anomaly(exp = exp, obs = obs, cross = TRUE, memb = FALSE)
-anom4 <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = FALSE)
-anom5 <- CST_Anomaly(lonlat_temp$exp)
-anom6 <- CST_Anomaly(obs = lonlat_temp$obs)
+anom <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = TRUE)
 
 }
 \seealso{
-\code{\link[s2dv]{Ano_CrossValid}}, \code{\link[s2dv]{Clim}} and \code{\link{CST_Load}}
+\code{\link[s2dv]{Ano_CrossValid}}, \code{\link[s2dv]{Clim}} and 
+\code{\link{CST_Load}}
 }
 \author{
 Perez-Zanon Nuria, \email{nuria.perez@bsc.es}

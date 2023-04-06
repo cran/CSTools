@@ -2,74 +2,127 @@
 % Please edit documentation in R/CST_SaveExp.R
 \name{SaveExp}
 \alias{SaveExp}
-\title{Save an experiment in a format compatible with CST_Load}
+\title{Save a multidimensional array with metadata to data in NetCDF format}
 \usage{
 SaveExp(
   data,
-  lon,
-  lat,
-  Dataset,
-  var_name,
-  units,
-  startdates,
-  Dates,
-  cdo_grid_name,
-  projection,
-  destination,
+  destination = "./",
+  Dates = NULL,
+  coords = NULL,
+  varname = NULL,
+  metadata = NULL,
+  Datasets = NULL,
+  startdates = NULL,
+  dat_dim = "dataset",
+  sdate_dim = "sdate",
+  ftime_dim = "time",
+  var_dim = "var",
+  memb_dim = "member",
+  single_file = FALSE,
   extra_string = NULL
 )
 }
 \arguments{
-\item{data}{an multi-dimensional array with named dimensions (longitude, latitude, time, member, sdate)}
+\item{data}{A multi-dimensional array with named dimensions.}
 
-\item{lon}{vector of logitud corresponding to the longitudinal dimension in data}
+\item{destination}{A character string indicating the path where to store the 
+NetCDF files.}
 
-\item{lat}{vector of latitud corresponding to the latitudinal dimension in data}
+\item{Dates}{A named array of dates with the corresponding sdate and forecast 
+time dimension.}
 
-\item{Dataset}{a vector of character string indicating the names of the datasets}
+\item{coords}{A named list with elements of the coordinates corresponding to 
+the dimensions of the data parameter. The names and length of each element 
+must correspond to the names of the dimensions. If any coordinate is not 
+provided, it is set as an index vector with the values from 1 to the length 
+of the corresponding dimension.}
 
-\item{var_name}{a character string indicating the name of the variable to be saved}
+\item{varname}{A character string indicating the name of the variable to be 
+saved.}
 
-\item{units}{a character string indicating the units of the variable}
+\item{metadata}{A named list where each element is a variable containing the
+corresponding information. The information must be contained in a list of 
+lists for each variable.}
 
-\item{startdates}{a vector of dates indicating the initialization date of each simulations}
+\item{Datasets}{A vector of character string indicating the names of the 
+datasets.}
 
-\item{Dates}{a matrix of dates with two dimension 'time' and 'sdate'.}
+\item{startdates}{A vector of dates indicating the initialization date of each 
+simulations.}
 
-\item{cdo_grid_name}{a character string indicating the name of the grid e.g.: 'r360x181'}
+\item{dat_dim}{A character string indicating the name of dataset dimension. 
+By default, it is set to 'dataset'. It can be NULL if there is no dataset  
+dimension.}
 
-\item{projection}{a character string indicating the projection name}
+\item{sdate_dim}{A character string indicating the name of the start date 
+dimension. By default, it is set to 'sdate'. It can be NULL if there is no
+start date dimension.}
 
-\item{destination}{a character string indicating the path where to store the NetCDF files}
+\item{ftime_dim}{A character string indicating the name of the forecast time
+dimension. By default, it is set to 'time'. It can be NULL if there is no 
+forecast time dimension.}
 
-\item{extra_string}{a character string to be include as part of the file name, for instance, to identify member or realization.}
+\item{var_dim}{A character string indicating the name of variable dimension. 
+By default, it is set to 'var'. It can be NULL if there is no variable  
+dimension.}
+
+\item{memb_dim}{A character string indicating the name of the member dimension.
+By default, it is set to 'member'. It can be NULL if there is no member 
+dimension.}
+
+\item{single_file}{A logical value indicating if all object is saved in a 
+unique file (TRUE) or in separated directories (FALSE). When it is FALSE, 
+the array is separated for Datasets, variable and start date. It is FALSE  
+by default.}
+
+\item{extra_string}{A character string to be include as part of the file name, 
+for instance, to identify member or realization. It would be added to the 
+file name between underscore characters.}
 }
 \value{
-the function creates as many files as sdates per dataset. Each file could contain multiple members. It would be added to the file name between underscore characters.
-The path will be created with the name of the variable and each Datasets.
+Multiple or single NetCDF files containing the data array.\cr
+\item{\code{single_file = TRUE}}{
+ All data is saved in a single file located in the specified destination  
+ path with the following name: 
+ <variable_name>_<extra_string>_<first_sdate>_<last_sdate>.nc. Multiple 
+ variables are saved separately in the same file. The forecast time units 
+ is extracted from the frequency of the time steps (hours, days, months). 
+ The first value of forecast time is 1. If no frequency is found, the units 
+ will be 'hours since' each start date and the time steps are assumed to be 
+ equally spaced.
+}
+\item{\code{single_file = FALSE}}{
+ The data array is subset and stored into multiple files. Each file 
+ contains the data subset for each start date, variable and dataset. Files 
+ with different variables and Datasets are stored in separated directories 
+ within the following directory tree: destination/Dataset/variable/. 
+ The name of each file will be: 
+ <variable_name>_<extra_string>_<sdate>.nc.
+}
 }
 \description{
-This function is created for compatibility with CST_Load/Load for saving post-processed datasets such as those calibrated of downscaled with CSTools functions
+This function allows to save a data array with metadata into a 
+NetCDF file, allowing to reload the saved data using \code{Start} function 
+from StartR package. If the original 's2dv_cube' object has been created from 
+\code{CST_Load()}, then it can be reloaded with \code{Load()}.
 }
 \examples{
 \dontrun{
 data <- lonlat_temp$exp$data
-lon <- lonlat_temp$exp$lon
-lat <- lonlat_temp$exp$lat
-Dataset <- 'XXX'
-var_name <- 'tas'
-units <- 'k'
-startdates <- lapply(1:length(lonlat_temp$exp$Datasets),
-                    function(x) {
-                        lonlat_temp$exp$Datasets[[x]]$InitializationDates[[1]]})[[1]]
-Dates <- lonlat_temp$exp$Dates$start
-dim(Dates) <- c(time = length(Dates)/length(startdates), sdate = length(startdates))
-cdo_grid_name = attr(lonlat_temp$exp$lon, 'cdo_grid_name')
-projection = attr(lonlat_temp$exp$lon, 'projection')
-destination = './path/'
-SaveExp(data, lon, lat, Dataset, var_name, units, startdates, Dates,
-                   cdo_grid_name, projection, destination)
+lon <- lonlat_temp$exp$coords$lon
+lat <- lonlat_temp$exp$coords$lat
+coords <- list(lon = lon, lat = lat)
+Datasets <- lonlat_temp$exp$attrs$Datasets
+varname <- 'tas'
+Dates <- lonlat_temp$exp$attrs$Dates
+destination = './'
+metadata <- lonlat_temp$exp$attrs$Variable$metadata
+SaveExp(data = data, destination = destination, coords = coords, 
+       Datasets = Datasets, varname = varname, Dates = Dates, 
+       metadata = metadata, single_file = TRUE, ftime_dim = 'ftime', 
+       var_dim = NULL)
 }
+
 }
 \author{
 Perez-Zanon Nuria, \email{nuria.perez@bsc.es}

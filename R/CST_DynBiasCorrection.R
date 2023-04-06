@@ -20,57 +20,58 @@
 #'@references Faranda, D., Alvarez-Castro, M.C., Messori, G., Rodriguez, D., 
 #'and Yiou, P. (2019). The hammam effect or how a warm ocean enhances large 
 #'scale atmospheric predictability.Nature Communications, 10(1), 1316. 
-#'DOI = https://doi.org/10.1038/s41467-019-09305-8 "
+#'\doi{10.1038/s41467-019-09305-8}"
 #'@references Faranda, D., Gabriele Messori and Pascal Yiou. (2017).
 #' Dynamical proxies of North Atlantic predictability and extremes. 
 #' Scientific Reports, 7-41278, 2017.
 #'
-#'@param exp an s2v_cube object with the experiment data
-#'@param obs an s2dv_cube object with the reference data 
-#'@param method a character string indicating the method to apply bias 
-#'correction among these ones: "PTF","RQUANT","QUANT","SSPLIN"
-#'@param wetday logical indicating whether to perform wet day correction 
-#'or not OR a numeric threshold below which all values are set to zero (by 
-#'default is set to 'FALSE').
-#'@param proxy a character string indicating the proxy for local dimension
-#' 'dim' or inverse of persistence 'theta' to apply the dynamical 
-#' conditioned bias correction method. 
-#'@param quanti a number lower than 1 indicating the quantile to perform 
-#'the computation of local dimension and theta
-#'@param ncores The number of cores to use in parallel computation
+#'@param exp An s2v_cube object with the experiment data.
+#'@param obs An s2dv_cube object with the reference data.
+#'@param method A character string indicating the method to apply bias 
+#'  correction among these ones: "PTF","RQUANT","QUANT","SSPLIN".
+#'@param wetday Logical indicating whether to perform wet day correction 
+#'  or not OR a numeric threshold below which all values are set to zero (by 
+#'  default is set to 'FALSE').
+#'@param proxy A character string indicating the proxy for local dimension
+#'  'dim' or inverse of persistence 'theta' to apply the dynamical 
+#'  conditioned bias correction method. 
+#'@param quanti A number lower than 1 indicating the quantile to perform 
+#'  the computation of local dimension and theta.
+#'@param ncores The number of cores to use in parallel computation.
 #'
-#'@return dynbias an s2dvcube object with a bias correction performed 
-#'conditioned by local dimension 'dim' or inverse of persistence 'theta'
+#'@return dynbias An s2dvcube object with a bias correction performed 
+#'conditioned by local dimension 'dim' or inverse of persistence 'theta'.
 #'
 #'@examples
-#'# example 1: simple data s2dvcube style
-#' set.seed(1)
-#' expL <- rnorm(1:2000)
-#' dim (expL) <- c(time =100,lat = 4, lon = 5)
-#' obsL <- c(rnorm(1:1980),expL[1,,]*1.2)
-#' dim (obsL) <- c(time = 100,lat = 4, lon = 5)
-#' time_obsL <- paste(rep("01", 100), rep("01", 100), 1920 : 2019, sep = "-")
-#' time_expL <- paste(rep("01", 100), rep("01", 100), 1929 : 2019, sep = "-")
-#' lon <- seq(-1,5,1.5)
-#' lat <- seq(30,35,1.5)
-#' # qm=0.98 # too high for this short dataset, it is possible that doesn't
-#' # get the requirement, in that case it would be necessary select a lower qm
-#' # for instance qm=0.60
-#' expL <- s2dv_cube(data = expL, lat = lat, lon = lon,
-#'                 Dates = list(start = time_expL, end = time_expL))
-#' obsL <- s2dv_cube(data = obsL, lat = lat, lon = lon,
-#'                 Dates = list(start = time_obsL, end = time_obsL))
-#' # to use DynBiasCorrection
-#' dynbias1 <- DynBiasCorrection(exp = expL$data, obs = obsL$data, proxy= "dim",
+#'expL <- rnorm(1:2000)
+#'dim(expL) <- c(time = 100, lat = 4, lon = 5)
+#'obsL <- c(rnorm(1:1980), expL[1, , ] * 1.2)
+#'dim(obsL) <- c(time = 100, lat = 4, lon = 5)
+#'time_obsL <- as.POSIXct(paste(rep("01", 100), rep("01", 100), 1920:2019, sep = "-"), 
+#'                        format = "%d-%m-%y")
+#'time_expL <- as.POSIXct(paste(rep("01", 100), rep("01", 100), 1929:2019, sep = "-"), 
+#'                        format = "%d-%m-%y")
+#'lon <- seq(-1, 5, 1.5)
+#'lat <- seq(30, 35, 1.5)
+#'# qm = 0.98 #'too high for this short dataset, it is possible that doesn't
+#'# get the requirement, in that case it would be necessary select a lower qm
+#'# for instance qm = 0.60
+#'expL <- s2dv_cube(data = expL, coords = list(lon = lon, lat = lat),
+#'                  Dates = time_expL)
+#'obsL <- s2dv_cube(data = obsL, coords = list(lon = lon, lat = lat),
+#'                  Dates = time_obsL)
+#'# to use DynBiasCorrection
+#'dynbias1 <- DynBiasCorrection(exp = expL$data, obs = obsL$data, proxy= "dim",
+#'                              quanti = 0.6)
+#'# to use CST_DynBiasCorrection
+#'dynbias2 <- CST_DynBiasCorrection(exp = expL, obs = obsL, proxy= "dim",
 #'                                  quanti = 0.6)
-#' # to use CST_DynBiasCorrection
-#' dynbias2 <- CST_DynBiasCorrection(exp = expL, obs = obsL, proxy= "dim",
-#'                                 quanti = 0.6)
 #'
 #'@export
 CST_DynBiasCorrection<- function(exp, obs, method = 'QUANT', wetday=FALSE,
                                  proxy = "dim", quanti,
                                  ncores = NULL) {
+  # Check 's2dv_cube'
   if (!inherits(obs, 's2dv_cube')) {
     stop("Parameter 'obs' must be of the class 's2dv_cube', ",
          "as output by CSTools::CST_Load.")
@@ -80,7 +81,7 @@ CST_DynBiasCorrection<- function(exp, obs, method = 'QUANT', wetday=FALSE,
          "as output by CSTools::CST_Load.")
   }
   exp$data <- DynBiasCorrection(exp = exp$data, obs = obs$data, method = method,
-                                wetday=wetday,
+                                wetday = wetday,
                                 proxy = proxy, quanti = quanti, ncores = ncores)
   return(exp)
 }
@@ -106,30 +107,30 @@ CST_DynBiasCorrection<- function(exp, obs, method = 'QUANT', wetday=FALSE,
 #'@references Faranda, D., Alvarez-Castro, M.C., Messori, G., Rodriguez, D., 
 #'and Yiou, P. (2019). The hammam effect or how a warm ocean enhances large 
 #'scale atmospheric predictability.Nature Communications, 10(1), 1316. 
-#'DOI = https://doi.org/10.1038/s41467-019-09305-8 "
+#'\doi{10.1038/s41467-019-09305-8}"
 #'@references Faranda, D., Gabriele Messori and Pascal Yiou. (2017).
 #' Dynamical proxies of North Atlantic predictability and extremes. 
 #' Scientific Reports, 7-41278, 2017.
 #'
-#'@param exp a multidimensional array with named dimensions with the 
-#'experiment data 
-#'@param obs a multidimensional array with named dimensions with the 
-#'observation data
-#'@param method a character string indicating the method to apply bias 
-#'correction among these ones:
-#'"PTF","RQUANT","QUANT","SSPLIN"
-#'@param wetday logical indicating whether to perform wet day correction 
-#'or not OR a numeric threshold below which all values are set to zero (by 
-#'default is set to 'FALSE').
-#'@param proxy a character string indicating the proxy for local dimension 
-#''dim' or inverse of persistence 'theta' to apply the dynamical conditioned 
-#'bias correction method. 
-#'@param quanti a number lower than 1 indicating the quantile to perform the 
-#'computation of local dimension and theta
-#'@param ncores The number of cores to use in parallel computation
+#'@param exp A multidimensional array with named dimensions with the 
+#'  experiment data.
+#'@param obs A multidimensional array with named dimensions with the 
+#'  observation data.
+#'@param method A character string indicating the method to apply bias 
+#'  correction among these ones:
+#'  "PTF", "RQUANT", "QUANT", "SSPLIN".
+#'@param wetday Logical indicating whether to perform wet day correction 
+#'  or not OR a numeric threshold below which all values are set to zero (by 
+#'  default is set to 'FALSE').
+#'@param proxy A character string indicating the proxy for local dimension 
+#'  'dim' or inverse of persistence 'theta' to apply the dynamical conditioned 
+#'  bias correction method. 
+#'@param quanti A number lower than 1 indicating the quantile to perform the 
+#'  computation of local dimension and theta.
+#'@param ncores The number of cores to use in parallel computation.
 #'
-#'@return a multidimensional array with named dimensions with a bias correction 
-#'performed conditioned by local dimension 'dim' or inverse of persistence 'theta'
+#'@return A multidimensional array with named dimensions with a bias correction 
+#'performed conditioned by local dimension 'dim' or inverse of persistence 'theta'.
 #'
 #'@import multiApply
 #'@importFrom ClimProjDiags Subset
@@ -140,7 +141,7 @@ CST_DynBiasCorrection<- function(exp, obs, method = 'QUANT', wetday=FALSE,
 #'obsL <- c(rnorm(1:1980),expL[1,,]*1.2)
 #'dim (obsL) <- c(time = 100,lat = 4, lon = 5)
 #'dynbias <- DynBiasCorrection(exp = expL, obs = obsL, method='QUANT',
-#'                            proxy= "dim", quanti = 0.6)
+#'                             proxy= "dim", quanti = 0.6)
 #'@export
 DynBiasCorrection<- function(exp, obs, method = 'QUANT',wetday=FALSE, 
                              proxy = "dim", quanti, ncores = NULL){
@@ -168,15 +169,15 @@ DynBiasCorrection<- function(exp, obs, method = 'QUANT',wetday=FALSE,
   predyn.exp <- Predictability(dim = attractor.exp$dim,
                                theta = attractor.exp$theta)
  
-  if (!(any(names(dim(exp)) %in% 'time'))){ 
-   if (any(names(dim(exp)) %in% 'sdate')) {
-    if (any(names(dim(exp)) %in% 'ftime')) {
-      exp <- MergeDims(exp, merge_dims = c('ftime', 'sdate'),
-                        rename_dim = 'time')
+  if (!(any(names(dim(exp)) %in% 'time'))) { 
+    if (any(names(dim(exp)) %in% 'sdate')) {
+      if (any(names(dim(exp)) %in% 'ftime')) {
+        exp <- MergeDims(exp, merge_dims = c('ftime', 'sdate'),
+                         rename_dim = 'time')
+      }
     }
-   }
   }
-  if (!(any(names(dim(obs)) %in% 'time'))){ 
+  if (!(any(names(dim(obs)) %in% 'time'))) { 
     if (any(names(dim(obs)) %in% 'sdate')) {
       if (any(names(dim(obs)) %in% 'ftime')) {
         obs <- MergeDims(obs, merge_dims = c('ftime', 'sdate'),
@@ -221,25 +222,25 @@ DynBiasCorrection<- function(exp, obs, method = 'QUANT',wetday=FALSE,
     stop ("Parameter 'proxy' must be set as 'dim' or 'theta'.")
   }
   
-  if(any(names(dim(adjusted)) %in% 'memberObs')){
-    if(dim(adjusted)['memberObs'] == 1){
-    adjusted <- Subset(adjusted,along='memberObs',indices=1,drop = 'selected')
-     }else{
-    print('Dimension member in obs changed to memberObs')
+  if (any(names(dim(adjusted)) %in% 'memberObs')) {
+    if (dim(adjusted)['memberObs'] == 1) {
+      adjusted <- Subset(adjusted, along = 'memberObs', indices=1, drop = 'selected')
+    } else {
+      print('Dimension member in obs changed to memberObs')
     }
   }
   
-  if(any(names(dim(adjusted)) %in% 'datasetObs')){
-    if(dim(adjusted)['datasetObs'] == 1){
-      adjusted <- Subset(adjusted,along='datasetObs',indices=1,drop = 'selected')
-    }else{
+  if (any(names(dim(adjusted)) %in% 'datasetObs')) {
+    if (dim(adjusted)['datasetObs'] == 1) {
+      adjusted <- Subset(adjusted, along = 'datasetObs', indices = 1, drop = 'selected')
+    } else {
       print('Dimension dataset in obs changed to datasetObs')
     }
   }
   return(adjusted)
 }
 
-.dynbias <- function(exp, obs, method, wetday,predyn.exp, predyn.obs) {
+.dynbias <- function(exp, obs, method, wetday, predyn.exp, predyn.obs) {
    result <- array(rep(NA, length(exp)))
    res <- lapply(1:3, function(x) {
      exp_sub <- exp[predyn.exp[[x]]]
@@ -250,7 +251,7 @@ DynBiasCorrection<- function(exp, obs, method = 'QUANT',wetday=FALSE,
    })
    return(result)
 }   
-.qbiascorrection <- function(expX, obsX, method,wetday) {
+.qbiascorrection <- function(expX, obsX, method, wetday) {
   ## functions fitQmap and doQmap
   if (method == "PTF") {
     qm.fit <- fitQmap(obsX, expX, method = "PTF", transfun = "expasympt",

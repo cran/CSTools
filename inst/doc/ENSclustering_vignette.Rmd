@@ -42,7 +42,7 @@ For our example we will use the sample seasonal temperature data provided within
 Data can be loaded as follows:
 
 ```r
-datalist <- CSTools::lonlat_temp$exp
+datalist <- lonlat_temp$exp
 ```
 
 The data will has the following dimension:
@@ -67,7 +67,7 @@ Let's launch the clustering using 4 clusters (numclus), 4 EOFs (numpcs), 'mean' 
 
 ```r
 results <- CST_EnsClustering(datalist, numclus = numcl, numpcs = 4,
-                            time_moment = 'mean', cluster_dim = c('member', 'sdate'))
+                             time_moment = 'mean', cluster_dim = c('member', 'sdate'))
 ```
 
 The EnsClustering produces the following outputs saved in object results:
@@ -75,7 +75,7 @@ The EnsClustering produces the following outputs saved in object results:
 ```r
 names(results)
 #[1] "cluster"        "freq"           "closest_member" "repr_field"    
-#[5] "composites"     "lat"            "on" 
+#[5] "composites"     "lon"            "lat" 
 
 ```
 

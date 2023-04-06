@@ -1,4 +1,5 @@
-#'Anomalies relative to a climatology along selected dimension with or without cross-validation
+#'Anomalies relative to a climatology along selected dimension with or without 
+#'cross-validation
 #'
 #'@author Perez-Zanon Nuria, \email{nuria.perez@bsc.es}
 #'@author Pena Jesus, \email{jesus.pena@bsc.es}
@@ -41,34 +42,31 @@
 #'in CSTools.
 #'
 #'@examples
-#'# Example 1:
 #'mod <- 1 : (2 * 3 * 4 * 5 * 6 * 7)
 #'dim(mod) <- c(dataset = 2, member = 3, sdate = 4, ftime = 5, lat = 6, lon = 7)
 #'obs <- 1 : (1 * 1 * 4 * 5 * 6 * 7)
 #'dim(obs) <- c(dataset = 1, member = 1, sdate = 4, ftime = 5, lat = 6, lon = 7)
 #'lon <- seq(0, 30, 5)
 #'lat <- seq(0, 25, 5)
-#'exp <- list(data = mod, lat = lat, lon = lon)
-#'obs <- list(data = obs, lat = lat, lon = lon)
+#'coords <- list(lon = lon, lat = lat)
+#'exp <- list(data = mod, coords = coords)
+#'obs <- list(data = obs, coords = coords)
 #'attr(exp, 'class') <- 's2dv_cube'
 #'attr(obs, 'class') <- 's2dv_cube'
 #'
-#'anom1 <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = TRUE)
-#'anom2 <- CST_Anomaly(exp = exp, obs = obs, cross = TRUE, memb = TRUE)
-#'anom3 <- CST_Anomaly(exp = exp, obs = obs, cross = TRUE, memb = FALSE)
-#'anom4 <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = FALSE)
-#'anom5 <- CST_Anomaly(lonlat_temp$exp)
-#'anom6 <- CST_Anomaly(obs = lonlat_temp$obs)
+#'anom <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = TRUE)
 #'
-#'@seealso \code{\link[s2dv]{Ano_CrossValid}}, \code{\link[s2dv]{Clim}} and \code{\link{CST_Load}}
+#'@seealso \code{\link[s2dv]{Ano_CrossValid}}, \code{\link[s2dv]{Clim}} and 
+#'\code{\link{CST_Load}}
 #'
 #'@import multiApply
 #'@importFrom s2dv InsertDim Clim Ano_CrossValid Reorder
 #'@export
-CST_Anomaly <- function(exp = NULL, obs = NULL, dim_anom = 'sdate', cross = FALSE, 
-                        memb_dim = 'member', memb = TRUE, dat_dim = c('dataset', 'member'), 
-                        filter_span = NULL, ftime_dim = 'ftime', ncores = NULL) {
-  # s2dv_cube
+CST_Anomaly <- function(exp = NULL, obs = NULL, dim_anom = 'sdate', 
+                        cross = FALSE, memb_dim = 'member', memb = TRUE, 
+                        dat_dim = c('dataset', 'member'), filter_span = NULL, 
+                        ftime_dim = 'ftime', ncores = NULL) {
+  # Check 's2dv_cube'
   if (!inherits(exp, 's2dv_cube') & !is.null(exp) || 
       !inherits(obs, 's2dv_cube') & !is.null(obs)) {
     stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube', ",
@@ -89,23 +87,18 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, dim_anom = 'sdate', cross = FALS
     case_exp = 1
     warning("Parameter 'obs' is not provided and 'exp' will be used instead.")
   }
-  if(any(is.null(names(dim(exp$data))))| any(nchar(names(dim(exp$data))) == 0) |
-     any(is.null(names(dim(obs$data))))| any(nchar(names(dim(obs$data))) == 0)) {
+  if (any(is.null(names(dim(exp$data))))| any(nchar(names(dim(exp$data))) == 0) |
+      any(is.null(names(dim(obs$data))))| any(nchar(names(dim(obs$data))) == 0)) {
     stop("Parameter 'exp' and 'obs' must have dimension names in element 'data'.")
   }
-  if(!all(names(dim(exp$data)) %in% names(dim(obs$data))) |
-     !all(names(dim(obs$data)) %in% names(dim(exp$data)))) {
+  if (!all(names(dim(exp$data)) %in% names(dim(obs$data))) |
+      !all(names(dim(obs$data)) %in% names(dim(exp$data)))) {
     stop("Parameter 'exp' and 'obs' must have same dimension names in element 'data'.")
   }
   dim_exp <- dim(exp$data)
   dim_obs <- dim(obs$data)
   dimnames_data <- names(dim_exp)
   # dim_anom
-  if (is.numeric(dim_anom) & length(dim_anom) == 1) {
-    warning("Parameter 'dim_anom' must be a character string and a numeric value will not be ",
-            "accepted in the next release. The corresponding dimension name is assigned.")
-    dim_anom <- dimnames_data[dim_anom]
-  }
   if (!is.character(dim_anom)) {
     stop("Parameter 'dim_anom' must be a character string.")
   }
@@ -117,18 +110,18 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, dim_anom = 'sdate', cross = FALS
          "'exp' and 'obs' must be greater than 1.")
   }
   # cross
-  if (!is.logical(cross) | !is.logical(memb) ) {
+  if (!is.logical(cross) | !is.logical(memb)) {
     stop("Parameters 'cross' and 'memb' must be logical.")
   }
-  if (length(cross) > 1 | length(memb) > 1 ) {
+  if (length(cross) > 1 | length(memb) > 1) {
     cross <- cross[1]
-    warning("Parameter 'cross' has length greater than 1 and only the first element",
+    warning("Parameter 'cross' has length greater than 1 and only the first element ",
             "will be used.")
   }
   # memb
   if (length(memb) > 1) {
      memb <- memb[1]
-     warning("Parameter 'memb' has length greater than 1 and only the first element",
+     warning("Parameter 'memb' has length greater than 1 and only the first element ",
              "will be used.")
   }
   # memb_dim
@@ -146,15 +139,15 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, dim_anom = 'sdate', cross = FALS
       stop("Parameter 'dat_dim' must be a character vector.")
     }
     if (!all(dat_dim %in% names(dim_exp)) | !all(dat_dim %in% names(dim_obs))) {
-      stop("Parameter 'dat_dim' is not found in 'exp' or 'obs' dimension in element 'data'.",
-           " Set it as NULL if there is no dataset dimension.")
+      stop("Parameter 'dat_dim' is not found in 'exp' or 'obs' dimension in element 'data'. ",
+           "Set it as NULL if there is no dataset dimension.")
     }
   }
   # filter_span
   if (!is.null(filter_span)) {
     if (!is.numeric(filter_span)) {
-      warning("Paramater 'filter_span' is not numeric and any filter",
-                " is being applied.")
+      warning("Paramater 'filter_span' is not numeric and any filter ",
+              "is being applied.")
       filter_span <- NULL
     }
     # ncores
@@ -178,11 +171,15 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, dim_anom = 'sdate', cross = FALS
   
   # With cross-validation
   if (cross) {
-    ano <- Ano_CrossValid(exp = exp$data, obs = obs$data, time_dim = dim_anom, memb_dim = memb_dim, memb = memb, dat_dim = dat_dim)
+    ano <- Ano_CrossValid(exp = exp$data, obs = obs$data, time_dim = dim_anom,
+                          memb_dim = memb_dim, memb = memb, dat_dim = dat_dim,
+                          ncores = ncores)
    
-    #  Without cross-validation 
+  # Without cross-validation 
   } else {
-    tmp <- Clim(exp = exp$data, obs = obs$data, time_dim = dim_anom, memb_dim = memb_dim, memb = memb, dat_dim = dat_dim)
+    tmp <- Clim(exp = exp$data, obs = obs$data, time_dim = dim_anom,
+		            memb_dim = memb_dim, memb = memb, dat_dim = dat_dim, 
+                ncores = ncores)
     if (!is.null(filter_span)) {
       tmp$clim_exp <- Apply(tmp$clim_exp, 
                             target_dims = c(ftime_dim),
@@ -201,8 +198,8 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, dim_anom = 'sdate', cross = FALS
       clim_exp <- tmp$clim_exp
       clim_obs <- tmp$clim_obs
     } else {
-      clim_exp <- InsertDim(tmp$clim_exp, 1,  dim_exp[memb_dim]) 
-      clim_obs <- InsertDim(tmp$clim_obs, 1,  dim_obs[memb_dim]) 
+      clim_exp <- InsertDim(tmp$clim_exp, 1, dim_exp[memb_dim]) 
+      clim_obs <- InsertDim(tmp$clim_obs, 1, dim_obs[memb_dim]) 
     }
     clim_exp <- InsertDim(clim_exp, 1, dim_exp[dim_anom]) 
     clim_obs <- InsertDim(clim_obs, 1, dim_obs[dim_anom])

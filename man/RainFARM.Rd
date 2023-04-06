@@ -24,66 +24,77 @@ RainFARM(
 )
 }
 \arguments{
-\item{data}{Precipitation array to downscale.
-The input array is expected to have at least two dimensions named "lon" and "lat" by default
-(these default names can be changed with the \code{lon_dim} and \code{lat_dim} parameters)
-and one or more dimensions over which to average these slopes,
-which can be specified by parameter \code{time_dim}.
-The number of longitudes and latitudes in the input data is expected to be even and the same. If not
+\item{data}{Precipitation array to downscale. The input array is expected to 
+have at least two dimensions named "lon" and "lat" by default (these default 
+names can be changed with the \code{lon_dim} and \code{lat_dim} parameters)
+and one or more dimensions over which to average these slopes, which can be 
+specified by parameter \code{time_dim}. The number of longitudes and 
+latitudes in the input data is expected to be even and the same. If not
 the function will perform a subsetting to ensure this condition.}
 
 \item{lon}{Vector or array of longitudes.}
 
 \item{lat}{Vector or array of latitudes.}
 
-\item{nf}{Refinement factor for downscaling (the output resolution is increased by this factor).}
+\item{nf}{Refinement factor for downscaling (the output resolution is 
+increased by this factor).}
 
-\item{weights}{multi-dimensional array with climatological weights which can be obtained using
-the \code{CST_RFWeights} function. If \code{weights=1.} (default) no weights are used.
-The names of these dimensions must be at least 'lon' and 'lat'.}
+\item{weights}{Multi-dimensional array with climatological weights which can 
+be obtained using the \code{CST_RFWeights} function. If \code{weights = 1.} 
+(default) no weights are used. The names of these dimensions must be at 
+least the same longitudinal and latitudinal dimension names as data.}
 
-\item{nens}{Number of ensemble members to produce (default: \code{nens=1}).}
+\item{nens}{Number of ensemble members to produce (default: \code{nens = 1}).}
 
-\item{slope}{Prescribed spectral slope. The default is \code{slope=0.}
-meaning that the slope is determined automatically over the dimensions specified by \code{time_dim}. A 1D array with named dimension can be provided (see details and examples)}
+\item{slope}{Prescribed spectral slope. The default is \code{slope = 0.}
+meaning that the slope is determined automatically over the dimensions 
+specified by \code{time_dim}. A 1D array with named dimension can be 
+provided (see details and examples).}
 
-\item{kmin}{First wavenumber for spectral slope (default: \code{kmin=1}).}
+\item{kmin}{First wavenumber for spectral slope (default: \code{kmin = 1}).}
 
-\item{fglob}{Logical to conseve global precipitation over the domain (default: FALSE)}
+\item{fglob}{Logical to conseve global precipitation over the domain 
+(default: FALSE).}
 
-\item{fsmooth}{Logical to conserve precipitation with a smoothing kernel (default: TRUE)}
+\item{fsmooth}{Logical to conserve precipitation with a smoothing kernel 
+(default: TRUE).}
 
-\item{nprocs}{The number of parallel processes to spawn for the use for parallel computation in multiple cores. (default: 1)}
+\item{nprocs}{The number of parallel processes to spawn for the use for 
+parallel computation in multiple cores. (default: 1)}
 
 \item{time_dim}{String or character array with name(s) of time dimension(s)
 (e.g. "ftime", "sdate", "time" ...) over which to compute spectral slopes.
 If a character array of dimension names is provided, the spectral slopes
 will be computed over all elements belonging to those dimensions.
-If omitted one of c("ftime", "sdate", "time")
-is searched and the first one with more than one element is chosen.}
+If omitted one of c("ftime", "sdate", "time") is searched and the first one 
+with more than one element is chosen.}
 
 \item{lon_dim}{Name of lon dimension ("lon" by default).}
 
 \item{lat_dim}{Name of lat dimension ("lat" by default).}
 
-\item{drop_realization_dim}{Logical to remove the "realization" stochastic ensemble dimension (default: FALSE)
- with the following behaviour if set to TRUE:
-
-1) if \code{nens==1}: the dimension is dropped;
-
-2) if \code{nens>1} and a "member" dimension exists:
-   the "realization" and "member" dimensions are compacted (multiplied) and the resulting dimension is named "member";
-
-3) if \code{nens>1} and a "member" dimension does not exist: the "realization" dimension is renamed to "member".}
+\item{drop_realization_dim}{Logical to remove the "realization" stochastic 
+ensemble dimension (default: FALSE) with the following behaviour if set to 
+TRUE:
+\enumerate{
+  \item{if \code{nens == 1}: the dimension is dropped;}
+  \item{if \code{nens > 1} and a "member" dimension exists: the "realization" 
+  and "member" dimensions are compacted (multiplied) and the resulting 
+  dimension is named "member";}
+  \item{if \code{nens > 1} and a "member" dimension does not exist: the 
+  "realization" dimension is renamed to "member".}
+}}
 
 \item{verbose}{logical for verbose output (default: FALSE).}
 }
 \value{
-RainFARM() returns a list containing the fine-scale longitudes, latitudes
-and the sequence of \code{nens} downscaled fields.
-If \code{nens>1} an additional dimension named "realization" is added to the output array
-after the "member" dimension (if it exists and unless \code{drop_realization_dim=TRUE} is specified).
-The ordering of the remaining dimensions in the \code{exp} element of the input object is maintained.
+RainFARM() Returns a list containing the fine-scale longitudes, 
+ latitudes and the sequence of \code{nens} downscaled fields. If 
+ \code{nens > 1} an additional dimension named "realization" is added to the 
+ output array after the "member" dimension (if it exists and unless 
+ \code{drop_realization_dim = TRUE} is specified). The ordering of the 
+ remaining dimensions in the \code{exp} element of the input object is 
+ maintained.
 }
 \description{
 This function implements the RainFARM stochastic precipitation downscaling method
@@ -92,47 +103,27 @@ and one or more dimension (such as "ftime", "sdate" or "time")
 over which to average automatically determined spectral slopes.
 Adapted for climate downscaling and including orographic correction.
 References:
-Terzago, S. et al. (2018). NHESS 18(11), 2825-2840. http://doi.org/10.5194/nhess-18-2825-2018,
-D'Onofrio et al. (2014), J of Hydrometeorology 15, 830-843; Rebora et. al. (2006), JHM 7, 724.
+Terzago, S. et al. (2018). NHESS 18(11), 2825-2840. \doi{10.5194/nhess-18-2825-2018},
+D'Onofrio et al. (2014), J of Hydrometeorology 15, 830-843; Rebora et. al. 
+(2006), JHM 7, 724.
 }
 \details{
-Wether parameter 'slope' and 'weights' presents seasonality dependency, a dimension name should match between these parameters and the input data in parameter 'data'. See example 2 below where weights and slope vary with 'sdate' dimension.
+Wether parameter 'slope' and 'weights' presents seasonality 
+dependency, a dimension name should match between these parameters and the 
+input data in parameter 'data'. See example 2 below where weights and slope 
+vary with 'sdate' dimension.
 }
 \examples{
 # Example for the 'reduced' RainFARM function 
 nf <- 8   # Choose a downscaling by factor 8
-nens <- 3 # Number of ensemble members
-# create a test array with dimension 8x8 and 20 timesteps
-# or provide your own read from a netcdf file
-pr <- rnorm(8 * 8 * 20)
-dim(pr) <- c(lon = 8, lat = 8, ftime = 20)
-lon_mat <- seq(10, 13.5, 0.5) # could also be a 2d matrix
-lat_mat <- seq(40, 43.5, 0.5)
+exp <- 1 : (2 * 3 * 4 * 8 * 8)
+dim(exp) <- c(dataset = 1, member = 2, sdate = 3, ftime = 4, lat = 8, lon = 8)
+lon <- seq(10, 13.5, 0.5)
+lat <- seq(40, 43.5, 0.5)
 # Create a test array of weights
 ww <- array(1., dim = c(lon = 8 * nf, lat = 8 * nf))
-# or create proper weights using an external fine-scale climatology file
-#     Specify a weightsfn filename if you wish to save the weights
-\dontrun{
-ww <- CST_RFWeights("./worldclim.nc", nf, lon = lon_mat, lat = lat_mat, 
-                    fsmooth = TRUE)
-}
-# downscale using weights (ww=1. means do not use weights)
-res <- RainFARM(pr, lon_mat, lat_mat, nf, 
-                fsmooth = TRUE, fglob = FALSE, 
-                weights = ww, nens = 2, verbose = TRUE)
-str(res)
-#List of 3
-# $ data: num [1:3, 1:20, 1:64, 1:64] 0.186 0.212 0.138 3.748 0.679 ...
-# $ lon : num [1:64] 9.78 9.84 9.91 9.97 10.03 ...
-# $ lat : num [1:64] 39.8 39.8 39.9 40 40 ...
-dim(res$data)
-#  lon         lat       ftime realization 
-#   64          64          20           2 
-# Example 2:
-slo <- array(c(0.1, 0.5, 0.7), c(sdate= 3))
-wei <- array(rnorm(8*8*3), c(lon = 8, lat = 8, sdate = 3))
-res <- RainFARM(lonlat_prec$data, lon = lonlat_prec$lon,
-                lat = lonlat_prec$lat, weights = wei, slope = slo, nf = 2)
+res <- RainFARM(data = exp, lon = lon, lat = lat, nf = nf, 
+               weights = ww, nens = 3, time_dim = 'ftime')
 }
 \author{
 Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}

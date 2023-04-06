@@ -16,32 +16,32 @@ DynBiasCorrection(
 )
 }
 \arguments{
-\item{exp}{a multidimensional array with named dimensions with the 
-experiment data}
+\item{exp}{A multidimensional array with named dimensions with the 
+experiment data.}
 
-\item{obs}{a multidimensional array with named dimensions with the 
-observation data}
+\item{obs}{A multidimensional array with named dimensions with the 
+observation data.}
 
-\item{method}{a character string indicating the method to apply bias 
+\item{method}{A character string indicating the method to apply bias 
 correction among these ones:
-"PTF","RQUANT","QUANT","SSPLIN"}
+"PTF", "RQUANT", "QUANT", "SSPLIN".}
 
-\item{wetday}{logical indicating whether to perform wet day correction 
+\item{wetday}{Logical indicating whether to perform wet day correction 
 or not OR a numeric threshold below which all values are set to zero (by 
 default is set to 'FALSE').}
 
-\item{proxy}{a character string indicating the proxy for local dimension 
+\item{proxy}{A character string indicating the proxy for local dimension 
 'dim' or inverse of persistence 'theta' to apply the dynamical conditioned 
 bias correction method.}
 
-\item{quanti}{a number lower than 1 indicating the quantile to perform the 
-computation of local dimension and theta}
+\item{quanti}{A number lower than 1 indicating the quantile to perform the 
+computation of local dimension and theta.}
 
-\item{ncores}{The number of cores to use in parallel computation}
+\item{ncores}{The number of cores to use in parallel computation.}
 }
 \value{
-a multidimensional array with named dimensions with a bias correction 
-performed conditioned by local dimension 'dim' or inverse of persistence 'theta'
+A multidimensional array with named dimensions with a bias correction 
+performed conditioned by local dimension 'dim' or inverse of persistence 'theta'.
 }
 \description{
 This function perform a bias correction conditioned by the 
@@ -60,13 +60,13 @@ dim (expL) <- c(time =100,lat = 4, lon = 5)
 obsL <- c(rnorm(1:1980),expL[1,,]*1.2)
 dim (obsL) <- c(time = 100,lat = 4, lon = 5)
 dynbias <- DynBiasCorrection(exp = expL, obs = obsL, method='QUANT',
-                           proxy= "dim", quanti = 0.6)
+                            proxy= "dim", quanti = 0.6)
 }
 \references{
 Faranda, D., Alvarez-Castro, M.C., Messori, G., Rodriguez, D., 
 and Yiou, P. (2019). The hammam effect or how a warm ocean enhances large 
 scale atmospheric predictability.Nature Communications, 10(1), 1316. 
-DOI = https://doi.org/10.1038/s41467-019-09305-8 "
+\doi{10.1038/s41467-019-09305-8}"
 
 Faranda, D., Gabriele Messori and Pascal Yiou. (2017).
 Dynamical proxies of North Atlantic predictability and extremes. 

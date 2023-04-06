@@ -232,7 +232,7 @@ library(s2dv)
 <p>For our example we will use the sample seasonal temperature data provided within the CSTools package.
 Data can be loaded as follows:</p>
 
-<pre><code class="r">datalist &lt;- CSTools::lonlat_temp$exp
+<pre><code class="r">datalist &lt;- lonlat_temp$exp
 </code></pre>
 
 <p>The data will has the following dimension:</p>
@@ -254,14 +254,14 @@ dataset  member   sdate   ftime     lat     lon
 <p>Let&#39;s launch the clustering using 4 clusters (numclus), 4 EOFs (numpcs), &#39;mean&#39; as moment to apply to the time dimension (time_moment), and both members and starting dates, i.e. &#39;c(&ldquo;member&rdquo;,&ldquo;sdate&rdquo;)&#39;, as dimension over which the clustering is performed (cluster_dim).</p>
 
 <pre><code class="r">results &lt;- CST_EnsClustering(datalist, numclus = numcl, numpcs = 4,
-                            time_moment = &#39;mean&#39;, cluster_dim = c(&#39;member&#39;, &#39;sdate&#39;))
+                             time_moment = &#39;mean&#39;, cluster_dim = c(&#39;member&#39;, &#39;sdate&#39;))
 </code></pre>
 
 <p>The EnsClustering produces the following outputs saved in object results:</p>
 
 <pre><code class="r">names(results)
 #[1] &quot;cluster&quot;        &quot;freq&quot;           &quot;closest_member&quot; &quot;repr_field&quot;    
-#[5] &quot;composites&quot;     &quot;lat&quot;            &quot;on&quot; 
+#[5] &quot;composites&quot;     &quot;lon&quot;            &quot;lat&quot; 
 
 </code></pre>
 

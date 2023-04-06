@@ -15,43 +15,60 @@ CST_RegimesAssign(
 )
 }
 \arguments{
-\item{data}{a 's2dv_cube' object.}
+\item{data}{An 's2dv_cube' object.}
 
-\item{ref_maps}{a 's2dv_cube' object as the output of CST_WeatherRegimes.}
+\item{ref_maps}{An 's2dv_cube' object as the output of CST_WeatherRegimes.}
 
-\item{method}{whether the matching will be performed in terms of minimum distance (default = 'distance') or 
-the maximum spatial correlation (method = 'ACC') between the maps.}
+\item{method}{Whether the matching will be performed in terms of minimum 
+distance (default = 'distance') or the maximum spatial correlation 
+(method = 'ACC') between the maps.}
 
-\item{composite}{a logical parameter indicating if the composite maps are computed or not (default = FALSE).}
+\item{composite}{A logical parameter indicating if the composite maps are 
+computed or not (default = FALSE).}
 
-\item{memb}{a logical value indicating whether to compute composites for separate members (default FALSE) or as unique ensemble (TRUE).
-This option is only available for when parameter 'composite' is set to TRUE and the data object has a dimension named 'member'.}
+\item{memb}{A logical value indicating whether to compute composites for 
+separate members (default FALSE) or as unique ensemble (TRUE). This option 
+is only available for when parameter 'composite' is set to TRUE and the data 
+object has a dimension named 'member'.}
 
-\item{ncores}{the number of multicore threads to use for parallel computation.}
+\item{ncores}{The number of multicore threads to use for parallel computation.}
 }
 \value{
-A list with two elements \code{$data} (a 's2dv_cube' object containing the composites cluster=1,..,K for case (*1)
-        \code{$pvalue} (array with the same structure as \code{$data} containing the pvalue of the composites obtained through a t-test 
-        that accounts for the serial dependence of the data with the same structure as Composite.)(only when composite = 'TRUE'),
-        \code{$cluster} (array with the same dimensions as data (except latitude and longitude which are removed) indicating the ref_maps to which each point is allocated.) ,
-        \code{$frequency} (A vector of integers (from k=1,...k n reference maps) indicating the percentage of assignations corresponding to each map.),
+A list with two elements \code{$data} (a 's2dv_cube' object containing 
+the composites cluster=1,..,K for case (*1) or only k=1 for any specific 
+cluster, i.e., case (*2)) (only when composite = 'TRUE') and \code{$statistics} 
+that includes \code{$pvalue} (array with the same structure as \code{$data} 
+containing the pvalue of the composites obtained through a t-test that 
+accounts for the serial dependence of the data with the same structure as 
+Composite.)(only when composite = 'TRUE'), \code{$cluster} (array with the 
+same dimensions as data (except latitude and longitude which are removed) 
+indicating the ref_maps to which each point is allocated.), \code{$frequency} 
+(A vector of integers (from k=1,...k n reference maps) indicating the 
+percentage of assignations corresponding to each map.).
 }
 \description{
-This function performs the matching between a field of anomalies and a set
-of maps which will be used as a reference. The anomalies will be assigned to the reference map 
-for which the minimum Eucledian distance (method=’distance’) or highest spatial correlation 
-(method = 'ACC') is obtained.
+This function performs the matching between a field of anomalies 
+and a set of maps which will be used as a reference. The anomalies will be 
+assigned to the reference map for which the minimum Eucledian distance 
+(method =’distance’) or highest spatial correlation (method = 'ACC') is 
+obtained.
 }
 \examples{
-\dontrun{
-regimes <- CST_WeatherRegimes(data = lonlat_temp$obs, EOFs = FALSE, ncenters = 4)
-res1 <- CST_RegimesAssign(data = lonlat_temp$exp, ref_maps = regimes, composite = FALSE)
-res2 <- CST_RegimesAssign(data = lonlat_temp$exp, ref_maps = regimes, composite = TRUE)
-}
+data <- array(abs(rnorm(1280, 282.7, 6.4)), dim = c(dataset = 2, member = 2, 
+                                                   sdate = 3, ftime = 3, 
+                                                   lat = 4, lon = 4))
+coords <- list(lon = seq(0, 3), lat = seq(47, 44))
+exp <- list(data = data, coords = coords)
+class(exp) <- 's2dv_cube'
+regimes <- CST_WeatherRegimes(data = exp, EOFs = FALSE, 
+                             ncenters = 4)
+res1 <- CST_RegimesAssign(data = exp, ref_maps = regimes, 
+                         composite = FALSE)
 }
 \references{
-Torralba, V. (2019) Seasonal climate prediction for the wind energy sector: methods and tools
-for the development of a climate service. Thesis. Available online: \url{https://eprints.ucm.es/56841/}
+Torralba, V. (2019) Seasonal climate prediction for the wind 
+energy sector: methods and tools for the development of a climate service. 
+Thesis. Available online: \url{https://eprints.ucm.es/56841/}
 }
 \author{
 Verónica Torralba - BSC, \email{veronica.torralba@bsc.es}

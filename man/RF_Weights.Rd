@@ -18,45 +18,55 @@ RF_Weights(
 )
 }
 \arguments{
-\item{zclim}{a multi-dimensional array with named dimension containing at least one precipiation field with spatial dimensions.}
+\item{zclim}{A multi-dimensional array with named dimension containing at 
+least one precipiation field with spatial dimensions.}
 
-\item{latin}{a vector indicating the latitudinal coordinates corresponding to the \code{zclim} parameter.}
+\item{latin}{A vector indicating the latitudinal coordinates corresponding to 
+the \code{zclim} parameter.}
 
-\item{lonin}{a vector indicating the longitudinal coordinates corresponding to the \code{zclim} parameter.}
+\item{lonin}{A vector indicating the longitudinal coordinates corresponding to 
+the \code{zclim} parameter.}
 
-\item{nf}{Refinement factor for downscaling (the output resolution is increased by this factor).}
+\item{nf}{Refinement factor for downscaling (the output resolution is 
+increased by this factor).}
 
-\item{lat}{Vector of latitudes.
-The number of longitudes and latitudes is expected to be even and the same. If not
-the function will perform a subsetting to ensure this condition.}
+\item{lat}{Vector of latitudes. The number of longitudes and latitudes is 
+expected to be even and the same. If not the function will perform a 
+subsetting to ensure this condition.}
 
 \item{lon}{Vector of longitudes.}
 
-\item{fsmooth}{Logical to use smooth conservation (default) or large-scale box-average conservation.}
+\item{fsmooth}{Logical to use smooth conservation (default) or large-scale 
+box-average conservation.}
 
-\item{lonname}{a character string indicating the name of the longitudinal dimension set as 'lon' by default.}
+\item{lonname}{A character string indicating the name of the longitudinal 
+dimension set as 'lon' by default.}
 
-\item{latname}{a character string indicating the name of the latitudinal dimension set as 'lat' by default.}
+\item{latname}{A character string indicating the name of the latitudinal 
+dimension set as 'lat' by default.}
 
-\item{ncores}{an integer that indicates the number of cores for parallel computations using multiApply function. The default value is one.}
+\item{ncores}{An integer that indicates the number of cores for parallel 
+computations using multiApply function. The default value is one.}
 }
 \value{
-An object of class 's2dv_cube' containing in matrix \code{data} the weights with dimensions (lon, lat).
+An object of class 's2dv_cube' containing in matrix \code{data} the 
+weights with dimensions (lon, lat).
 }
 \description{
-Compute climatological ("orographic") weights from a fine-scale precipitation climatology file.
+Compute climatological ("orographic") weights from a fine-scale 
+precipitation climatology file.
 }
 \examples{
 a <- array(1:2500, c(lat = 50, lon = 50))
 res <- RF_Weights(a, seq(0.1 ,5, 0.1), seq(0.1 ,5, 0.1), 
-                  nf = 5, lat = 1:5, lon = 1:5) 
+                 nf = 5, lat = 1:5, lon = 1:5)
 }
 \references{
 Terzago, S., Palazzi, E., & von Hardenberg, J. (2018).
 Stochastic downscaling of precipitation in complex orography: 
 A simple method to reproduce a realistic fine-scale climatology.
 Natural Hazards and Earth System Sciences, 18(11),
-2825-2840. http://doi.org/10.5194/nhess-18-2825-2018 .
+2825-2840. \doi{10.5194/nhess-18-2825-2018}.
 }
 \author{
 Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}

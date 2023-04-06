@@ -25,7 +25,7 @@ to combining.}
 
 \item{pdf_2}{A numeric array with a dimension named 'statistic', containg 
 two parameters: mean' and 'standard deviation' of the second gaussian pdf 
- to combining.}
+to combining.}
 
 \item{nsigma}{(optional) A numeric value for setting the limits of X axis. 
 (Default nsigma = 3).}
@@ -68,20 +68,6 @@ attr(pdf_2, "name") <- "NAO2"
 dim(pdf_2) <-  c(statistic = 2)
 
 PlotPDFsOLE(pdf_1, pdf_2)
-
-# Example 2
-Glosea5PDF <- c(2.25, 0.67)
-attr(Glosea5PDF, "name") <- "Glosea5"
-dim(Glosea5PDF) <-  c(statistic = 2)
-ECMWFPDF <- c(2.38, 0.61)
-attr(ECMWFPDF, "name") <- "ECMWF"
-dim(ECMWFPDF) <-  c(statistic = 2)
-MFPDF <- c(4.52, 0.34)
-attr(MFPDF, "name") <- "MF"
-dim(MFPDF) <-  c(statistic = 2)
-PlotPDFsOLE(pdf_1 = Glosea5PDF, pdf_2 = ECMWFPDF, legendPos = 'left')
-PlotPDFsOLE(pdf_1 = Glosea5PDF, pdf_2 = MFPDF, legendPos = 'top')
-PlotPDFsOLE(pdf_1 = ECMWFPDF, pdf_2 = MFPDF, legendSize = 1.2)
 }
 \author{
 Eroteida Sanchez-Garcia - AEMET, //email{esanchezg@aemet.es}

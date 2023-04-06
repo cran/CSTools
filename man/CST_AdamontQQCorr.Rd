@@ -16,32 +16,32 @@ CST_AdamontQQCorr(
 )
 }
 \arguments{
-\item{exp}{experiment data an object of class \code{s2dv_cube}}
+\item{exp}{Experiment data an object of class \code{s2dv_cube}.}
 
-\item{wt_exp}{corresponding weather types (same dimensions as \code{exp$data}
-but lat/lon)}
+\item{wt_exp}{Corresponding weather types (same dimensions as \code{exp$data}
+but lat/lon).}
 
-\item{obs}{reference data, also of class \code{s2dv_cube}. lat/lon dimensions
+\item{obs}{Reference data, also of class \code{s2dv_cube}. lat/lon dimensions
 can differ from \code{exp} if non rectilinear latlon grids are used, 
 in which case regrid should be set to TRUE and .NearestNeighbors \code{NN}
-output should be provided}
+output should be provided.}
 
-\item{wt_obs}{corresponding weather types (same dimensions as \code{obs} but
-lat/lon)}
+\item{wt_obs}{Corresponding weather types (same dimensions as \code{obs} but
+lat/lon).}
 
-\item{corrdims}{list of dimensions in \code{exp} for which quantile mapping
-correction is applied}
+\item{corrdims}{List of dimensions in \code{exp} for which quantile mapping
+correction is applied.}
 
-\item{londim}{character name of longitude dimension in \code{exp} and 
-\code{obs}}
+\item{londim}{Character name of longitude dimension in \code{exp} and 
+\code{obs}.}
 
-\item{latdim}{character name of latitude dimension in \code{exp} and 
-\code{obs}}
+\item{latdim}{Character name of latitude dimension in \code{exp} and 
+\code{obs}.}
 }
 \value{
-an object of class \code{s2dv_cube} containing experiment data on the
-   lat/lon grid of \code{obs} input data, corrected by quantile mapping 
-   depending on the weather types \code{wt_exp}
+An object of class \code{s2dv_cube} containing experiment data on the
+lat/lon grid of \code{obs} input data, corrected by quantile mapping 
+depending on the weather types \code{wt_exp}.
 }
 \description{
 This function computes a quantile mapping based on weather types 
@@ -49,15 +49,23 @@ for experiment data (typically a hindcast) onto reference \code{obs},
 typically provided by reanalysis data.
 }
 \examples{
-\dontrun{
-wt_exp <- sample(1:3, 15*6*3, replace=T)
-dim(wt_exp) <- c(dataset=1, member=15, sdate=6, ftime=3)
-wt_obs <- sample(1:3, 6*3, replace=T)
-dim(wt_obs) <- c(dataset=1, member=1, sdate=6, ftime=3)
-exp_corr <- CST_AdamontQQCorr(exp = lonlat_temp$exp, wt_exp = wt_exp, 
-   obs=lonlat_temp$obs, wt_obs = wt_obs, 
-   corrdims = c('dataset','member','sdate','ftime'))
-}
+wt_exp <- c(1,1,2,3,3,2,2,1,1,2,2,3)
+dim(wt_exp) <- c(dataset = 1, member = 1, sdate = 4, ftime = 3)
+wt_obs <- c(3,3,1,2,2,2,2,1,3,1,1,2) 
+dim(wt_obs) <- c(dataset = 1, member = 1, sdate = 4, ftime = 3)
+exp <- NULL
+exp$data <-  1 : c(1 * 1 * 4 * 3 * 4 * 4)
+dim(exp$data) <- c(dataset = 1, member = 1, sdate = 4, ftime = 3,
+                  lat = 4, lon = 4)
+class(exp) <- 's2dv_cube'
+obs <- NULL
+obs$data <-  101 : c(100 + 1 * 1 * 4 * 3 * 4 * 4)
+dim(obs$data) <- c(dataset = 1, member = 1, sdate = 4, ftime = 3,
+                  lat = 4, lon = 4)
+class(obs) <- 's2dv_cube'
+exp_corr <- CST_AdamontQQCorr(exp = exp, wt_exp = wt_exp, 
+                             obs = obs, wt_obs = wt_obs, 
+                             corrdims = c('dataset','member','sdate','ftime'))
 }
 \author{
 Lauriane Batté, \email{lauriane.batte@meteo.fr}

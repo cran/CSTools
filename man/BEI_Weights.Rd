@@ -10,15 +10,15 @@ BEI_Weights(index_weight, pdf_weight, time_dim_name = "time")
 \item{index_weight}{Index (e.g. NAO index) array, from a dataset of SFSs
 for a period of years, with at least dimensions 'member'. 
 Additional dimensions, for instance, a temporal dimension as 'time', 
-must have the same lenght in both parameters, 
-'index_weight' and 'pdf_weight'.}
+must have the same lenght in both parameters, 'index_weight' and 
+'pdf_weight'.}
 
 \item{pdf_weight}{Statistics array to define a Gaussian PDF with at least 
-dimensions 'statistic'.
-The firt statistic is the parameter 'mean' of the PDF and
-the second statistic is the parameter 'standard deviation' of the PDF.}
+dimensions 'statistic'. The firt statistic is the parameter 'mean' of the PDF 
+and the second statistic is the parameter 'standard deviation' of the PDF.}
 
-\item{time_dim_name}{A character string indicating the name of the temporal dimension, by default 'time'.}
+\item{time_dim_name}{A character string indicating the name of the temporal 
+dimension, by default 'time'.}
 }
 \value{
 BEI_Weights() returns a normalized weights array with the same 
@@ -45,9 +45,9 @@ dim(res)
 
 }
 \references{
-Regionally improved seasonal forecast of precipitation through Best
-estimation of winter NAO, Sanchez-Garcia, E. et al.,
-Adv. Sci. Res., 16, 165174, 2019, https://doi.org/10.5194/asr-16-165-2019
+Regionally improved seasonal forecast of precipitation through 
+Best estimation of winter NAO, Sanchez-Garcia, E. et al.,
+Adv. Sci. Res., 16, 165174, 2019, \doi{10.5194/asr-16-165-2019}
 }
 \author{
 Eroteida Sanchez-Garcia - AEMET, \email{esanchezg@aemet.es}

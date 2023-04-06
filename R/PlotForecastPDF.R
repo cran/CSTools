@@ -37,14 +37,16 @@
 #'@param add.ensmemb Either to add the ensemble members \code{'above'} (default) 
 #'  or \code{'below'} the pdf, or not (\code{'no'}).
 #'@param color.set A selection of predefined color sets: use \code{'ggplot'} 
-#'  (default) for blue/green/red, \code{'s2s4e'} for blue/grey/orange, or 
+#'  (default) for blue/green/red, \code{'s2s4e'} for blue/grey/orange, 
 #'  \code{'hydro'} for yellow/gray/blue (suitable for precipitation and 
-#'  inflows).
+#'  inflows) or the \code{"vitigeoss"} color set.
 #'@param memb_dim A character string indicating the name of the member 
 #'  dimension.
 #'
 #'@return A ggplot object containing the plot.
-#'
+#'@examples
+#'fcsts <- data.frame(fcst1 = rnorm(10), fcst2 = rnorm(10, 0.5, 1.2))
+#'PlotForecastPDF(fcsts,c(-1,1))
 #'@importFrom data.table data.table
 #'@importFrom data.table CJ
 #'@importFrom data.table setkey
@@ -53,20 +55,12 @@
 #'@importFrom plyr .
 #'@importFrom plyr dlply
 #'@importFrom s2dv InsertDim
-#'@examples
-#'fcsts <- data.frame(fcst1 = rnorm(10), fcst2 = rnorm(10, 0.5, 1.2), 
-#'                    fcst3 = rnorm(10, -0.5, 0.9))
-#'PlotForecastPDF(fcsts,c(-1,1))
-#'\donttest{
-#'fcsts2 <- array(rnorm(100), dim = c(member = 20, fcst = 5))
-#'PlotForecastPDF(fcsts2, c(-0.66, 0.66), extreme.limits = c(-1.2, 1.2), 
-#'                fcst.names = paste0('random fcst ', 1 : 5), obs = 0.7)
-#'}
 #'@export
 PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = NULL, 
                             plotfile = NULL, title = "Set a title", var.name = "Varname (units)", 
                             fcst.names = NULL, add.ensmemb = c("above", "below", "no"), 
-                            color.set = c("ggplot", "s2s4e", "hydro"), memb_dim = 'member') {
+                            color.set = c("ggplot", "s2s4e", "hydro", "vitigeoss"), 
+                            memb_dim = 'member') {
     value <- init <- extremes <- x <- ymin <- ymax <- tercile <- NULL
     y <- xend <- yend <- yjitter <- MLT <- lab.pos <- NULL
     ggColorHue <- function(n) {
@@ -95,6 +89,12 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
         colorMember <- c("#ffff7f")
         colorObs <- "purple"
         colorLab <- c("red", "blue")
+    } else if (color.set == "vitigeoss") {
+        colorFill <- rev(c("#007be2", "#acb2b5", "#f40000"))
+        colorHatch <- rev(c("#211b79", "#ae0003"))
+        colorMember <- c("#ffff7f")
+        colorObs <- "purple"
+        colorLab <- colorHatch
     } else {
         stop("Parameter 'color.set' should be one of ggplot/s2s4e/hydro")
     }
@@ -574,3 +574,4 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     }
     return(do.call("rbind", hatch.ls))
 }
+

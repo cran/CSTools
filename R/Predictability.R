@@ -16,18 +16,17 @@
 #'@references Faranda, D., Alvarez-Castro, M.C., Messori, G., Rodriguez, D., 
 #'and Yiou, P. (2019). The hammam effect or how a warm ocean enhances large 
 #'scale atmospheric predictability.Nature Communications, 10(1), 1316. 
-#'DOI = https://doi.org/10.1038/s41467-019-09305-8 "
+#'\doi{10.1038/s41467-019-09305-8}"
 #'@references Faranda, D., Gabriele Messori and Pascal Yiou. (2017).
-#' Dynamical proxies of North Atlantic predictability and extremes. 
-#' Scientific Reports, 7-41278, 2017.
+#'Dynamical proxies of North Atlantic predictability and extremes. 
+#'Scientific Reports, 7-41278, 2017.
 #'
 #'@param dim An array of N named dimensions containing the local dimension as 
-#'the output of CST_ProxiesAttractor or ProxiesAttractor. 
-# 
+#'  the output of CST_ProxiesAttractor or ProxiesAttractor. 
 #'@param theta An array of N named dimensions containing the inverse of the 
-#'persistence 'theta' as the output of CST_ProxiesAttractor or ProxiesAttractor.
-#' 
-#'@param ncores The number of cores to use in parallel computation
+#'  persistence 'theta' as the output of CST_ProxiesAttractor or 
+#'  ProxiesAttractor.
+#'@param ncores The number of cores to use in parallel computation.
 #'
 #'@return A list of length 2:
 #' \itemize{
@@ -59,16 +58,8 @@
 #' attractor <- ProxiesAttractor(dat = m, quanti = 0.60)
 #' predyn <- Predictability(dim = attractor$dim, theta = attractor$theta)
 #'@export 
-#'
-Predictability<- function(dim, theta, ncores = NULL) {
-  # if (!inherits(dim, 's2dv_cube')) {
-  #   stop("Parameter 'dim' must be of the class 's2dv_cube', ",
-  #        "as output by CSTools::CST_Load.")
-  # }
-  # if (!inherits(theta, 's2dv_cube')) {
-  #   stop("Parameter 'theta' must be of the class 's2dv_cube', ",
-  #        "as output by CSTools::CST_Load.")
-  # }
+Predictability <- function(dim, theta, ncores = NULL) {
+  
   if (any(names(dim(dim)) %in% 'sdate')) {
     if (any(names(dim(dim)) %in% 'ftime')) {
       dim <- MergeDims(dim, merge_dims = c('ftime', 'sdate'),

@@ -1,68 +1,88 @@
-#' @rdname CST_RegimesAssign
-#' @title Function for matching a field of anomalies with 
-#' a set of maps used as a reference (e.g. clusters obtained from the WeatherRegime function)
+#'@rdname CST_RegimesAssign
+#'@title Function for matching a field of anomalies with 
+#'a set of maps used as a reference (e.g. clusters obtained from the WeatherRegime function)
 #'
-#' @author Verónica Torralba - BSC, \email{veronica.torralba@bsc.es}
+#'@author Verónica Torralba - BSC, \email{veronica.torralba@bsc.es}
 #'
-#' @description This function performs the matching between a field of anomalies and a set
-#' of maps which will be used as a reference. The anomalies will be assigned to the reference map 
-#' for which the minimum Eucledian distance (method=’distance’) or highest spatial correlation 
-#' (method = 'ACC') is obtained. 
-#' 
-#'@references Torralba, V. (2019) Seasonal climate prediction for the wind energy sector: methods and tools
-#' for the development of a climate service. Thesis. Available online: \url{https://eprints.ucm.es/56841/}
+#'@description This function performs the matching between a field of anomalies 
+#'and a set of maps which will be used as a reference. The anomalies will be 
+#'assigned to the reference map for which the minimum Eucledian distance 
+#'(method =’distance’) or highest spatial correlation (method = 'ACC') is 
+#'obtained. 
 #'
-#'@param data a 's2dv_cube' object.
-
-#'@param ref_maps a 's2dv_cube' object as the output of CST_WeatherRegimes.  
-#'@param method whether the matching will be performed in terms of minimum distance (default = 'distance') or 
-#' the maximum spatial correlation (method = 'ACC') between the maps.
-#'@param composite a logical parameter indicating if the composite maps are computed or not (default = FALSE).
-#'@param memb a logical value indicating whether to compute composites for separate members (default FALSE) or as unique ensemble (TRUE).
-#'This option is only available for when parameter 'composite' is set to TRUE and the data object has a dimension named 'member'.
-#'@param ncores the number of multicore threads to use for parallel computation.
-#'@return A list with two elements \code{$data} (a 's2dv_cube' object containing the composites cluster=1,..,K for case (*1)
-# or only k=1 for any specific cluster, i.e., case (*2)) (only when composite = 'TRUE') and \code{$statistics} that includes
-#'         \code{$pvalue} (array with the same structure as \code{$data} containing the pvalue of the composites obtained through a t-test 
-#'         that accounts for the serial dependence of the data with the same structure as Composite.)(only when composite = 'TRUE'),
-#'         \code{$cluster} (array with the same dimensions as data (except latitude and longitude which are removed) indicating the ref_maps to which each point is allocated.) ,
-#'         \code{$frequency} (A vector of integers (from k=1,...k n reference maps) indicating the percentage of assignations corresponding to each map.),
+#'@references Torralba, V. (2019) Seasonal climate prediction for the wind 
+#'energy sector: methods and tools for the development of a climate service. 
+#'Thesis. Available online: \url{https://eprints.ucm.es/56841/}
+#'
+#'@param data An 's2dv_cube' object.
+#'@param ref_maps An 's2dv_cube' object as the output of CST_WeatherRegimes.  
+#'@param method Whether the matching will be performed in terms of minimum 
+#'  distance (default = 'distance') or the maximum spatial correlation 
+#'  (method = 'ACC') between the maps.
+#'@param composite A logical parameter indicating if the composite maps are 
+#'  computed or not (default = FALSE).
+#'@param memb A logical value indicating whether to compute composites for 
+#'  separate members (default FALSE) or as unique ensemble (TRUE). This option 
+#'  is only available for when parameter 'composite' is set to TRUE and the data 
+#'  object has a dimension named 'member'.
+#'@param ncores The number of multicore threads to use for parallel computation.
+#'@return A list with two elements \code{$data} (a 's2dv_cube' object containing 
+#'the composites cluster=1,..,K for case (*1) or only k=1 for any specific 
+#'cluster, i.e., case (*2)) (only when composite = 'TRUE') and \code{$statistics} 
+#'that includes \code{$pvalue} (array with the same structure as \code{$data} 
+#'containing the pvalue of the composites obtained through a t-test that 
+#'accounts for the serial dependence of the data with the same structure as 
+#'Composite.)(only when composite = 'TRUE'), \code{$cluster} (array with the 
+#'same dimensions as data (except latitude and longitude which are removed) 
+#'indicating the ref_maps to which each point is allocated.), \code{$frequency} 
+#'(A vector of integers (from k=1,...k n reference maps) indicating the 
+#'percentage of assignations corresponding to each map.).
+#'@examples
+#'data <- array(abs(rnorm(1280, 282.7, 6.4)), dim = c(dataset = 2, member = 2, 
+#'                                                    sdate = 3, ftime = 3, 
+#'                                                    lat = 4, lon = 4))
+#'coords <- list(lon = seq(0, 3), lat = seq(47, 44))
+#'exp <- list(data = data, coords = coords)
+#'class(exp) <- 's2dv_cube'
+#'regimes <- CST_WeatherRegimes(data = exp, EOFs = FALSE, 
+#'                              ncenters = 4)
+#'res1 <- CST_RegimesAssign(data = exp, ref_maps = regimes, 
+#'                          composite = FALSE)
 #'@importFrom s2dv ACC MeanDims InsertDim
 #'@import multiApply
-#'@examples
-#'\dontrun{
-#'regimes <- CST_WeatherRegimes(data = lonlat_temp$obs, EOFs = FALSE, ncenters = 4)
-#'res1 <- CST_RegimesAssign(data = lonlat_temp$exp, ref_maps = regimes, composite = FALSE)
-#'res2 <- CST_RegimesAssign(data = lonlat_temp$exp, ref_maps = regimes, composite = TRUE)
-#'}
 #'@export
-#'
-
-CST_RegimesAssign <- function(data,  ref_maps, 
+CST_RegimesAssign <- function(data, ref_maps, 
                               method = "distance", 
                               composite = FALSE,
-                              memb = FALSE, ncores = NULL)  {
+                              memb = FALSE, ncores = NULL) {
+  # Check 's2dv_cube'
   if (!inherits(data, 's2dv_cube')) {
     stop("Parameter 'data' must be of the class 's2dv_cube', ",
          "as output by CSTools::CST_Load.")
   }
-
   if (!inherits(ref_maps, 's2dv_cube')) {
     stop("Parameter 'ref_maps' must be of the class 's2dv_cube', ",
          "as output by CSTools::CST_Load.")
   }
-
-  if ('lat' %in% names(data)){
-    lat <- data$lat
-  } else {
-    lat <- NULL
+  # Check 'exp' object structure
+  if (!all(c('data', 'coords') %in% names(data))) {
+    stop("Parameter 'data' must have 'data' and 'coords' elements ",
+         "within the 's2dv_cube' structure.")
   }
-  result <- Apply(data = list(data = data$data, ref_maps = ref_maps$data), 
-                  lat = lat, fun = RegimesAssign, 
-                  target_dims = list(names(dim(data$data)), c('lat', 'lon', 'cluster')),
-                  method = method, memb = memb, composite = composite, ncores = ncores)
+  # Check coordinates
+  if (!any(names(data$coords) %in% .KnownLatNames())) {
+    stop("Spatial coordinate names do not match any of the names accepted ",
+         "the package.")
+  } else {
+    lat_name <- names(data$coords)[[which(names(data$coords) %in% .KnownLatNames())]]
+    lat <- as.vector(data$coords[[lat_name]])
+  }
+
+  result <- RegimesAssign(data = data$data, ref_maps = ref_maps$data, lat = lat, 
+                          method = method, composite = composite, 
+                          memb = memb, ncores = ncores)
   
-  if (composite){
+  if (composite) {
     data$data <- result$composite
     data$statistics <- result[-1]
   } else {
@@ -73,88 +93,114 @@ CST_RegimesAssign <- function(data,  ref_maps,
   return(data)
 }
 
-#' @rdname RegimesAssign
-#' @title Function for matching a field of anomalies with 
-#' a set of maps used as a reference (e.g. clusters obtained from the WeatherRegime function).
+#'@rdname RegimesAssign
+#'@title Function for matching a field of anomalies with 
+#'a set of maps used as a reference (e.g. clusters obtained from the WeatherRegime function).
 #'
-#' @author Verónica Torralba - BSC, \email{veronica.torralba@bsc.es}
+#'@author Verónica Torralba - BSC, \email{veronica.torralba@bsc.es}
 #'
-#' @description This function performs the matching between a field of anomalies and a set
-#' of maps which will be used as a reference. The anomalies will be assigned to the reference map 
-#' for which the minimum Eucledian distance (method = 'distance') or highest spatial correlation 
-#' (method = 'ACC') is obtained. 
+#'@description This function performs the matching between a field of anomalies 
+#'and a set of maps which will be used as a reference. The anomalies will be 
+#'assigned to the reference map for which the minimum Eucledian distance 
+#'(method = 'distance') or highest spatial correlation (method = 'ACC') is 
+#'obtained. 
 #'
-#'@references Torralba, V. (2019) Seasonal climate prediction for the wind energy sector: methods and tools for the development of a climate service. Thesis. Available online: \url{https://eprints.ucm.es/56841/}
+#'@references Torralba, V. (2019) Seasonal climate prediction for the wind 
+#'energy sector: methods and tools for the development of a climate service. 
+#'Thesis. Available online: \url{https://eprints.ucm.es/56841/}
 #'
-#'@param data an array containing anomalies with named dimensions: dataset, member, sdate, ftime, lat and lon.
-#'@param ref_maps array with 3-dimensions ('lon', 'lat', 'cluster') containing the maps/clusters that will be used as a reference for the matching. 
-#'@param method whether the matching will be performed in terms of minimum distance (default = 'distance') or 
-#' the maximum spatial correlation (method = 'ACC') between the maps.
-#'@param lat a vector of latitudes corresponding to the positions provided in data and ref_maps.
-#'@param composite a logical parameter indicating if the composite maps are computed or not (default = FALSE).
-#'@param memb a logical value indicating whether to compute composites for separate members (default FALSE) or as unique ensemble (TRUE).
-#'This option is only available for when parameter 'composite' is set to TRUE and the data object has a dimension named 'member'.
-#'@param ncores the number of multicore threads to use for parallel computation.
-#'@return A list with elements \code{$composite} (3-d array (lon, lat, k) containing the composites k=1,..,K for case (*1)
-# or only k=1 for any specific cluster, i.e., case (*2)) (only if composite='TRUE'),
-#'         \code{$pvalue} ( array with the same structure as \code{$composite} containing the pvalue of the composites obtained through a t-test 
-#'         that accounts for the serial dependence of the data with the same structure as Composite.) (only if composite='TRUE'),
-#'         \code{$cluster} (array with the same dimensions as data (except latitude and longitude which are removed) indicating the ref_maps to which each point is allocated.) ,
-#'         \code{$frequency} (A vector of integers (from k = 1, ... k n reference maps) indicating the percentage of assignations corresponding to each map.),
-#'  
+#'@param data An array containing anomalies with named dimensions: dataset, 
+#'  member, sdate, ftime, lat and lon.
+#'@param ref_maps Array with 3-dimensions ('lon', 'lat', 'cluster') containing 
+#'  the maps/clusters that will be used as a reference for the matching. 
+#'@param method Whether the matching will be performed in terms of minimum 
+#'  distance (default = 'distance') or the maximum spatial correlation 
+#'  (method = 'ACC') between the maps.
+#'@param lat A vector of latitudes corresponding to the positions provided in 
+#'  data and ref_maps.
+#'@param composite A logical parameter indicating if the composite maps are 
+#'  computed or not (default = FALSE).
+#'@param memb A logical value indicating whether to compute composites for 
+#'  separate members (default FALSE) or as unique ensemble (TRUE). This option 
+#'  is only available for when parameter 'composite' is set to TRUE and the data 
+#'  object has a dimension named 'member'.
+#'@param ncores The number of multicore threads to use for parallel computation.
+#'@return A list with elements \code{$composite} (3-d array (lon, lat, k) 
+#'containing the composites k = 1,..,K for case (*1) or only k = 1 for any specific 
+#'cluster, i.e., case (*2)) (only if composite = 'TRUE'), \code{$pvalue} (array 
+#'with the same structure as \code{$composite} containing the pvalue of the 
+#'composites obtained through a t-test that accounts for the serial dependence 
+#'of the data with the same structure as Composite.) (only if composite='TRUE'),
+#'\code{$cluster} (array with the same dimensions as data (except latitude and 
+#'longitude which are removed) indicating the ref_maps to which each point is 
+#'allocated.), \code{$frequency} (A vector of integers (from k = 1, ... k n 
+#'reference maps) indicating the percentage of assignations corresponding to 
+#'each map.),
+#' 
+#'@examples 
+#'data <- array(abs(rnorm(1280, 282.7, 6.4)), dim = c(dataset = 2, member = 2, 
+#'                                                    sdate = 3, ftime = 3, 
+#'                                                    lat = 4, lon = 4))
+#'regimes <- WeatherRegime(data = data, lat = seq(47, 44),
+#'                         EOFs = FALSE, ncenters = 4)$composite
+#'res1 <- RegimesAssign(data = data, ref_maps = drop(regimes), 
+#'                      lat = seq(47, 44), composite = FALSE)
 #'@importFrom s2dv ACC MeanDims Eno InsertDim
 #'@import multiApply   
-#'@examples 
-#'\dontrun{
-#'regimes <- WeatherRegime(data = lonlat_temp$obs$data, lat = lonlat_temp$obs$lat,
-#'                         EOFs = FALSE, ncenters = 4)$composite
-#'res1 <- RegimesAssign(data = lonlat_temp$exp$data, ref_maps = drop(regimes), 
-#'                      lat = lonlat_temp$exp$lat, composite = FALSE)
-#'}	
 #'@export
-
 RegimesAssign <- function(data, ref_maps, lat, method = "distance", composite = FALSE, 
                           memb = FALSE, ncores = NULL) {
-  
+  ## Initial checks
+  # data
   if (is.null(names(dim(data)))) {
     stop("Parameter 'data' must be an array with named dimensions.")
   }
+  # ref_maps
   if (is.null(ref_maps)) {
     stop("Parameter 'ref_maps' must be specified.")
-  }
-  
-  if (is.null(lat)) {
-    stop("Parameter 'lat' must be specified.")
   }
   if (is.null(names(dim(ref_maps)))) {
     stop("Parameter 'ref_maps' must be an array with named dimensions.")
   }
+  # lat
+  if (is.null(lat)) {
+    stop("Parameter 'lat' must be specified.")
+  }
+  # memb
   if (!is.logical(memb)) {
       stop("Parameter 'memb' must be logical.")
   }
+  # composite
   if (!is.logical(composite)) {
       stop("Parameter 'memb' must be logical.")
   }
   dimData <- names(dim(data))
-
-  if (!all( c('lat', 'lon') %in% dimData)) {
-    stop("Parameter 'data' must contain the named dimensions 'lat' and 'lon'.")
+  # Know spatial coordinates names
+  if (!any(dimData %in% .KnownLonNames()) | 
+      !any(dimData %in% .KnownLatNames())) {
+    stop("Spatial coordinate dimension names do not match any of the names ",
+         "accepted by the package.")
   }
-  
+  lon_name <- dimData[[which(dimData %in% .KnownLonNames())]]
+  lat_name <- dimData[[which(dimData %in% .KnownLatNames())]]
   dimRef <- names(dim(ref_maps))
-  
-  if (!all( c('cluster', 'lat', 'lon') %in% dimRef)) {
+  if (!any(dimRef %in% .KnownLonNames()) | 
+      !any(dimRef %in% .KnownLatNames())) {
+    stop("Spatial coordinate dimension names do not match any of the names ",
+         "accepted by the package.")
+  }
+  lon_name_ref <- dimRef[[which(dimRef %in% .KnownLonNames())]]
+  lat_name_ref <- dimRef[[which(dimRef %in% .KnownLatNames())]]
+  if (!all( c('cluster', lat_name_ref, lon_name_ref) %in% dimRef)) {
    stop("Parameter 'ref_maps' must contain the named dimensions 
-    'cluster','lat' and 'lon'.")
+        'cluster', and the spatial coordinates accepted names.")
   }
-
-
-  if (length(lat) != dim(data)['lat'] | (length(lat) != dim(ref_maps)['lat']) ) {
-    stop(" Parameter 'lat' does not match with the dimension 'lat' in the 
-         parameter 'data' or in the parameter 'ref_maps'.")
+  if (length(lat) != dim(data)[lat_name] | 
+      (length(lat) != dim(ref_maps)[lat_name_ref])) {
+    stop("Parameter 'lat' does not match with the latitudinal dimension",
+         " in the parameter 'data' or in the parameter 'ref_maps'.")
   }
-  
-  
+  # Temporal dimensions
   if ('sdate' %in% dimData && 'ftime' %in% dimData) {
     nsdates <- dim(data)['sdate']
     nftimes <- dim(data)['ftime']
@@ -170,9 +216,12 @@ RegimesAssign <- function(data, ref_maps, lat, method = "distance", composite = 
   }
   ref_maps <- drop(ref_maps) 
   index <- Apply(data = list(ref = ref_maps, target = data),
-                 target_dims = list(c('lat', 'lon', 'cluster'), c('lat', 'lon')),
+                 target_dims = list(c(lat_name_ref, lon_name_ref, 'cluster'), 
+                                    c(lat_name, lon_name)),
                  fun = .RegimesAssign,
                  lat = lat,  method = method, 
+                 lon_name = lon_name, lat_name = lat_name,
+                 lon_name_ref = lon_name_ref, lat_name_ref = lat_name_ref, 
                  ncores = ncores)[[1]]
 
   nclust <- dim(ref_maps)['cluster']
@@ -182,8 +231,8 @@ RegimesAssign <- function(data, ref_maps, lat, method = "distance", composite = 
   }
   
   if (composite) {
-    poslon <- which(names(dim(data)) == 'lon')
-    poslat <- which(names(dim(data)) == 'lat')
+    poslon <- which(names(dim(data)) == lon_name)
+    poslat <- which(names(dim(data)) == lat_name)
     postime <- which(names(dim(data)) == 'time')
     posdim <- setdiff(1:length(dim(data)), c(postime, poslat, poslon))
     dataComp <- aperm(data, c(poslon, poslat, postime, posdim))
@@ -199,19 +248,16 @@ RegimesAssign <- function(data, ref_maps, lat, method = "distance", composite = 
         dataComp <- MergeDims(dataComp, merge_dims = c('time', 'member'), rename_dim = 'time')
         index <- MergeDims(index, merge_dims = c('time', 'member'), rename_dim = 'time') 
       }
-      recon <-
-          Apply(data = list(var = dataComp, occ = index),
-                target_dims = list(c('lon', 'lat', 'time'), c('time')),
-                fun = Composite,
-                K = dim(ref_maps)['cluster'])
+      recon <- Apply(data = list(var = dataComp, occ = index),
+                     target_dims = list(c(lon_name, lat_name, 'time'), c('time')),
+                     fun = Composite,
+                     K = dim(ref_maps)['cluster'])
     }
-    
     output <- list(composite = recon$composite,
                    pvalue = recon$pvalue,
                    cluster = index,
                    frequency = freqs)
   } else {
-    
     output <- list(cluster = index,
                    frequency = freqs)
   }
@@ -219,82 +265,77 @@ RegimesAssign <- function(data, ref_maps, lat, method = "distance", composite = 
   return(output)
 }
 
-.RegimesAssign <- function(ref, target, method = 'distance', lat, composite = FALSE) {
+.RegimesAssign <- function(ref, target, method = 'distance', lat, 
+                           composite = FALSE, 
+                           lon_name = 'lon', lat_name = 'lat', 
+                           lon_name_ref = 'lon', lat_name_ref = 'lat') {
 
-  # ref: c('lat', 'lon', 'cluster')
-  # target: c('lat', 'lon')
+  # ref: [lat_name_ref, lon_name_ref, 'cluster']
+  # target: [lat_name, lon_name]
 
   posdim <- which(names(dim(ref)) == 'cluster')
-  poslat <- which(names(dim(ref)) == 'lat')
-  poslon <- which(names(dim(ref)) == 'lon')
+  poslat <- which(names(dim(ref)) == lat_name_ref)
+  poslon <- which(names(dim(ref)) == lon_name_ref)
   
   nclust <- dim(ref)[posdim]
   if (all(dim(ref)[-posdim] != dim(target))) {
-    stop('The target should have the same dimensions [lat,lon] that
-         the reference ')
+    stop('The target should have the same dimensions [lat_name, lon_name] that',
+         'the reference ')
   }
-  
   if (is.null(names(dim(ref))) | is.null(names(dim(target)))) {
-    stop(
-      'The arrays should include dimensions names ref[cluster,lat,lon]
-      and target [lat,lon]'
+    stop('The arrays should include dimensions names ref[cluster, lat_name, ',
+         'lon_name] and target [lat_name, lon_name]'
     )
   }
-
-  
   if (length(lat) != dim(ref)[poslat]) {
     stop('latitudes do not match with the maps')
   }
-
  if (is.na(max(target))){
     assign <- NA
-
-  } else{
-
-  
-  # This dimensions are reorganized
-  ref <- aperm(ref, c(posdim, poslat, poslon))
-  target <- aperm(target, 
-                  c(which(names(dim(target)) == 'lat'), 
-                    which(names(dim(target)) == 'lon')))
-  
-  # weights are defined
-  latWeights <- InsertDim(sqrt(cos(lat * pi / 180)), 2, dim(ref)[3])
-  
-  
-  rmsdiff <- function(x, y) {
-    dims <- dim(x)
-    ndims <- length(dims)
-    if (ndims != 2 | ndims != length(dim(y))) {
-      stop('x and y should be maps')
-    }
-    map_diff <- NA * x
-    for (i in 1:dims[1]) {
-      for (j in 1:dims[2]) {
-        map_diff[i, j] <- (x[i, j] - y[i, j]) ^ 2
+  } else {
+    # This dimensions are reorganized
+    ref <- aperm(ref, c(posdim, poslat, poslon))
+    target <- aperm(target, 
+                    c(which(names(dim(target)) == lat_name), 
+                      which(names(dim(target)) == lon_name)))
+    
+    # weights are defined
+    latWeights <- InsertDim(sqrt(cos(lat * pi / 180)), 2, dim(ref)[3])
+    
+    rmsdiff <- function(x, y) {
+      dims <- dim(x)
+      ndims <- length(dims)
+      if (ndims != 2 | ndims != length(dim(y))) {
+        stop('x and y should be maps')
       }
+      map_diff <- NA * x
+      for (i in 1:dims[1]) {
+        for (j in 1:dims[2]) {
+          map_diff[i, j] <- (x[i, j] - y[i, j]) ^ 2
+        }
+      }
+      rmsdiff <- sqrt(mean(map_diff))
+      return(rmsdiff)
     }
-    rmsdiff <- sqrt(mean(map_diff))
-    return(rmsdiff)
-  }
-  
-  if (method == 'ACC') {
-    corr <- rep(NA, nclust)
-    for (i in 1:nclust) {
-      #NOTE: s2dv::ACC returns centralized and weighted result.
-      corr[i] <-
-        ACC(ref[i, , ], target, lat = lat, dat_dim = NULL, avg_dim = NULL, memb_dim = NULL)$acc
+    
+    if (method == 'ACC') {
+      corr <- rep(NA, nclust)
+      for (i in 1:nclust) {
+        #NOTE: s2dv::ACC returns centralized and weighted result.
+        corr[i] <-
+          ACC(ref[i, , ], target, lat = lat, dat_dim = NULL, avg_dim = NULL, 
+              memb_dim = NULL)$acc
+      }
+      assign <- which(corr == max(corr))
     }
-    assign <- which(corr == max(corr))
-  }
-  
-  if (method == 'distance') {
-    rms <- rep(NA, nclust)
-    for (i in 1:nclust) {
-      rms[i] <- rmsdiff(ref[i, , ] * latWeights, target * latWeights)
+    
+    if (method == 'distance') {
+      rms <- rep(NA, nclust)
+      for (i in 1:nclust) {
+        rms[i] <- rmsdiff(ref[i, , ] * latWeights, target * latWeights)
+      }
+      assign <- which(rms == min(rms))
     }
-    assign <- which(rms == min(rms))
-  }
   }
   
   return(assign)

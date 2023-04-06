@@ -2,20 +2,40 @@
 #'
 #'@author Mishra Niti, \email{niti.mishra@bsc.es}
 #'@author Perez-Zanon Nuria, \email{nuria.perez@bsc.es}
-#'@description This function calculates correlation (Anomaly Correlation Coefficient; ACC), root mean square error (RMS) and the root mean square error skill score (RMSSS) of individual anomaly models and multi-models mean (if desired) with the observations.
+#'@description This function calculates correlation (Anomaly Correlation 
+#'Coefficient; ACC), root mean square error (RMS) and the root mean square error 
+#'skill score (RMSSS) of individual anomaly models and multi-models mean (if 
+#'desired) with the observations.
 #'
-#'@param exp an object of class \code{s2dv_cube} as returned by \code{CST_Anomaly} function, containing the anomaly of the seasonal forecast experiments data in the element named \code{$data}.
-#'@param obs an object of class \code{s2dv_cube} as returned by \code{CST_Anomaly} function, containing the anomaly of observed data in the element named \code{$data}.
-#'@param metric a character string giving the metric for computing the maximum skill. This must be one of the strings 'correlation', 'rms', 'rmsss' and 'rpss'. If 'rpss' is chossen the terciles probabilities are evaluated.
-#'@param multimodel a logical value indicating whether a Multi-Model Mean should be computed.
-#'
-#'@param time_dim name of the temporal dimension where a mean will be applied. It can be NULL, the default value is 'ftime'.
-#'@param memb_dim name of the member dimension. It can be NULL, the default value is 'member'.
-#'@param sdate_dim name of the start date dimension or a dimension name identifiying the different forecast. It can be NULL, the default value is 'sdate'.
-#'@return an object of class \code{s2dv_cube} containing the statistics of the selected metric in the element \code{$data} which is a list of arrays: for the metric requested and others for statistics about its signeificance. The arrays have two dataset dimensions equal to the 'dataset' dimension in the \code{exp$data} and \code{obs$data} inputs. If \code{multimodel} is TRUE, the first position in the first 'nexp' dimension correspons to the Multi-Model Mean. 
-#'@seealso \code{\link[s2dv]{Corr}}, \code{\link[s2dv]{RMS}}, \code{\link[s2dv]{RMSSS}} and \code{\link{CST_Load}}
-#'@references 
-#'Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31.\url{https://link.springer.com/article/10.1007/s00382-018-4404-z}
+#'@param exp An object of class \code{s2dv_cube} as returned by 
+#'  \code{CST_Anomaly} function, containing the anomaly of the seasonal forecast 
+#'  experiments data in the element named \code{$data}.
+#'@param obs An object of class \code{s2dv_cube} as returned by 
+#'  \code{CST_Anomaly} function, containing the anomaly of observed data in the 
+#'  element named \code{$data}.
+#'@param metric A character string giving the metric for computing the maximum 
+#'  skill. This must be one of the strings 'correlation', 'rms', 'rmsss' and 
+#'  'rpss'. If 'rpss' is chossen the terciles probabilities are evaluated.
+#'@param multimodel A logical value indicating whether a Multi-Model Mean should 
+#'  be computed.
+#'@param time_dim Name of the temporal dimension where a mean will be applied. 
+#'  It can be NULL, the default value is 'ftime'.
+#'@param memb_dim Name of the member dimension. It can be NULL, the default 
+#'  value is 'member'.
+#'@param sdate_dim Name of the start date dimension or a dimension name 
+#'  identifiying the different forecast. It can be NULL, the default value is 
+#'  'sdate'.
+#'@return An object of class \code{s2dv_cube} containing the statistics of the 
+#'selected metric in the element \code{$data} which is a list of arrays: for the
+#'metric requested and others for statistics about its signeificance. The arrays 
+#'have two dataset dimensions equal to the 'dataset' dimension in the 
+#'\code{exp$data} and \code{obs$data} inputs. If \code{multimodel} is TRUE, the 
+#'first position in the first 'nexp' dimension correspons to the Multi-Model Mean. 
+#'@seealso \code{\link[s2dv]{Corr}}, \code{\link[s2dv]{RMS}}, 
+#'\code{\link[s2dv]{RMSSS}} and \code{\link{CST_Load}}
+#'@references Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill 
+#'Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 
+#'29-31. \doi{10.1007/s00382-018-4404-z}
 #' 
 #'@importFrom s2dv MeanDims Reorder Corr RMS RMSSS InsertDim
 #'@import abind
@@ -23,32 +43,23 @@
 #'@import stats
 #'@import multiApply
 #'@examples
-#'library(zeallot)
-#'mod <- 1 : (2 * 3 * 4 * 5 * 6 * 7)
-#'dim(mod) <- c(dataset = 2, member = 3, sdate = 4, ftime = 5, lat = 6, lon = 7)
-#'obs <- 1 : (1 * 1 * 4 * 5 * 6 * 7)
-#'dim(obs) <- c(dataset = 1, member = 1, sdate = 4, ftime = 5, lat = 6, lon = 7)
+#'mod <- rnorm(2*2*4*5*2*2)
+#'dim(mod) <- c(dataset = 2, member = 2, sdate = 4, ftime = 5, lat = 2, lon = 2)
+#'obs <- rnorm(1*1*4*5*2*2)
+#'dim(obs) <- c(dataset = 1, member = 1, sdate = 4, ftime = 5, lat = 2, lon = 2)
 #'lon <- seq(0, 30, 5)
 #'lat <- seq(0, 25, 5)
-#'exp <- list(data = mod, lat = lat, lon = lon)
-#'obs <- list(data = obs, lat = lat, lon = lon)
+#'coords <- list(lat = lat, lon = lon)
+#'exp <- list(data = mod, coords = coords)
+#'obs <- list(data = obs, coords = coords)
 #'attr(exp, 'class') <- 's2dv_cube'
 #'attr(obs, 'class') <- 's2dv_cube'
-#'c(ano_exp, ano_obs) %<-% CST_Anomaly(exp = exp, obs = obs, cross = TRUE, memb = TRUE)
-#'a <- CST_MultiMetric(exp = ano_exp, obs = ano_obs)
-#'str(a)
-#'\donttest{
-#'exp <- lonlat_temp$exp
-#'obs <- lonlat_temp$obs
-#'a <- CST_MultiMetric(exp, obs, metric = 'rpss', multimodel = FALSE)
-#'a <- CST_MultiMetric(exp, obs, metric = 'correlation')
-#'a <- CST_MultiMetric(exp, obs, metric = 'rms')
-#'a <- CST_MultiMetric(exp, obs, metric = 'rmsss')
-#'}
+#'a <- CST_MultiMetric(exp = exp, obs = obs)
 #'@export
 CST_MultiMetric <- function(exp, obs, metric = "correlation", multimodel = TRUE,
                             time_dim = 'ftime', memb_dim = 'member',
                             sdate_dim = 'sdate') {
+  # Check 's2dv_cube'
   if (!inherits(exp, 's2dv_cube') || !inherits(obs, 's2dv_cube')) {
     stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube', ",
          "as output by CSTools::CST_Load.")
@@ -56,26 +67,45 @@ CST_MultiMetric <- function(exp, obs, metric = "correlation", multimodel = TRUE,
   result <- MultiMetric(exp$data, obs$data, metric = metric, multimodel = multimodel,
                         time_dim = time_dim, memb_dim = memb_dim, sdate_dim = sdate_dim)
   exp$data <- result
+  exp$attrs$Datasets <- c(exp$attrs$Datasets, obs$attrs$Datasets)
+  exp$attrs$source_files <- c(exp$attrs$source_files, obs$attrs$source_files)
+
   return(exp)
 }
+
 #'Multiple Metrics applied in Multiple Model Anomalies
 #'
 #'@author Mishra Niti, \email{niti.mishra@bsc.es}
 #'@author Perez-Zanon Nuria, \email{nuria.perez@bsc.es}
-#'@description This function calculates correlation (Anomaly Correlation Coefficient; ACC), root mean square error (RMS) and the root mean square error skill score (RMSSS) of individual anomaly models and multi-models mean (if desired) with the observations on arrays with named dimensions.
+#'@description This function calculates correlation (Anomaly Correlation 
+#'Coefficient; ACC), root mean square error (RMS) and the root mean square error 
+#'skill score (RMSSS) of individual anomaly models and multi-models mean (if 
+#'desired) with the observations on arrays with named dimensions.
 #'
-#'@param exp a multidimensional array with named dimensions.
-#'@param obs a multidimensional array with named dimensions.
-#'@param metric a character string giving the metric for computing the maximum skill. This must be one of the strings 'correlation', 'rms' or 'rmsss.
-#'@param multimodel a logical value indicating whether a Multi-Model Mean should be computed.
-#'
-#'@param time_dim name of the temporal dimension where a mean will be applied. It can be NULL, the default value is 'ftime'.
-#'@param memb_dim name of the member dimension. It can be NULL, the default value is 'member'.
-#'@param sdate_dim name of the start date dimension or a dimension name identifiying the different forecast. It can be NULL, the default value is 'sdate'.
-#'@return a list of arrays containing the statistics of the selected metric in the element \code{$data} which is a list of arrays: for the metric requested and others for statistics about its signeificance. The arrays have two dataset dimensions equal to the 'dataset' dimension in the \code{exp$data} and \code{obs$data} inputs. If \code{multimodel} is TRUE, the greatest position in the first dimension correspons to the Multi-Model Mean. 
-#'@seealso \code{\link[s2dv]{Corr}}, \code{\link[s2dv]{RMS}}, \code{\link[s2dv]{RMSSS}} and \code{\link{CST_Load}}
-#'@references 
-#'Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 29-31.\url{https://link.springer.com/article/10.1007/s00382-018-4404-z}
+#'@param exp A multidimensional array with named dimensions.
+#'@param obs A multidimensional array with named dimensions.
+#'@param metric A character string giving the metric for computing the maximum 
+#'  skill. This must be one of the strings 'correlation', 'rms' or 'rmsss.
+#'@param multimodel A logical value indicating whether a Multi-Model Mean should 
+#'  be computed.
+#'@param time_dim Name of the temporal dimension where a mean will be applied. 
+#'  It can be NULL, the default value is 'ftime'.
+#'@param memb_dim Name of the member dimension. It can be NULL, the default 
+#'  value is 'member'.
+#'@param sdate_dim Name of the start date dimension or a dimension name 
+#'  identifiying the different forecast. It can be NULL, the default value is 
+#'  'sdate'.
+#'@return A list of arrays containing the statistics of the selected metric in 
+#'the element \code{$data} which is a list of arrays: for the metric requested 
+#'and others for statistics about its signeificance. The arrays have two dataset 
+#'dimensions equal to the 'dataset' dimension in the \code{exp$data} and 
+#'\code{obs$data} inputs. If \code{multimodel} is TRUE, the greatest position in 
+#'the first dimension correspons to the Multi-Model Mean. 
+#'@seealso \code{\link[s2dv]{Corr}}, \code{\link[s2dv]{RMS}}, 
+#'\code{\link[s2dv]{RMSSS}} and \code{\link{CST_Load}}
+#'@references Mishra, N., Prodhomme, C., & Guemas, V. (n.d.). Multi-Model Skill 
+#'Assessment of Seasonal Temperature and Precipitation Forecasts over Europe, 
+#'29-31. \doi{10.1007/s00382-018-4404-z}
 #' 
 #'@importFrom s2dv MeanDims Reorder Corr RMS RMSSS InsertDim
 #'@import abind
@@ -83,10 +113,18 @@ CST_MultiMetric <- function(exp, obs, metric = "correlation", multimodel = TRUE,
 #'@import stats
 #'@import multiApply
 #'@examples
-#'res <- MultiMetric(lonlat_temp$exp$data, lonlat_temp$obs$data)
+#'exp <- array(rnorm(2*2*4*5*2*2), 
+#'             dim = c(dataset = 2, member = 2, sdate = 4, ftime = 5, lat = 2, 
+#'                     lon = 2))
+#'obs <- array(rnorm(1*1*4*5*2*2),
+#'             dim = c(dataset = 1, member = 1, sdate = 4, ftime = 5, lat = 2, 
+#'                     lon = 2))
+#'res <- MultiMetric(exp = exp, obs = obs)
 #'@export
 MultiMetric <- function(exp, obs, metric = "correlation", multimodel = TRUE,
-                        time_dim = 'ftime', memb_dim = 'member', sdate_dim = 'sdate') {
+                        time_dim = 'ftime', memb_dim = 'member', 
+                        sdate_dim = 'sdate') {
+                          
   if (!is.null(names(dim(exp))) & !is.null(names(dim(obs)))) {
     if (all(names(dim(exp)) %in% names(dim(obs)))) {
       dimnames <- names(dim(exp))
@@ -96,7 +134,7 @@ MultiMetric <- function(exp, obs, metric = "correlation", multimodel = TRUE,
     }
   } else {
     stop("Element 'data' from parameters 'exp' and 'obs'",
-         " should have dimmension names.")
+         " should have dimension names.")
   }
   if (!is.logical(multimodel)) {
     stop("Parameter 'multimodel' must be a logical value.")

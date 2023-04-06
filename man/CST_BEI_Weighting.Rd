@@ -9,7 +9,8 @@ CST_BEI_Weighting(
   aweights,
   terciles = NULL,
   type = "ensembleMean",
-  time_dim_name = "time"
+  time_dim_name = "time",
+  memb_dim = "member"
 )
 }
 \arguments{
@@ -36,16 +37,18 @@ or four dimensions depending if the variable is spatially aggregated variable
 (as e.g. precipitation or temperature), dimension (time, tercile, lat, lon), 
 containing the terciles probabilities computing with weighted members.
 The first tercil is the lower tercile, the second is the normal tercile and
-the third is the upper tercile.
-If 'type' =  'ensembleMean', the function returns, in the element data from 
-'var_exp' parameter, an array with at least one or three dimensions
-depending if the variable is a spatially aggregated variable 
-(as e.g. NAO index)(time) or it is spatial variable (as e.g. precipitation 
-or temperature) (time, lat, lon), containing the ensemble means computing
-with weighted members.}
+the third is the upper tercile. If 'type' =  'ensembleMean', the function 
+returns, in the element data from 'var_exp' parameter, an array with at 
+least one or three dimensions depending if the variable is a spatially 
+aggregated variable (as e.g. NAO index)(time) or it is spatial variable (as 
+e.g. precipitation or temperature) (time, lat, lon), containing the ensemble 
+means computing with weighted members.}
 
 \item{time_dim_name}{A character string indicating the name of the 
 temporal dimension, by default 'time'.}
+
+\item{memb_dim}{A character string indicating the name of the 
+member dimension, by default 'member'.}
 }
 \value{
 CST_BEI_Weighting() returns a CSTools object (i.e., of the
@@ -64,19 +67,17 @@ Systems (SFSs).
 \examples{
 var_exp <- 1 : (2 * 4 * 3 * 2)
 dim(var_exp) <- c(time = 2, member = 4, lat = 3, lon = 2)
-aweights <- c(0.2, 0.1, 0.3, 0.4, 0.1, 0.2, 0.4, 0.3, 0.1, 0.2, 0.4, 0.4, 0.1, 0.2, 0.4, 0.2)
+aweights <- c(0.2, 0.1, 0.3, 0.4, 0.1, 0.2, 0.4, 0.3, 0.1, 0.2, 0.4, 0.4, 0.1, 
+             0.2, 0.4, 0.2)
 dim(aweights) <- c(time = 2, member = 4, dataset = 2)
 var_exp <- list(data = var_exp)
 class(var_exp) <- 's2dv_cube'
 res_CST <- CST_BEI_Weighting(var_exp, aweights)
-dim(res_CST$data)
-# time     lat     lon   dataset
-#    2       3       2         2
 }
 \references{
 Regionally improved seasonal forecast of precipitation through
 Best estimation of winter NAO, Sanchez-Garcia, E. et al.,
-Adv. Sci. Res., 16, 165174, 2019, https://doi.org/10.5194/asr-16-165-2019
+Adv. Sci. Res., 16, 165174, 2019, \doi{10.5194/asr-16-165-2019}
 }
 \author{
 Eroteida Sanchez-Garcia - AEMET, \email{esanchezg@aemet.es}

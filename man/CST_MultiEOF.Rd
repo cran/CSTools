@@ -14,61 +14,64 @@ CST_MultiEOF(
 )
 }
 \arguments{
-\item{datalist}{A list of objects of the class 's2dv_cube', containing the variables to be analysed.
-Each data object in the list is expected to have an element named \code{$data} with at least two
-spatial dimensions named "lon" and "lat", a dimension "ftime" and a dimension "sdate".}
+\item{datalist}{A list of objects of the class 's2dv_cube', containing the 
+variables to be analysed. Each data object in the list is expected to have 
+an element named \code{$data} with at least two spatial dimensions named 
+"lon" and "lat", a dimension "ftime" and a dimension "sdate". Latitudinal 
+dimension accepted names: 'lat', 'lats', 'latitude', 'y', 'j', 'nav_lat'. 
+Longitudinal dimension accepted names: 'lon', 'lons','longitude', 'x', 'i', 
+'nav_lon'.}
 
-\item{neof_max}{Maximum number of single eofs considered in the first decomposition}
+\item{neof_max}{Maximum number of single eofs considered in the first 
+decomposition.}
 
-\item{neof_composed}{Number of composed eofs to return in output}
+\item{neof_composed}{Number of composed eofs to return in output.}
 
-\item{minvar}{Minimum variance fraction to be explained in first decomposition}
+\item{minvar}{Minimum variance fraction to be explained in first decomposition.}
 
-\item{lon_lim}{Vector with longitudinal range limits for the EOF calculation for all input variables}
+\item{lon_lim}{Vector with longitudinal range limits for the EOF calculation 
+for all input variables.}
 
-\item{lat_lim}{Vector with latitudinal range limits for the EOF calculation for all input variables}
+\item{lat_lim}{Vector with latitudinal range limits for the EOF calculation 
+for all input variables.}
 }
 \value{
-A list with elements \code{$coeff} (an array of time-varying principal component coefficients),
-        \code{$variance} (a matrix of explained variances),
-        \code{eof_pattern} (a matrix of EOF patterns obtained by regression for each variable).
+A list with elements \code{$coeff} (an array of time-varying principal 
+component coefficients), \code{$variance} (a matrix of explained variances),
+\code{eof_pattern} (a matrix of EOF patterns obtained by regression for each 
+variable).
 }
 \description{
 This function performs EOF analysis over multiple variables,
-accepting in input a list of CSTools objects. Based on Singular Value Decomposition. For each field the EOFs are computed and the corresponding PCs are standardized (unit variance, zero mean); the minimum number of principal components needed to reach the user-defined variance is retained. The function weights the input data for the latitude cosine square root.
+accepting in input a list of CSTools objects. Based on Singular Value 
+Decomposition. For each field the EOFs are computed and the corresponding PCs 
+are standardized (unit variance, zero mean); the minimum number of principal 
+components needed to reach the user-defined variance is retained. The function 
+weights the input data for the latitude cosine square root.
 }
 \examples{
-\donttest{
-library(zeallot)
-library(ClimProjDiags)
-c(exp, obs) \%<-\% lonlat_temp
-# Create three datasets (from the members)
-exp1 <- exp
-exp2 <- exp
-exp3 <- exp
-exp1$data <- Subset(exp$data, along = 2, indices = 1 : 5)
-exp2$data <- Subset(exp$data, along = 2, indices = 6 : 10)
-exp3$data <- Subset(exp$data, along = 2, indices = 11 : 15)
+seq <- 1 : (2 * 3 * 4 * 5 * 6 * 8)
+mod1 <- sin( 0.7 + seq )^2 + cos( seq ^ 2 * 1.22  )
+dim(mod1) <- c(dataset = 2, member = 3, sdate = 4, ftime = 5, lat = 6, 
+              lon = 8)
+mod2 <- sin( seq * 2 ) ^ 3 + cos( seq ^ 2 )
+dim(mod2) <- c(dataset = 2, member = 3, sdate = 4, ftime = 5, lat = 6, 
+              lon = 8)
+lon <- seq(0, 35, 5)
+lat <- seq(0, 25, 5)
+exp1 <- list(data = mod1, coords = list(lat = lat, lon = lon))
+exp2 <- list(data = mod2, coords = list(lat = lat, lon = lon))
+attr(exp1, 'class') <- 's2dv_cube'
+attr(exp2, 'class') <- 's2dv_cube'
+d = as.POSIXct(c("2017/01/01", "2017/01/02", "2017/01/03", "2017/01/04", 
+                "2017/01/05", "2018/01/01", "2018/01/02", "2018/01/03",
+                "2018/01/04", "2018/01/05", "2019/01/01", "2019/01/02", 
+                "2019/01/03", "2019/01/04", "2019/01/05", "2020/01/01", 
+                "2020/01/02", "2020/01/03", "2020/01/04", "2020/01/05"))
+exp1$attrs$Dates = d
+exp2$attrs$Dates = d
 
-cal <- CST_MultiEOF(list(exp1, exp2, exp3), neof_max=5, neof_composed=2)
-str(cal)
-# List of 3
-# $ coeff      : num [1:3, 1:6, 1:2, 1:5] -0.312 -0.588 0.724 1.202 1.181 ...
-# $ variance   : num [1:2, 1:5] 0.413 0.239 0.352 0.27 0.389 ...
-# $ eof_pattern: num [1:3, 1:53, 1:22, 1:2, 1:5] -1.47 -0.446 -0.656 -1.534 -0.464 ...
-dim(cal$coeff)
-#  ftime   sdate     eof  member
-#      3       6       2       3
-
-cal <- CST_MultiEOF(list(exp1, exp2, exp3) , minvar=0.9)
-str(cal)
-# $ coeff      : num [1:3, 1:6, 1:5, 1:5] 0.338 0.603 -0.736 -1.191 -1.198 ...
-# $ variance   : num [1:5, 1:5] 0.3903 0.2264 0.1861 0.1032 0.0379 ...
-# $ eof_pattern: num [1:3, 1:53, 1:22, 1:5, 1:5] 1.477 0.454 0.651 1.541 0.47 ...
-
-cal <- CST_MultiEOF(list(exp1, exp2))
-cal <- CST_MultiEOF(list(exp1, exp2, exp3), lon_lim=c(5, 30), lat_lim=c(35, 50), neof_composed=3)
-}
+cal <- CST_MultiEOF(datalist = list(exp1, exp2), neof_composed = 2)
 }
 \author{
 Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}

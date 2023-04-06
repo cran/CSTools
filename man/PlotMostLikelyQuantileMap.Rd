@@ -16,17 +16,30 @@ PlotMostLikelyQuantileMap(
 )
 }
 \arguments{
-\item{probs}{a list of bi-dimensional arrays with the named dimensions 'latitude' (or 'lat') and 'longitude' (or 'lon'), with equal size and in the same order, or a single tri-dimensional array with an additional dimension (e.g. 'bin') for the different categories. The arrays must contain probability values between 0 and 1, and the probabilities for all categories of a grid cell should not exceed 1 when added.}
+\item{probs}{A list of bi-dimensional arrays with the named dimensions 
+'latitude' (or 'lat') and 'longitude' (or 'lon'), with equal size and in the 
+same order, or a single tri-dimensional array with an additional dimension 
+(e.g. 'bin') for the different categories. The arrays must contain 
+probability values between 0 and 1, and the probabilities for all categories 
+of a grid cell should not exceed 1 when added.}
 
-\item{lon}{a numeric vector with the longitudes of the map grid, in the same order as the values along the corresponding dimension in \code{probs}.}
+\item{lon}{A numeric vector with the longitudes of the map grid, in the same 
+order as the values along the corresponding dimension in \code{probs}.}
 
-\item{lat}{a numeric vector with the latitudes of the map grid, in the same order as the values along the corresponding dimension in \code{probs}.}
+\item{lat}{A numeric vector with the latitudes of the map grid, in the same 
+order as the values along the corresponding dimension in \code{probs}.}
 
-\item{cat_dim}{the name of the dimension along which the different categories are stored in \code{probs}. This only applies if \code{probs} is provided in the form of 3-dimensional array. The default expected name is 'bin'.}
+\item{cat_dim}{The name of the dimension along which the different categories 
+are stored in \code{probs}. This only applies if \code{probs} is provided in 
+the form of 3-dimensional array. The default expected name is 'bin'.}
 
-\item{bar_titles}{vector of character strings with the names to be drawn on top of the color bar for each of the categories. As many titles as categories provided in \code{probs} must be provided.}
+\item{bar_titles}{Vector of character strings with the names to be drawn on 
+top of the color bar for each of the categories. As many titles as 
+categories provided in \code{probs} must be provided.}
 
-\item{col_unknown_cat}{character string with a colour representation of the colour to be used to paint the cells for which no category can be clearly assigned. Takes the value 'white' by default.}
+\item{col_unknown_cat}{Character string with a colour representation of the 
+colour to be used to paint the cells for which no category can be clearly 
+assigned. Takes the value 'white' by default.}
 
 \item{drawleg}{Where to draw the common colour bar. Can take values TRUE, 
 FALSE or:\cr
@@ -35,10 +48,20 @@ FALSE or:\cr
 'right', 'r', 'R', 'east', 'e', 'E'\cr
 'left', 'l', 'L', 'west', 'w', 'W'}
 
-\item{...}{additional parameters to be sent to \code{PlotCombinedMap} and \code{PlotEquiMap}.}
+\item{...}{Additional parameters to be sent to \code{PlotCombinedMap} and 
+\code{PlotEquiMap}.}
 }
 \description{
-This function receives as main input (via the parameter \code{probs}) a collection of longitude-latitude maps, each containing the probabilities (from 0 to 1) of the different grid cells of belonging to a category. As many categories as maps provided as inputs are understood to exist. The maps of probabilities must be provided on a common rectangular regular grid, and a vector with the longitudes and a vector with the latitudes of the grid must be provided. The input maps can be provided in two forms, either as a list of multiple two-dimensional arrays (one for each category) or as a three-dimensional array, where one of the dimensions corresponds to the different categories.
+This function receives as main input (via the parameter 
+\code{probs}) a collection of longitude-latitude maps, each containing the 
+probabilities (from 0 to 1) of the different grid cells of belonging to a 
+category. As many categories as maps provided as inputs are understood to 
+exist. The maps of probabilities must be provided on a common rectangular 
+regular grid, and a vector with the longitudes and a vector with the latitudes 
+of the grid must be provided. The input maps can be provided in two forms, 
+either as a list of multiple two-dimensional arrays (one for each category) or 
+as a three-dimensional array, where one of the dimensions corresponds to the 
+different categories.
 }
 \examples{
 # Simple example
@@ -127,11 +150,11 @@ PlotMostLikelyQuantileMap(bins, lons, lats,
                          mask = 1 - (w1 + w2 / max(c(w1, w2))), 
                          brks = 20, width = 10, height = 8)
 }
-
 }
 \seealso{
 \code{PlotCombinedMap} and \code{PlotEquiMap}
 }
 \author{
-Veronica Torralba, \email{veronica.torralba@bsc.es}, Nicolau Manubens, \email{nicolau.manubens@bsc.es}
+Veronica Torralba, \email{veronica.torralba@bsc.es}, Nicolau Manubens, 
+\email{nicolau.manubens@bsc.es}
 }

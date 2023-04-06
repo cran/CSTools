@@ -3,31 +3,29 @@
 #'@author Eroteida Sanchez-Garcia - AEMET, \email{esanchezg@aemet.es}
 #' 
 #'@description This function implements the computation to obtain the
-#' normalized weights for each member of each Seasonal Forecast Systems (SFS) 
-#' or dataset using the Probability Density Functions (PDFs) indicated by the 
-#' parameter 'pdf_weight' (for instance the Best Index estimation obtained 
-#' using the 'PDFBest' function). The weight of each member is proportional to
-#' the probability of its index calculated with the PDF "pdf_weight". 
+#'normalized weights for each member of each Seasonal Forecast Systems (SFS) 
+#'or dataset using the Probability Density Functions (PDFs) indicated by the 
+#'parameter 'pdf_weight' (for instance the Best Index estimation obtained 
+#'using the 'PDFBest' function). The weight of each member is proportional to
+#'the probability of its index calculated with the PDF "pdf_weight". 
 #' 
-#'@references Regionally improved seasonal forecast of precipitation through Best
-#' estimation of winter NAO, Sanchez-Garcia, E. et al.,
-#' Adv. Sci. Res., 16, 165174, 2019, https://doi.org/10.5194/asr-16-165-2019
+#'@references Regionally improved seasonal forecast of precipitation through 
+#'Best estimation of winter NAO, Sanchez-Garcia, E. et al.,
+#'Adv. Sci. Res., 16, 165174, 2019, \doi{10.5194/asr-16-165-2019}
 #' 
 #'@param index_weight Index (e.g. NAO index) array, from a dataset of SFSs
-#' for a period of years, with at least dimensions 'member'. 
-#' Additional dimensions, for instance, a temporal dimension as 'time', 
-#' must have the same lenght in both parameters, 
-#' 'index_weight' and 'pdf_weight'. 
-#' @param pdf_weight Statistics array to define a Gaussian PDF with at least 
-#' dimensions 'statistic'.
-#' The firt statistic is the parameter 'mean' of the PDF and
-#' the second statistic is the parameter 'standard deviation' of the PDF.
-#' @param time_dim_name A character string indicating the name of the temporal dimension, by default 'time'.
+#'  for a period of years, with at least dimensions 'member'. 
+#'  Additional dimensions, for instance, a temporal dimension as 'time', 
+#'  must have the same lenght in both parameters, 'index_weight' and 
+#'  'pdf_weight'. 
+#'@param pdf_weight Statistics array to define a Gaussian PDF with at least 
+#'  dimensions 'statistic'. The firt statistic is the parameter 'mean' of the PDF 
+#'  and the second statistic is the parameter 'standard deviation' of the PDF.
+#'@param time_dim_name A character string indicating the name of the temporal 
+#'  dimension, by default 'time'.
 #' 
 #'@return BEI_Weights() returns a normalized weights array with the same 
 #' dimensions that index_weight.
-#' 
-#'@import multiApply
 #' 
 #'@examples
 #' # Example for the BEI_Weights function
@@ -40,6 +38,7 @@
 #' # sdate   dataset    member season
 #' #    10         3         5      1
 #'
+#'@import multiApply
 #'@export
 BEI_Weights <- function(index_weight, pdf_weight, time_dim_name = 'time') {
   
@@ -98,16 +97,16 @@ BEI_Weights <- function(index_weight, pdf_weight, time_dim_name = 'time') {
   return(aweights)
 }
 
-#' Atomic BEI_Weights
-#' @param index_weight Index (e.g. NAO index) array from a SFS with dimensions
-#' (member)
-#' @param pdf_weight Statistics array to define a Gaussian PDF with dimensions
-#' (statistic = 2).
-#' The firt statistic is the parameter 'mean' of the PDF and
-#' the second statistic is the parameter 'standard deviation' of the PDF.
-#' @return .BEI_Weights returns an array of with dimensions (member),
-#' the normalized weights for each member of a SFS using a Best NAO PDF.
-#' @examples
+#'Atomic BEI_Weights
+#'@param index_weight Index (e.g. NAO index) array from a SFS with dimensions
+#'  (member)
+#'@param pdf_weight Statistics array to define a Gaussian PDF with dimensions
+#'  (statistic = 2).
+#'  The firt statistic is the parameter 'mean' of the PDF and
+#'  the second statistic is the parameter 'standard deviation' of the PDF.
+#'@return .BEI_Weights returns an array of with dimensions (member),
+#'the normalized weights for each member of a SFS using a Best NAO PDF.
+#'@examples
 #' # Example for the Atomic BEI_Weights function
 #' index_weight <- c(1.3,3,-1)
 #' dim(index_weight) <- c(member = 3)
@@ -117,7 +116,7 @@ BEI_Weights <- function(index_weight, pdf_weight, time_dim_name = 'time') {
 #' dim(res)
 #' # member
 #' #      3
-#' @noRd
+#'@noRd
 .BEI_Weights <- function(index_weight, pdf_weight) {
   aweights <- apply(index_weight, 1, dnorm, mean = pdf_weight[1], sd = pdf_weight[2])
   dim(aweights) <- dim(index_weight)

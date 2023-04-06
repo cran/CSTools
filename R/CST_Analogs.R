@@ -41,7 +41,9 @@
 #'  criterias. If parameter 'expVar' is not provided, the function will return 
 #'  the expL analog. The element 'data' in the 's2dv_cube' object must have, at
 #'  least, latitudinal and longitudinal dimensions. The object is expect to be 
-#'  already subset for the desired large scale region.
+#'  already subset for the desired large scale region. Latitudinal dimension 
+#'  accepted names: 'lat', 'lats', 'latitude', 'y', 'j', 'nav_lat'. Longitudinal 
+#'  dimension accepted names: 'lon', 'lons','longitude', 'x', 'i', 'nav_lon'.
 #'@param obsL An 's2dv_cube' object containing the observational field on the
 #'  large scale. The element 'data' in the 's2dv_cube' object must have the same 
 #'  latitudinal and longitudinal dimensions as parameter 'expL' and a temporal 
@@ -72,10 +74,10 @@
 #'  time_obsL), by default time_expL will be removed during the search of analogs.
 #'@param time_expL A character string indicating the date of the experiment 
 #'  in the same format than time_obsL (i.e. "yyyy-mm-dd"). By default it is NULL 
-#'  and dates are taken from element \code{$Dates$start} from expL.
+#'  and dates are taken from element \code{$attrs$Dates} from expL.
 #'@param time_obsL A character string indicating the date of the observations 
 #'  in the date format (i.e. "yyyy-mm-dd"). By default it is NULL and dates are 
-#'  taken from element \code{$Dates$start} from obsL.
+#'  taken from element \code{$attrs$Dates} from obsL.
 #'@param region A vector of length four indicating the minimum longitude, 
 #'  the maximum longitude, the minimum latitude and the maximum latitude.
 #'@param nAnalogs Number of Analogs to be selected to apply the criterias 
@@ -99,7 +101,7 @@
 #'  best analog, for instance for downscaling. 
 #'@param ncores The number of cores to use in parallel computation
 #'
-#'@seealso code{\link{CST_Load}}, \code{\link[s2dv]{Load}} and 
+#'@seealso \code{\link{CST_Load}}, \code{\link[s2dv]{Load}} and 
 #'\code{\link[s2dv]{CDORemap}}
 #'
 #'@return An 's2dv_cube' object containing an array with the dowscaled values of 
@@ -108,17 +110,22 @@
 #'elements 'analogs', 'metric' and 'dates'.
 #'@examples
 #'expL <- rnorm(1:200)
-#'dim(expL) <- c(member = 10,lat = 4, lon = 5)
-#'obsL <- c(rnorm(1:180),expL[1,,]*1.2)
-#'dim(obsL) <- c(time = 10,lat = 4, lon = 5)
-#'time_obsL <- paste(rep("01", 10), rep("01", 10), 1994:2003, sep = "-")
+#'dim(expL) <- c(member = 10, lat = 4, lon = 5)
+#'obsL <- c(rnorm(1:180), expL[1, , ]*1.2)
+#'dim(obsL) <- c(time = 10, lat = 4, lon = 5)
+#'time_obsL <- as.POSIXct(paste(rep("01", 10), rep("01", 10), 1994:2003, sep = "-"), 
+#'                        format = "%d-%m-%y")
+#'dim(time_obsL) <- c(time = 10)
 #'time_expL <- time_obsL[1]
-#'lon <- seq(-1,5,1.5)
-#'lat <- seq(30,35,1.5)
-#'expL <- s2dv_cube(data = expL, lat = lat, lon = lon, 
-#'                  Dates = list(start = time_expL, end = time_expL))
-#'obsL <- s2dv_cube(data = obsL, lat = lat, lon = lon,
-#'                  Dates = list(start = time_obsL, end = time_obsL))
+#'lon <-  seq(-1, 5, 1.5)
+#'lat <- seq(30, 35, 1.5)
+#'coords <- list(lon = seq(-1, 5, 1.5), lat = seq(30, 35, 1.5))
+#'attrs_expL <- list(Dates = time_expL)
+#'attrs_obsL <- list(Dates = time_obsL)
+#'expL <- list(data = expL, coords = coords, attrs = attrs_expL)
+#'obsL <- list(data = obsL, coords = coords, attrs = attrs_obsL)
+#'class(expL) <- 's2dv_cube'
+#'class(obsL) <- 's2dv_cube'
 #'region <- c(min(lon), max(lon), min(lat), max(lat))
 #'downscaled_field <- CST_Analogs(expL = expL, obsL = obsL, region = region)
 #' 
@@ -131,6 +138,8 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
                         time_expL = NULL, time_obsL = NULL,
                         nAnalogs = NULL, AnalogsInfo = FALSE,
                         ncores = NULL) {
+
+  # Check 's2dv_cube'
   if (!inherits(expL, "s2dv_cube") || !inherits(obsL, "s2dv_cube")) {
     stop("Parameter 'expL' and 'obsL' must be of the class 's2dv_cube', ",
          "as output by CSTools::CST_Load.")
@@ -140,15 +149,44 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
          "as output by CSTools::CST_Load.")
   }        
   if (!is.null(obsVar) && !inherits(obsVar, "s2dv_cube")) {
-    stop("Parameter 'expVar' must be of the class 's2dv_cube', ",
+    stop("Parameter 'obsVar' must be of the class 's2dv_cube', ",
          "as output by CSTools::CST_Load.")
   }
-  if (any(is.na(expL)))  {
-    warning("Parameter 'expL' contains NA values.")
+
+  # Check 'obsL' object structure
+  if (!all(c('data', 'coords', 'attrs') %in% names(obsL))) {
+    stop("Parameter 'obsL' must have 'data', 'coords' and 'attrs' elements ",
+         "within the 's2dv_cube' structure.")
   }
-  if (any(is.na(obsL))) {
-    warning("Parameter 'obsL' contains NA values.")
+  
+  if (!any(names(obsL$coords) %in% .KnownLonNames()) | 
+      !any(names(obsL$coords) %in% .KnownLatNames())) {
+    stop("Spatial coordinate names of parameter 'obsL' do not match any ",
+         "of the names accepted by the package.")
   }
+
+  lon_name <- names(obsL$coords)[[which(names(obsL$coords) %in% .KnownLonNames())]]
+  lat_name <- names(obsL$coords)[[which(names(obsL$coords) %in% .KnownLatNames())]]
+
+  # Check 'obsVar' object structure
+  if (!is.null(obsVar)) {
+    if (!all(c('data', 'coords', 'attrs') %in% names(obsVar))) {
+      stop("Parameter 'obsVar' must have 'data', 'coords' and 'attrs' elements ",
+           "within the 's2dv_cube' structure.")
+    }
+    if (!any(names(obsVar$coords) %in% .KnownLonNames()) | 
+        !any(names(obsVar$coords) %in% .KnownLatNames())) {
+      stop("Spatial coordinate names of parameter 'obsVar' do not match any ",
+           "of the names accepted by the package.")
+    }
+    lonVar <- obsVar$coords[[which(names(obsVar$coords) %in% .KnownLonNames())]]
+    latVar <- obsVar$coords[[which(names(obsVar$coords) %in% .KnownLatNames())]]
+  } else {
+    lonVar <- NULL
+    latVar <- NULL
+  }
+
+  # Check temporal dimensions
   if (any(names(dim(obsL$data)) %in% 'sdate')) {
     if (any(names(dim(obsL$data)) %in% 'ftime')) {
       obsL <- CST_MergeDims(obsL, c('ftime', 'sdate'), rename_dim = 'time')
@@ -166,36 +204,47 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
     }
   } 
   if (is.null(time_expL)) {
-    time_expL <- expL$Dates$start
+    time_expL <- expL$attrs$Dates
   }
   if (is.null(time_obsL)) {
-    time_obsL <- obsL$Dates$start
+    time_obsL <- obsL$attrs$Dates
   }
+
   res <- Analogs(expL$data, obsL$data, time_obsL = time_obsL, 
-                 time_expL = time_expL, lonL = expL$lon,
-                 latL = expL$lat, expVar = expVar$data,
+                 time_expL = time_expL, 
+                 lonL = as.vector(obsL$coords[[lon_name]]),
+                 latL = as.vector(obsL$coords[[lat_name]]), 
+                 expVar = expVar$data,
                  obsVar = obsVar$data, criteria = criteria, 
                  excludeTime = excludeTime, region = region,
-                 lonVar = as.vector(obsVar$lon), latVar = as.vector(obsVar$lat),
+                 lonVar = as.vector(lonVar), latVar = as.vector(latVar),
                  nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo,
                  ncores = ncores)
+                 
   if (AnalogsInfo) {
     if (is.numeric(res$dates)) {
       res$dates <- as.POSIXct(res$dates, origin = '1970-01-01', tz = 'UTC')
     }
   }
+
   expL$data <- res
-  if (is.null(region)) {
-    expL$lon <- obsL$lon
-    expL$lat <- obsL$lat
-  } else {
-    expL$lon <- SelBox(obsL$data, lon = as.vector(obsL$lon), 
-                       lat = as.vector(obsL$lat),
-                       region = region)$lon
-    expL$lat <- SelBox(obsL$data, lon = as.vector(obsL$lon), 
-                       lat = as.vector(obsL$lat),
-                       region = region)$lat
+
+  if (!is.null(obsL$coords[[lon_name]]) | !is.null(obsL$coords[[lat_name]])) {
+    if (is.null(region)) {
+      expL$coords[[lon_name]] <- obsL$coords[[lon_name]]
+      expL$coords[[lat_name]] <- obsL$coords[[lat_name]]
+    } else {
+      expL$coords[[lon_name]] <- SelBox(obsL$data, 
+                                        lon = as.vector(obsL$coords[[lon_name]]), 
+                                        lat = as.vector(obsL$coords[[lat_name]]),
+                                        region = region)$lon
+      expL$coords[[lat_name]] <- SelBox(obsL$data, 
+                                        lon = as.vector(obsL$coords[[lon_name]]), 
+                                        lat = as.vector(obsL$coords[[lat_name]]),
+                                        region = region)$lat
+    }
   }
+ 
   return(expL)
 }
 
@@ -246,16 +295,19 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
 #'  all the criterias. If parameter 'expVar' is not provided, the function will
 #'  return the expL analog. The element 'data' in the 's2dv_cube' object must 
 #'  have, at least, latitudinal and longitudinal dimensions. The object is 
-#'  expect to be already subset for the desired large scale region.
+#'  expect to be already subset for the desired large scale region. Latitudinal 
+#'  dimension accepted names: 'lat', 'lats', 'latitude', 'y', 'j', 'nav_lat'. 
+#'  Longitudinal dimension accepted names: 'lon', 'lons','longitude', 'x', 'i', 
+#'  'nav_lon'.
 #'@param obsL An array of N named dimensions containing the observational field 
 #'  on the large scale. The element 'data' in the 's2dv_cube' object must have 
 #'  the same latitudinal and longitudinal dimensions as parameter 'expL' and a 
 #'  single temporal dimension with the maximum number of available observations.
 #'@param time_obsL A character string indicating the date of the observations 
-#'  in the format "dd/mm/yyyy". Reference time to search for analogs. 
+#'  in the format "dd-mm-yyyy". Reference time to search for analogs. 
 #'@param time_expL An array of N named dimensions (coinciding with time 
 #'  dimensions in expL) of character string(s) indicating the date(s) of the 
-#'  experiment in the format "dd/mm/yyyy". Time(s) to find the analogs.
+#'  experiment in the format "dd-mm-yyyy". Time(s) to find the analogs.
 #'@param lonL A vector containing the longitude of parameter 'expL'.
 #'@param latL A vector containing the latitude of parameter 'expL'.
 #'@param excludeTime An array of N named dimensions (coinciding with time 
@@ -281,7 +333,7 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
 #'  correlation, while for Large_dist criteria the best analog will be the day 
 #'  with minimum Euclidean distance). Set to FALSE to get a single analog, the 
 #'  best analog, for instance for downscaling. 
-#'@param criteria a character string indicating the criteria to be used for the
+#'@param criteria A character string indicating the criteria to be used for the
 #' selection of analogs:
 #'  \itemize{\item{Large_dist} minimum Euclidean distance in the large scale pattern; 
 #'           \item{Local_dist} minimum Euclidean distance in the large scale pattern 
@@ -289,11 +341,11 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
 #'           \item{Local_cor} minimum Euclidean distance in the large scale pattern, 
 #'            minimum Euclidean distance in the local scale pattern and highest 
 #'            correlation in the local variable to downscale.} 
-#'@param lonVar a vector containing the longitude of parameter 'expVar'.
-#'@param latVar a vector containing the latitude of parameter 'expVar'.
-#'@param region a vector of length four indicating the minimum longitude, 
+#'@param lonVar A vector containing the longitude of parameter 'expVar'.
+#'@param latVar A vector containing the latitude of parameter 'expVar'.
+#'@param region A vector of length four indicating the minimum longitude, 
 #'  the maximum longitude, the minimum latitude and the maximum latitude.
-#'@param nAnalogs number of Analogs to be selected to apply the criterias 
+#'@param nAnalogs Number of Analogs to be selected to apply the criterias 
 #'  'Local_dist' or 'Local_cor'. This is not the necessary the number of analogs 
 #'  that the user can get, but the number of events with minimum distance in 
 #'  which perform the search of the best Analog. The default value for the 
@@ -302,10 +354,7 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
 #'  NULL for 'Local_dist' and 'Local_cor' the default value will be set at the 
 #'  length of 'time_obsL'. If AnalogsInfo is FALSE the function returns just 
 #'  the best analog.
-#'@param ncores the number of cores to use in parallel computation.
-#'@import multiApply
-#'@import abind
-#'@importFrom ClimProjDiags SelBox Subset
+#'@param ncores The number of cores to use in parallel computation.
 #'
 #'@return An array with the dowscaled values of the best analogs for the criteria 
 #'selected. If 'AnalogsInfo' is set to TRUE it returns a list with an array 
@@ -313,14 +362,14 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
 #''metric' and 'dates'.
 #'
 #'@examples
-#'# Example 1:Downscaling using criteria 'Large_dist' and a single variable:
+#'# Example 1: Downscaling using criteria 'Large_dist' and a single variable:
 #'expSLP <- rnorm(1:20)
 #'dim(expSLP) <- c(lat = 4, lon = 5)
 #'obsSLP <- c(rnorm(1:180), expSLP * 1.2)
 #'dim(obsSLP) <- c(time = 10, lat = 4, lon = 5)
 #'time_obsSLP <- paste(rep("01", 10), rep("01", 10), 1994 : 2003, sep = "-")
 #'downscale_field <- Analogs(expL = expSLP, obsL = obsSLP, 
-#'                   time_obsL = time_obsSLP,time_expL = "01-01-1994")
+#'                           time_obsL = time_obsSLP,time_expL = "01-01-1994")
 #'
 #'# Example 2: Downscaling using criteria 'Large_dist' and 2 variables:
 #'obs.pr <- c(rnorm(1:200) * 0.001)
@@ -328,23 +377,7 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
 #'downscale_field <- Analogs(expL = expSLP, obsL = obsSLP, obsVar = obs.pr,
 #'                           time_obsL = time_obsSLP, time_expL = "01-01-1994")
 #'
-#'# Example 3:List of best Analogs using criteria 'Large_dist' and a single 
-#'obsSLP <- c(rnorm(1:1980), expSLP * 1.5)
-#'dim(obsSLP) <- c(lat = 4, lon = 5, time = 100)
-#'time_obsSLP <- paste(rep("01", 100), rep("01", 100), 1920 : 2019, sep = "-")
-#'downscale_field <- Analogs(expL = expSLP, obsL = obsSLP, time_obsSLP,
-#'                          nAnalogs = 5, time_expL = "01-01-2003", 
-#'                          AnalogsInfo = TRUE, excludeTime = "01-01-2003")
-#'
-#'# Example 4:List of best Analogs using criteria 'Large_dist' and 2 variables:
-#'obsSLP <- c(rnorm(1:180), expSLP * 2)
-#'dim(obsSLP) <- c(lat = 4, lon = 5, time = 10)
-#'time_obsSLP <- paste(rep("01", 10), rep("01", 10), 1994 : 2003, sep = "-")
-#'downscale_field <- Analogs(expL = expSLP, obsL = obsSLP, obsVar = obs.pr,
-#'                           time_obsL = time_obsSLP,nAnalogs=5,
-#'                           time_expL = "01-10-2003", AnalogsInfo = TRUE)
-#'
-#'# Example 5: Downscaling using criteria 'Local_dist' and 2 variables:
+#'# Example 3: Downscaling using criteria 'Local_dist' and 2 variables:
 #'# analogs of local scale using criteria 2
 #'region = c(lonmin = -1 ,lonmax = 2, latmin = 30, latmax = 33)
 #'Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
@@ -353,65 +386,34 @@ CST_Analogs <- function(expL, obsL, expVar = NULL, obsVar = NULL, region = NULL,
 #'                       region = region,time_expL = "01-10-2000", 
 #'                       nAnalogs = 10, AnalogsInfo = TRUE)
 #'
-#'# Example 6: list of best analogs using criteria 'Local_dist' and 2 
-#'Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
-#'                       criteria = "Local_dist", lonL = seq(-1, 5, 1.5),
-#'                       latL = seq(30, 35, 1.5), region = region,
-#'                       time_expL = "01-10-2000", nAnalogs = 5, 
-#'                       AnalogsInfo = TRUE)
-#'
-#'# Example 7: Downscaling using Local_dist criteria
-#'Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
-#'                       criteria = "Local_dist", lonL = seq(-1, 5, 1.5),
-#'                       latL = seq(30, 35, 1.5), region = region, 
-#'                       time_expL = "01-10-2000",
-#'                       nAnalogs = 10, AnalogsInfo = FALSE)
-#'
-#'# Example 8: Downscaling using criteria 'Local_cor' and 2 variables:
+#'# Example 4: Downscaling using criteria 'Local_cor' and 2 variables:
 #'exp.pr <- c(rnorm(1:20) * 0.001)
 #'dim(exp.pr) <- dim(expSLP)
-#'Local_scalecor <- Analogs(expL = expSLP, obsL = obsSLP,time_obsL = time_obsSLP,
+#'Local_scalecor <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
 #'                          obsVar = obs.pr, expVar = exp.pr,
 #'                          criteria = "Local_cor", lonL = seq(-1, 5, 1.5),
 #'                          time_expL = "01-10-2000", latL = seq(30, 35, 1.5),
 #'                          lonVar = seq(-1, 5, 1.5), latVar = seq(30, 35, 1.5), 
 #'                          nAnalogs = 8, region = region, AnalogsInfo = FALSE)
-#'# same but without imposing nAnalogs,so nAnalogs will be set by default as 10 
-#'Local_scalecor <- Analogs(expL = expSLP, obsL = obsSLP,time_obsL = time_obsSLP,
-#'                          obsVar = obs.pr, expVar = exp.pr,
-#'                          lonVar = seq(-1, 5, 1.5), latVar = seq(30, 35, 1.5),
-#'                          criteria = "Local_cor", lonL = seq(-1,5,1.5),
-#'                          time_expL = "01-10-2000", latL =seq(30, 35, 1.5), 
-#'                          region = region, AnalogsInfo = TRUE)
 #'
-#'#'Example 9: List of best analogs in the three criterias Large_dist, 
+#'# Example 5: List of best analogs in the three criterias Large_dist, 
 #'Large_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
 #'                       criteria = "Large_dist", time_expL = "01-10-2000",
 #'                       nAnalogs = 7, AnalogsInfo = TRUE)
 #'Local_scale <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
 #'                       time_expL = "01-10-2000", criteria = "Local_dist",
 #'                       lonL = seq(-1, 5, 1.5), latL = seq(30, 35, 1.5), 
-#'                       nAnalogs = 7,region = region, AnalogsInfo = TRUE)
-#'Local_scalecor <- Analogs(expL = expSLP, obsL = obsSLP,time_obsL = time_obsSLP,
+#'                       nAnalogs = 7, region = region, AnalogsInfo = TRUE)
+#'Local_scalecor <- Analogs(expL = expSLP, obsL = obsSLP, time_obsL = time_obsSLP,
 #'                          obsVar = obsSLP, expVar = expSLP, 
-#'                          time_expL = "01-10-2000",criteria = "Local_cor", 
+#'                          time_expL = "01-10-2000", criteria = "Local_cor", 
 #'                          lonL = seq(-1, 5, 1.5), latL = seq(30, 35, 1.5),
 #'                          lonVar = seq(-1, 5, 1.5), latVar = seq(30, 35, 1.5),
-#'                          nAnalogs = 7,region = region, 
+#'                          nAnalogs = 7, region = region, 
 #'                          AnalogsInfo = TRUE)
-#'#Example 10: Downscaling using criteria 'Large_dist' and a single variable, 
-#'# more than 1 sdate:
-#'expSLP <- rnorm(1:40)
-#'dim(expSLP) <- c(sdate = 2, lat = 4, lon = 5)
-#'obsSLP <- c(rnorm(1:180), expSLP * 1.2)
-#'dim(obsSLP) <- c(time = 11, lat = 4, lon = 5)
-#'time_obsSLP <- paste(rep("01", 11), rep("01", 11), 1993 : 2003, sep = "-")
-#'time_expSLP <- paste(rep("01", 2), rep("01", 2), 1994 : 1995, sep = "-")
-#'excludeTime <- c("01-01-2003", "01-01-2003")
-#'dim(excludeTime) <- c(sdate = 2)
-#'downscale_field_exclude <- Analogs(expL = expSLP, obsL = obsSLP, 
-#'                          time_obsL = time_obsSLP, time_expL = time_expSLP, 
-#'                          excludeTime = excludeTime, AnalogsInfo = TRUE)
+#'@import multiApply
+#'@import abind
+#'@importFrom ClimProjDiags SelBox Subset
 #'@export
 Analogs <- function(expL, obsL, time_obsL, time_expL = NULL, 
                     lonL = NULL, latL = NULL, expVar = NULL,
@@ -419,30 +421,100 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL,
                     excludeTime = NULL, lonVar = NULL, latVar = NULL, 
                     region = NULL, nAnalogs = NULL, 
                     AnalogsInfo = FALSE, ncores = NULL) {
-  if (!all(c('lon', 'lat') %in% names(dim(expL)))) {
-    stop("Parameter 'expL' must have the dimensions 'lat' and 'lon'.")
+  # Check inputs
+  # expL, obsL
+  if (!is.array(expL) || !is.numeric(expL)) {
+    stop("Parameter 'expL' must be a numeric array.")
   }
-  if (!all(c('lat', 'lon') %in% names(dim(obsL)))) {
-    stop("Parameter 'obsL' must have the dimension 'lat' and 'lon'.")
+  if (!is.array(obsL) || !is.numeric(obsL)) {
+    stop("Parameter 'obsL' must be a numeric array.")
+  }
+  obsdims <- names(dim(obsL))
+  expdims <- names(dim(expL))
+  if (is.null(expdims)) {
+    stop("Parameter 'expL' must have dimension names.")
+  }
+  if (is.null(obsdims)) {
+    stop("Parameter 'obsL' must have dimension names.")
   }
   if (any(is.na(expL)))  {
-    warning("Parameter 'exp' contains NA values.")
+    warning("Parameter 'expL' contains NA values.")
   }
-  if (any(is.na(obsL))) {
-    warning("Parameter 'obs' contains NA values.")
+  if (any(is.na(obsL)))  {
+    warning("Parameter 'obsL' contains NA values.")
   }
+  if (!any(.KnownLonNames() %in% obsdims) | !any(.KnownLonNames() %in% expdims)) {
+    stop("Parameter 'expL' and 'obsL' must have longitudinal dimension.")
+  }
+  if (!any(.KnownLatNames() %in% obsdims) | !any(.KnownLatNames() %in% expdims)) {
+    stop("Parameter 'expL' and 'obsL' must have latitudinal dimension.")
+  }
+
+  # Know spatial coordinates names
+  if (!any(obsdims %in% .KnownLonNames()) | 
+      !any(obsdims %in% .KnownLatNames())) {
+    stop("Spatial coordinate names do not match any of the names accepted by ",
+         "the package.")
+  }
+
+  lon_name <- obsdims[[which(obsdims %in% .KnownLonNames())]]
+  lat_name <- obsdims[[which(obsdims %in% .KnownLatNames())]]
+
+  # criteria
+  if (!criteria %in% c('Large_dist', 'Local_dist', 'Local_cor')) {
+    stop("Parameter 'criteria' can only be: 'Large_dist', 'Local_dist' or 'Local_cor'.")
+  }
+  if (length(criteria) > 1) {
+    warning("Only first element of 'criteria' parameter will be used.")
+    criteria <- criteria[1]
+  }
+  # lonL, latL, lonVar, latVar
+  if (criteria == "Local_dist" | criteria == "Local_cor") {
+    if (is.null(lonL) | is.null(latL)) {
+      stop("Parameters 'lonL' and 'latL' cannot be NULL.")
+    }
+    if (!is.numeric(lonL) | !is.numeric(latL)) {
+      stop("Parameters 'lonL' and 'latL' must be numeric.")
+    }
+    if (!is.null(dim(lonL)) | !is.null(dim(latL))) {
+      if (length(dim(lonL)) == 1 & length(dim(latL)) == 1) {
+        lonL <- as.vector(lonL)
+        latL <- as.vector(latL)
+      } else {
+        stop("Parameters 'lonL' and 'latL' need to be a vector.")
+      }
+    }
+  }
+  if (criteria == "Local_cor") {
+    if (is.null(lonVar) | is.null(latVar)) {
+      stop("Parameters 'lonVar' and 'latVar' cannot be NULL.")
+    }
+    if (!is.numeric(lonVar) | !is.numeric(latVar)) {
+      stop("Parameters 'lonVar' and 'latVar' must be numeric.")
+    }
+    if (!is.null(dim(lonVar)) | !is.null(dim(latVar))) {
+      if (length(dim(lonVar)) == 1 & length(dim(latVar)) == 1) {
+        lonVar <- as.vector(lonVar)
+        latVar <- as.vector(latVar)
+      } else {
+        stop("Parameters 'lonVar' and 'latVar' need to be a vector.")
+      }
+    }
+  }
+  # expVar and obsVar
   if (!is.null(expVar) & is.null(obsVar)) {
     expVar <- NULL
     warning("Parameter 'expVar' is set to NULL as parameter 'obsVar', 
-            large scale field will be returned.")
+             large scale field will be returned.")
   }
   if (is.null(expVar) & is.null(obsVar)) {
     warning("Parameter 'expVar' and 'obsVar' are NULLs, downscaling/listing 
-            same variable as obsL and expL'.")
+             same variable as obsL and expL'.")
   }
   if (!is.null(obsVar) & is.null(expVar) & criteria == "Local_cor") {
     stop("Parameter 'expVar' cannot be NULL.")
   }
+  # nAnalogs
   if (is.null(nAnalogs) & criteria != "Large_dist") {
     nAnalogs = length(time_obsL)
     warning("Parameter 'nAnalogs' is NULL and is set to the same length of", 
@@ -451,28 +523,31 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL,
   if (is.null(nAnalogs) & criteria == "Large_dist") {
     nAnalogs <- 1
   }
+  # time_obsL, time_expL
+  if (is.null(time_obsL)) {
+    stop("Parameter 'time_obsL' cannot be NULL.")
+  }
   if (is.null(time_expL)) {
-    stop("Parameter 'time_expL' cannot be NULL")
+    stop("Parameter 'time_expL' cannot be NULL.")
   }
-  if(any(class(time_obsL)!="character")){
+  if (!inherits(time_obsL, "character")) {
     warning('imposing time_obsL to be a character')
-    time_obsL=format(as.Date(time_obsL),'%d-%m-%Y')
+    time_obsL <- format(as.Date(time_obsL), '%d-%m-%Y')
   }
-  if(any(class(time_expL)!="character")){
+  if (!inherits(time_expL, "character")) {
     warning('imposing time_expL to be a character')
-    time_expL=format(as.Date(time_expL),'%d-%m-%Y')
+    time_expL <- format(as.Date(time_expL), '%d-%m-%Y')
   }
-  if(!is.null(excludeTime)){
-    if(any(class(excludeTime)!="character")){
+  # excludeTime
+  if (!is.null(excludeTime)) {
+    if (!inherits(excludeTime, "character")) {
       warning('imposing excludeTime to be a character')
-      excludeTime=format(as.Date(excludeTime),'%d-%m-%Y')
+      excludeTime <- format(as.Date(excludeTime),'%d-%m-%Y')
     }
-  }  
+  }
+  # time_obsL
   if (is.null(time_obsL)) {
     stop("Parameter 'time_obsL' cannot be NULL")
-  }
-  if (is.null(expL)) {
-    stop("Parameter 'expL' cannot be NULL")
   }
   if (any(names(dim(obsL)) %in% 'ftime')) {
     if (any(names(dim(obsL)) %in% 'time')) {
@@ -526,8 +601,8 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL,
         dims_obsL <- dim(obsL)
         pos_time <- which(names(dim(obsL)) == 'time')
         if(length(time_obsL) != dim(obsL)[pos_time]) {
-          stop(" 'time_obsL' and 'obsL' must have same length in the temporal
-               dimension.")
+          stop("'time_obsL' and 'obsL' must have same length in the temporal
+                dimension.")
         }
         pos <- 1 : length(dim(obsL))
         pos <- c(pos_time, pos[-c(pos_time)])
@@ -589,8 +664,7 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL,
                      c('ftime', 'leadtime', 'ltime') == TRUE)) > 1) {
       stop("Parameter 'expL' cannot have multiple forecast time dimensions")
     } else {
-    names(dim(expL))[which(names(dim(expL)) %in% c('ftime','leadtime','ltime'))] <-
-         'time'
+    names(dim(expL))[which(names(dim(expL)) %in% c('ftime','leadtime','ltime'))] <- 'time'
     }
   }
   # remove dimension length 1 to simplify outputs:
@@ -611,14 +685,19 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL,
     }
   }
   names(dim(expL)) <- replace_repeat_dimnames(names(dim(expL)),
-                                              names(dim(obsL)))
+                                              names(dim(obsL)), 
+                                              lon_name = lon_name, 
+                                              lat_name = lat_name)
   if (!is.null(expVar)) {
     names(dim(expVar)) <- replace_repeat_dimnames(names(dim(expVar)),
-                                                  names(dim(obsVar)))
+                                                  names(dim(obsVar)),
+                                                  lon_name = lon_name, 
+                                                  lat_name = lat_name)
   }
   
   if (is.null(excludeTime)) {
-    excludeTime <- vector(mode="character", length=length(time_expL))
+    excludeTime <- vector(mode = "character", length = length(time_expL))
+
   }
   if (length(time_expL) == length(excludeTime)) {
     if (any(names(dim(expL)) %in% c('sdate_exp'))) {
@@ -645,68 +724,73 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL,
   if (!AnalogsInfo) {
     if (is.null(obsVar)) {
       res <- Apply(list(expL, obsL),
-                   target_dims = list(c('lat', 'lon'), c('time','lat','lon')),
+                   target_dims = list(c(lat_name, lon_name), c('time', lat_name, lon_name)),
                    fun = .analogs, time_obsL, expVar = expVar,
                    time_expL = time_expL, excludeTime = excludeTime,
                    obsVar = obsVar, criteria = criteria,
                    lonL = lonL, latL = latL,
                    lonVar = lonVar, latVar = latVar, region = region,
-                   nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo,
-                   output_dims = c('nAnalogs', 'lat', 'lon'), 
+                   nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo, 
+                   lon_name = lon_name, lat_name = lat_name, 
+                   output_dims = c('nAnalogs', lat_name, lon_name), 
                    ncores = ncores)$output1
 
     } else if (!is.null(obsVar) && is.null(expVar)) {
         res <- Apply(list(expL, obsL, obsVar), 
-                     target_dims = list(c('lat', 'lon'), c('time','lat','lon'),
-                                        c('time', 'lat', 'lon')),
+                     target_dims = list(c(lat_name, lon_name), c('time', lat_name, lon_name),
+                                        c('time', lat_name, lon_name)),
                      fun = .analogs, time_obsL, 
                      time_expL = time_expL, excludeTime = excludeTime,
                      expVar = expVar, criteria = criteria,
                      lonL = lonL, latL = latL,
                      lonVar = lonVar, latVar = latVar, region = region,
                      nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo,
-                     output_dims = c('nAnalogs', 'lat', 'lon'), 
+                     lon_name = lon_name, lat_name = lat_name, 
+                     output_dims = c('nAnalogs', lat_name, lon_name), 
                      ncores = ncores)$output1
 
     } else if (!is.null(obsVar) && !is.null(expVar)) {
         res <- Apply(list(expL, obsL, obsVar, expVar),
-                     target_dims = list(c('lat', 'lon'), c('time','lat','lon'),
-                                        c('time','lat','lon'), c('lat','lon')),
+                     target_dims = list(c(lat_name, lon_name), c('time', lat_name, lon_name),
+                                        c('time', lat_name, lon_name), c(lat_name, lon_name)),
                      fun = .analogs,
                      criteria = criteria, time_obsL,
                      time_expL = time_expL, excludeTime = excludeTime,
                      lonL = lonL, latL = latL,
                      lonVar = lonVar, latVar = latVar, region = region,
-                     nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo,
-                     output_dims = c('nAnalogs', 'lat', 'lon'), 
+                     nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo, 
+                     lon_name = lon_name, lat_name = lat_name, 
+                     output_dims = c('nAnalogs', lat_name, lon_name), 
                      ncores = ncores)$output1
     }
   } else {
     if (is.null(obsVar)) {
         res <- Apply(list(expL, obsL),
-                     target_dims = list(c('lat', 'lon'), c('time','lat','lon')),
+                     target_dims = list(c(lat_name, lon_name), c('time', lat_name, lon_name)),
                      fun = .analogs, time_obsL, expVar = expVar,
                      time_expL = time_expL, excludeTime = excludeTime,
                      obsVar = obsVar, criteria = criteria,
                      lonL = lonL, latL = latL,
                      lonVar = lonVar, latVar = latVar, region = region,
-                     nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo,
-                     output_dims = list(fields = c('nAnalogs', 'lat', 'lon'),
+                     nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo, 
+                     lon_name = lon_name, lat_name = lat_name, 
+                     output_dims = list(fields = c('nAnalogs', lat_name, lon_name),
                                         analogs = c('nAnalogs'),
                                         metric = c('nAnalogs', 'metric'),
                                         dates = c('nAnalogs')),
                      ncores = ncores)
     } else if (!is.null(obsVar) && is.null(expVar)) {
         res <- Apply(list(expL, obsL, obsVar),
-                     target_dims = list(c('lat', 'lon'), c('time','lat','lon'),
-                                        c('time', 'lat', 'lon')),
-                     fun = .analogs,time_obsL,
+                     target_dims = list(c(lat_name, lon_name), c('time', lat_name, lon_name),
+                                        c('time', lat_name, lon_name)),
+                     fun = .analogs, time_obsL,
                      time_expL = time_expL, excludeTime = excludeTime,
                      expVar = expVar, criteria = criteria,
                      lonL = lonL, latL = latL,
                      lonVar = lonVar, latVar = latVar, region = region,
-                     nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo,
-                     output_dims = list(fields = c('nAnalogs', 'lat', 'lon'),
+                     nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo, 
+                     lon_name = lon_name, lat_name = lat_name, 
+                     output_dims = list(fields = c('nAnalogs', lat_name, lon_name),
                                         analogs = c('nAnalogs'),
                                         metric = c('nAnalogs', 'metric'),
                                         dates = c('nAnalogs')),
@@ -714,15 +798,16 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL,
 
     } else if (!is.null(obsVar) && !is.null(expVar)) {
       res <- Apply(list(expL, obsL, obsVar, expVar),
-                   target_dims = list(c('lat', 'lon'), c('time', 'lat', 'lon'),
-                                      c('time', 'lat', 'lon'), c('lat', 'lon')),
+                   target_dims = list(c(lat_name, lon_name), c('time', lat_name, lon_name),
+                                      c('time', lat_name, lon_name), c(lat_name, lon_name)),
                    fun = .analogs, time_obsL, 
                    criteria = criteria,
                    time_expL = time_expL, excludeTime = excludeTime,
                    lonL = lonL, latL = latL,
                    lonVar = lonVar, latVar = latVar, region = region,
-                   nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo,
-                   output_dims = list(fields = c('nAnalogs', 'lat', 'lon'),
+                   nAnalogs = nAnalogs, AnalogsInfo = AnalogsInfo, 
+                   lon_name = lon_name, lat_name = lat_name, 
+                   output_dims = list(fields = c('nAnalogs', lat_name, lon_name),
                                       analogs = c('nAnalogs'),
                                       metric = c('nAnalogs', 'metric'),
                                       dates = c('nAnalogs')),
@@ -736,7 +821,8 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL,
                       time_obsL, criteria = "Large_dist",
                       lonL = NULL, latL = NULL,
                       lonVar = NULL, latVar = NULL, region = NULL, 
-                      nAnalogs = NULL, AnalogsInfo = FALSE) {
+                      nAnalogs = NULL, AnalogsInfo = FALSE, lon_name = 'lon',
+                      lat_name = 'lat') {
 
   if (all(excludeTime == "")) {
     excludeTime = NULL
@@ -805,7 +891,7 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL,
   } else {
     stop("parameter 'obsL' cannot be NULL")
   }
-  if (length(time_obsL)==0) {
+  if (length(time_obsL) == 0) {
     stop("Parameter 'time_obsL' can not be length 0")
   }
     Analog_result <- FindAnalog(expL = expL, obsL = obsL, time_obsL = time_obsL,
@@ -814,7 +900,8 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL,
                                 AnalogsInfo = AnalogsInfo,
                                 nAnalogs = nAnalogs,
                                 lonL = lonL, latL = latL, lonVar = lonVar, 
-                                latVar = latVar, region = region)
+                                latVar = latVar, region = region, 
+                                lon_name = lon_name, lat_name = lat_name)
     if (AnalogsInfo == TRUE) {
       return(list(AnalogsFields = Analog_result$AnalogsFields, 
                   AnalogsInfo = Analog_result$Analog,
@@ -827,15 +914,17 @@ Analogs <- function(expL, obsL, time_obsL, time_expL = NULL,
 FindAnalog <- function(expL, obsL, time_obsL, expVar, obsVar, criteria, 
                        lonL, latL, lonVar,
                        latVar, region, nAnalogs = nAnalogs,
-                       AnalogsInfo = AnalogsInfo) {
+                       AnalogsInfo = AnalogsInfo, lon_name = 'lon', lat_name = 'lat') {
   position <- Select(expL = expL, obsL = obsL,  expVar = expVar, 
                      obsVar = obsVar, criteria = criteria, 
                      lonL = lonL, latL = latL, lonVar = lonVar, 
-                     latVar = latVar, region = region)$position
-  metrics<- Select(expL = expL, obsL = obsL,  expVar = expVar, 
+                     latVar = latVar, region = region,
+                     lon_name = lon_name, lat_name = lat_name)$position
+  metrics <- Select(expL = expL, obsL = obsL,  expVar = expVar, 
                    obsVar = obsVar, criteria = criteria, lonL = lonL,
                    latL = latL, lonVar = lonVar, 
-                   latVar = latVar, region = region)$metric.original
+                   latVar = latVar, region = region, 
+                   lon_name = lon_name, lat_name = lat_name)$metric.original
   best <- Apply(list(position), target_dims = c('time', 'pos'), 
                 fun = BestAnalog, criteria = criteria, 
                 AnalogsInfo = AnalogsInfo, nAnalogs = nAnalogs)$output1
@@ -845,7 +934,7 @@ FindAnalog <- function(expL, obsL, time_obsL, expVar, obsVar, criteria,
   if (all(!is.null(region), !is.null(lonVar), !is.null(latVar))) {
     if (is.null(obsVar)) {
       obsVar <- SelBox(obsL, lon = lonL, lat = latL, region = region)$data
-      expVar <- SelBox(expL, lon = lonL, lat = latL, region=region)$data
+      expVar <- SelBox(expL, lon = lonL, lat = latL, region = region)$data
       Analogs_fields <- Subset(obsVar, 
                                along = which(names(dim(obsVar)) == 'time'),
                                indices = best)
@@ -872,8 +961,8 @@ FindAnalog <- function(expL, obsL, time_obsL, expVar, obsVar, criteria,
     }
   }
   
-  lon_dim <- which(names(dim(Analogs_fields)) == 'lon')
-  lat_dim <- which(names(dim(Analogs_fields)) == 'lat')
+  lon_dim <- which(names(dim(Analogs_fields)) == lon_name)
+  lat_dim <- which(names(dim(Analogs_fields)) == lat_name)
   
   Analogs_metrics <- Subset(metrics,
                             along = which(names(dim(metrics)) == 'time'),
@@ -922,17 +1011,17 @@ BestAnalog <- function(position, nAnalogs = nAnalogs, AnalogsInfo = FALSE,
     } else {
       pos <- pos1[1 : nAnalogs]
     }
-  } else if (criteria== 'Local_dist') {
+  } else if (criteria == 'Local_dist') {
     pos1 <- pos1[1 : nAnalogs]
     pos2 <- pos2[1 : nAnalogs]
     best <- match(pos1, pos2)
-    if(length(best)==1) {
+    if (length(best) == 1) {
       warning("Just 1 best analog matching Large_dist and ", 
               "Local_dist criteria")
     } 
-    if(length(best)<1 | is.na(best[1])==TRUE){
+    if (length(best) < 1 | is.na(best[1]) == TRUE) {
       stop("no best analogs matching Large_dist and Local_dist criterias, 
-           please increase nAnalogs") 
+            please increase nAnalogs") 
     }
     pos <- pos2[as.logical(best)]
     pos <- pos[which(!is.na(pos))]
@@ -944,25 +1033,25 @@ BestAnalog <- function(position, nAnalogs = nAnalogs, AnalogsInfo = FALSE,
     pos1 <- pos1[1 : nAnalogs]
     pos2 <- pos2[1 : nAnalogs]
     best <- match(pos1, pos2)
-    if (length(best)==1) {
+    if (length(best) == 1) {
       warning("Just 1 best analog matching Large_dist and ", 
               "Local_dist criteria")
     } 
-    if(length(best)<1 | is.na(best[1])==TRUE){
+    if (length(best) < 1 | is.na(best[1]) == TRUE) {
       stop("no best analogs matching Large_dist and Local_dist criterias, 
-           please increase nAnalogs") 
+            please increase nAnalogs") 
     }
     pos <- pos1[as.logical(best)]
     pos <- pos[which(!is.na(pos))]
     pos3 <- pos3[1 : nAnalogs]
     best <- match(pos, pos3)
-    if(length(best)==1){
+    if (length(best) == 1) {
       warning("Just 1 best analog matching Large_dist, Local_dist and ", 
               "Local_cor criteria")
     } 
-    if(length(best)<1 | is.na(best[1])==TRUE){
+    if (length(best) < 1 | is.na(best[1]) == TRUE) {
       stop("no best analogs matching Large_dist, Local_dist and Local_cor 
-           criterias, please increase nAnalogs") 
+            criterias, please increase nAnalogs") 
     }
     pos <- pos[order(best, decreasing = F)]
     pos <- pos[which(!is.na(pos))]
@@ -976,15 +1065,19 @@ BestAnalog <- function(position, nAnalogs = nAnalogs, AnalogsInfo = FALSE,
 }
 Select <- function(expL, obsL,  expVar = NULL, obsVar = NULL, 
                    criteria = "Large_dist", lonL = NULL, latL = NULL,
-                   lonVar = NULL, latVar = NULL, region = NULL) {
+                   lonVar = NULL, latVar = NULL, region = NULL, 
+                   lon_name = 'lon', lat_name = 'lat') {
   names(dim(expL)) <- replace_repeat_dimnames(names(dim(expL)), 
-                                              names(dim(obsL)))
-  metric1 <- Apply(list(obsL), target_dims = list(c('lat', 'lon')), 
-                   fun = .select, expL, metric = "dist")$output1
-  metric1.original=metric1
+                                              names(dim(obsL)),
+                                              lon_name = lon_name,
+                                              lat_name = lat_name)
+  metric1 <- Apply(list(obsL), target_dims = list(c(lat_name, lon_name)), 
+                   fun = .select, expL, metric = "dist",
+                   lon_name = lon_name, lat_name = lat_name)$output1
+  metric1.original = metric1
   if (length(dim(metric1)) > 1) {
     dim_time_obs <- which(names(dim(metric1)) == 'time' | 
-                            names(dim(metric1)) == 'ftime')
+                          names(dim(metric1)) == 'ftime')
     dim(metric1) <- c(dim(metric1), metric=1)
     margins <- c(1 : (length(dim(metric1))))[-dim_time_obs]
     pos1 <- apply(metric1, margins, order)      
@@ -992,27 +1085,28 @@ Select <- function(expL, obsL,  expVar = NULL, obsVar = NULL,
     metric1.original = metric1
     metric1 <-  apply(metric1, margins, sort)
     names(dim(metric1))[1] <- 'time'
-    names(dim(metric1.original))=names(dim(metric1))
+    names(dim(metric1.original)) = names(dim(metric1))
   } else {
     pos1 <- order(metric1)
     dim(pos1) <- c(time = length(pos1))
     metric1 <- sort(metric1)
     dim(metric1) <- c(time = length(metric1))
-    dim(metric1.original)=dim(metric1)
-    dim_time_obs=1
+    dim(metric1.original) = dim(metric1)
+    dim_time_obs = 1
   }
   if (criteria == "Large_dist") {
     dim(metric1) <- c(dim(metric1), metric = 1)
     dim(pos1) <- c(dim(pos1), pos = 1)
-    dim(metric1.original)=dim(metric1)
-    return(list(metric = metric1, metric.original=metric1.original,
+    dim(metric1.original) = dim(metric1)
+    return(list(metric = metric1, metric.original = metric1.original,
                 position = pos1))
   }
   if (criteria == "Local_dist" | criteria == "Local_cor") {
     obs <- SelBox(obsL, lon = lonL, lat = latL, region = region)$data
     exp <- SelBox(expL, lon = lonL, lat = latL, region = region)$data
-    metric2 <- Apply(list(obs), target_dims = list(c('lat', 'lon')), 
-                     fun = .select, exp, metric = "dist")$output1
+    metric2 <- Apply(list(obs), target_dims = list(c(lat_name, lon_name)), 
+                     fun = .select, exp, metric = "dist", 
+                     lon_name = lon_name, lat_name = lat_name)$output1
     metric2.original = metric2
     dim(metric2) <- c(dim(metric2), metric=1)
     margins <- c(1 : (length(dim(metric2))))[-dim_time_obs]
@@ -1024,27 +1118,28 @@ Select <- function(expL, obsL,  expVar = NULL, obsVar = NULL,
     if (criteria == "Local_dist") {
       metric <- abind(metric1, metric2, along = length(dim(metric1))+1)
       metric.original <- abind(metric1.original,metric2.original,
-                               along=length(dim(metric1))+1)
+                               along = length(dim(metric1))+1)
       position <- abind(pos1, pos2, along = length(dim(pos1))+1) 
       names(dim(metric)) <- c(names(dim(pos1)), 'metric')
       names(dim(position)) <- c(names(dim(pos1)), 'pos')
       names(dim(metric.original)) = names(dim(metric)) 
-      return(list(metric = metric, metric.original=metric.original,
+      return(list(metric = metric, metric.original = metric.original,
                   position = position))
     }   
   }
   if (criteria == "Local_cor") {
     obs <- SelBox(obsVar, lon = lonVar, lat = latVar, region = region)$data
     exp <- SelBox(expVar, lon = lonVar, lat = latVar, region = region)$data
-    metric3 <- Apply(list(obs), target_dims = list(c('lat', 'lon')), 
-                     fun = .select, exp, metric = "cor")$output1
-    metric3.original=metric3
+    metric3 <- Apply(list(obs), target_dims = list(c(lat_name, lon_name)), 
+                     fun = .select, exp, metric = "cor",
+                     lon_name = lon_name, lat_name = lat_name)$output1
+    metric3.original = metric3
     dim(metric3) <- c(dim(metric3), metric=1)
     margins <- c(1 : (length(dim(metric3))))[-dim_time_obs]
     pos3 <- apply(abs(metric3), margins, order, decreasing = TRUE)
     names(dim(pos3))[1] <- 'time'
     metricsort <- metric3[pos3]
-    dim(metricsort)=dim(metric3)
+    dim(metricsort) = dim(metric3)
     names(dim(metricsort))[1] <- 'time'
     metric <- abind(metric1, metric2, metricsort, 
                     along = length(dim(metric1)) + 1)
@@ -1063,22 +1158,23 @@ Select <- function(expL, obsL,  expVar = NULL, obsVar = NULL,
          "'Local_dist','Local_cor'.")
   }
 }
-.select <- function(exp, obs, metric = "dist") {
+.select <- function(exp, obs, metric = "dist", 
+                    lon_name = 'lon', lat_name = 'lat') {
   if (metric == "dist") {
-    result <- Apply(list(obs), target_dims = list(c('lat', 'lon')), 
+    result <- Apply(list(obs), target_dims = list(c(lat_name, lon_name)), 
             fun = function(x) {sqrt(sum((x - exp) ^ 2, na.rm = TRUE))})$output1
   } else if (metric == "cor") {
-    result <- Apply(list(obs), target_dims = list(c('lat', 'lon')), 
+    result <- Apply(list(obs), target_dims = list(c(lat_name, lon_name)), 
                     fun = function(x) {cor(as.vector(x), 
                                            as.vector(exp),
-                                           method="spearman")})$output1
+                                           method = "spearman")})$output1
   } 
   result
 }
-.time_ref <- function(time_obsL,time_expL,excludeTime){
+.time_ref <- function(time_obsL,time_expL,excludeTime) {
   sameTime = which(time_obsL %in% time_expL)
-  result<- c(time_obsL[1:(sameTime-excludeTime-1)],
-             time_obsL[(sameTime+excludeTime+1):length(time_obsL)])
+  result<- c(time_obsL[1:(sameTime - excludeTime - 1)],
+             time_obsL[(sameTime + excludeTime + 1):length(time_obsL)])
   result
 }
 
@@ -1103,8 +1199,8 @@ replace_repeat_dimnames <- function(names_exp, names_obs, lat_name = 'lat',
 }
 
 replace_time_dimnames <- function(dataL, time_name = 'time', 
-                                  stdate_name='stdate', ftime_name='ftime') {
-  names_obs=names(dim(dataL))
+                                  stdate_name = 'stdate', ftime_name='ftime') {
+  names_obs = names(dim(dataL))
   if (!is.character(names_obs)) {
     stop("Parameter 'names_obs' must be a vector of characters.")
   }

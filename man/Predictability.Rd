@@ -12,9 +12,10 @@ Predictability(dim, theta, ncores = NULL)
 the output of CST_ProxiesAttractor or ProxiesAttractor.}
 
 \item{theta}{An array of N named dimensions containing the inverse of the 
-persistence 'theta' as the output of CST_ProxiesAttractor or ProxiesAttractor.}
+persistence 'theta' as the output of CST_ProxiesAttractor or 
+ProxiesAttractor.}
 
-\item{ncores}{The number of cores to use in parallel computation}
+\item{ncores}{The number of cores to use in parallel computation.}
 }
 \value{
 A list of length 2:
@@ -59,7 +60,7 @@ predyn <- Predictability(dim = attractor$dim, theta = attractor$theta)
 Faranda, D., Alvarez-Castro, M.C., Messori, G., Rodriguez, D., 
 and Yiou, P. (2019). The hammam effect or how a warm ocean enhances large 
 scale atmospheric predictability.Nature Communications, 10(1), 1316. 
-DOI = https://doi.org/10.1038/s41467-019-09305-8 "
+\doi{10.1038/s41467-019-09305-8}"
 
 Faranda, D., Gabriele Messori and Pascal Yiou. (2017).
 Dynamical proxies of North Atlantic predictability and extremes. 

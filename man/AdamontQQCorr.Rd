@@ -18,38 +18,38 @@ AdamontQQCorr(
 )
 }
 \arguments{
-\item{exp}{array with named dimensions (such as \code{$data} array of 
-experiment data from an object of class \code{s2dv_cube})}
+\item{exp}{Array with named dimensions (such as \code{$data} array of 
+experiment data from an object of class \code{s2dv_cube}).}
 
-\item{wt_exp}{corresponding weather types (same dimensions as \code{exp} but
-lat/lon)}
+\item{wt_exp}{Corresponding weather types (same dimensions as \code{exp} but
+lat/lon).}
 
-\item{obs}{array with named dimensions with reference data (can also be 
+\item{obs}{Array with named dimensions with reference data (can also be 
 \code{$data} array of class \code{s2dv_cube}). lat/lon dimensions can differ 
 from \code{exp} if non rectilinear latlon grids are used, in which case 
-regrid should be set to TRUE and .NearestNeighbors \code{NN} output should be
-provided}
+regrid should be set to TRUE and .NearestNeighbors \code{NN} output should 
+be provided.}
 
-\item{wt_obs}{corresponding weather types (same dimensions as \code{obs} but
-lat/lon)}
+\item{wt_obs}{Corresponding weather types (same dimensions as \code{obs} but
+lat/lon).}
 
-\item{corrdims}{list of dimensions in \code{exp} for which quantile mapping 
-correction is applied}
+\item{corrdims}{List of dimensions in \code{exp} for which quantile mapping 
+correction is applied.}
 
-\item{londim}{character name of longitude dimension in \code{exp} and 
-\code{obs}}
+\item{londim}{Character name of longitude dimension in \code{exp} and 
+\code{obs}.}
 
-\item{latdim}{character name of latitude dimension in \code{exp} and 
-\code{obs}}
+\item{latdim}{Character name of latitude dimension in \code{exp} and 
+\code{obs}.}
 
-\item{regrid}{(optional) boolean indicating whether .NearestNeighbors
-regridding is needed}
+\item{regrid}{(optional) Boolean indicating whether .NearestNeighbors
+regridding is needed.}
 
-\item{NN}{(optional, if regrid=TRUE) list (output from .NearestNeighbors)
-maps (nlat, nlon) onto (nlat_o, nlon_o)}
+\item{NN}{(optional, if regrid = TRUE) List (output from .NearestNeighbors)
+maps (nlat, nlon) onto (nlat_o, nlon_o).}
 }
 \value{
-an array (such as \code{$data} array from an object of class 
+An array (such as \code{$data} array from an object of class 
 \code{s2dv_cube}) with named dimensions, containing experiment data on the 
 lat/lon grid of \code{obs} array, corrected by quantile mapping depending on 
 the weather types \code{wt_exp}
@@ -60,15 +60,19 @@ for experiment data (typically a hindcast) onto reference \code{obs},
 typically provided by reanalysis data.
 }
 \examples{
-\dontrun{
-wt_exp <- sample(1:3, 15*6*3, replace=T)
-dim(wt_exp) <- c(dataset=1, member=15, sdate=6, ftime=3)
-wt_obs <- sample(1:3, 6*3, replace=T)
-dim(wt_obs) <- c(dataset=1, member=1, sdate=6, ftime=3)
-exp_corr <- AdamontQQCorr(exp=lonlat_temp$exp$data, wt_exp=wt_exp, 
-   obs=lonlat_temp$obs$data, wt_obs=wt_obs, 
-   corrdims = c('dataset','member','sdate','ftime'))
-}
+wt_exp <- c(1,1,2,3,3,2,2,1,1,2,2,3)
+dim(wt_exp) <- c(dataset = 1, member = 1, sdate = 4, ftime = 3)
+wt_obs <- c(3,3,1,2,2,2,2,1,3,1,1,2) 
+dim(wt_obs) <- c(dataset = 1, member = 1, sdate = 4, ftime = 3)
+exp <- 1 : c(1 * 1 * 4 * 3 * 4 * 4)
+dim(exp) <- c(dataset = 1, member = 1, sdate = 4, ftime = 3,
+             lat = 4, lon = 4)
+obs <- 101 : c(100 + 1 * 1 * 4 * 3 * 4 * 4)
+dim(obs) <- c(dataset = 1, member = 1, sdate = 4, ftime = 3,
+             lat = 4, lon = 4)
+exp_corr <- AdamontQQCorr(exp = exp, wt_exp = wt_exp, 
+                         obs = obs, wt_obs = wt_obs, 
+                         corrdims = c('dataset', 'member', 'sdate', 'ftime'))
 }
 \author{
 Paola Marson, \email{paola.marson@meteo.fr} for PROSNOW version

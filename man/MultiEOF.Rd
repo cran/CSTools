@@ -2,7 +2,8 @@
 % Please edit documentation in R/CST_MultiEOF.R
 \name{MultiEOF}
 \alias{MultiEOF}
-\title{EOF analysis of multiple variables starting from an array (reduced version)}
+\title{EOF analysis of multiple variables starting from an array (reduced 
+version)}
 \usage{
 MultiEOF(
   data,
@@ -19,9 +20,12 @@ MultiEOF(
 )
 }
 \arguments{
-\item{data}{A multidimensional array with dimension \code{"var"},
-containing the variables to be analysed. The other diemnsions follow the same structure as the
-\code{"exp"} element of a 's2dv_cube' object.}
+\item{data}{A multidimensional array with dimension \code{"var"}, containing 
+the variables to be analysed. The other diemnsions follow the same structure
+as the \code{"exp"} element of a 's2dv_cube' object. Latitudinal 
+dimension accepted names: 'lat', 'lats', 'latitude', 'y', 'j', 'nav_lat'. 
+Longitudinal dimension accepted names: 'lon', 'lons','longitude', 'x', 'i', 
+'nav_lon'.}
 
 \item{lon}{Vector of longitudes.}
 
@@ -29,27 +33,48 @@ containing the variables to be analysed. The other diemnsions follow the same st
 
 \item{time}{Vector or matrix of dates in POSIXct format.}
 
-\item{lon_dim}{String with dimension name of longitudinal coordinate}
+\item{lon_dim}{String with dimension name of longitudinal coordinate.}
 
-\item{lat_dim}{String with dimension name of latitudinal coordinate}
+\item{lat_dim}{String with dimension name of latitudinal coordinate.}
 
-\item{neof_max}{Maximum number of single eofs considered in the first decomposition}
+\item{neof_max}{Maximum number of single eofs considered in the first 
+decomposition.}
 
-\item{neof_composed}{Number of composed eofs to return in output}
+\item{neof_composed}{Number of composed eofs to return in output.}
 
-\item{minvar}{Minimum variance fraction to be explained in first decomposition}
+\item{minvar}{Minimum variance fraction to be explained in first decomposition.}
 
-\item{lon_lim}{Vector with longitudinal range limits for the calculation for all input variables}
+\item{lon_lim}{Vector with longitudinal range limits for the calculation for 
+all input variables.}
 
-\item{lat_lim}{Vector with latitudinal range limits for the calculation for all input variables}
+\item{lat_lim}{Vector with latitudinal range limits for the calculation for 
+all input variables.}
 }
 \value{
-A list with elements \code{$coeff} (an array of time-varying principal component coefficients),
-        \code{$variance} (a matrix of explained variances),
-        \code{eof_pattern} (a matrix of EOF patterns obtained by regression for each variable).
+A list with elements \code{$coeff} (an array of time-varying principal
+component coefficients), \code{$variance} (a matrix of explained variances), 
+\code{eof_pattern} (a matrix of EOF patterns obtained by regression for each 
+variable).
 }
 \description{
-This function performs EOF analysis over multiple variables, accepting in input an array with a dimension \code{"var"} for each variable to analyse. Based on Singular Value Decomposition. For each field the EOFs are computed and the corresponding PCs are standardized (unit variance, zero mean); the minimum number of principal components needed to reach the user-defined variance is retained. The function weights the input data for the latitude cosine square root.
+This function performs EOF analysis over multiple variables, 
+accepting in input an array with a dimension \code{"var"} for each variable to 
+analyse. Based on Singular Value Decomposition. For each field the EOFs are 
+computed and the corresponding PCs are standardized (unit variance, zero mean); 
+the minimum number of principal components needed to reach the user-defined 
+variance is retained. The function weights the input data for the latitude 
+cosine square root.
+}
+\examples{
+exp <- array(runif(1280)*280, dim = c(dataset = 2, member = 2, sdate = 3, 
+                                     ftime = 3, lat = 4, lon = 4, var = 1))
+lon <- seq(0, 3)
+lat <- seq(47, 44)
+dates <- c("2000-11-01", "2000-12-01", "2001-01-01", "2001-11-01", 
+          "2001-12-01", "2002-01-01", "2002-11-01", "2002-12-01", "2003-01-01")
+Dates <- as.POSIXct(dates, format = "\%Y-\%m-\%d")
+dim(Dates) <- c(ftime = 3, sdate = 3)
+cal <- MultiEOF(data = exp, lon = lon, lat = lat, time = Dates)
 }
 \author{
 Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}

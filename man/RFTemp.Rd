@@ -26,57 +26,57 @@ RFTemp(
 )
 }
 \arguments{
-\item{data}{Temperature array to downscale.
-The input array is expected to have at least two dimensions named
-"lon" and "lat" by default
-(these default names can be changed with the \code{lon_dim} and
-\code{lat_dim} parameters)}
+\item{data}{Temperature array to downscale. The input array is expected to 
+have at least two dimensions named "lon" and "lat" by default (these default 
+names can be changed with the \code{lon_dim} and \code{lat_dim} parameters).}
 
 \item{lon}{Vector or array of longitudes.}
 
 \item{lat}{Vector or array of latitudes.}
 
-\item{oro}{Array containing fine-scale orography (in m)
-The destination downscaling area must be contained in the orography field.}
+\item{oro}{Array containing fine-scale orography (in m). The destination 
+downscaling area must be contained in the orography field.}
 
 \item{lonoro}{Vector or array of longitudes corresponding to the fine orography.}
 
 \item{latoro}{Vector or array of latitudes corresponding to the fine orography.}
 
-\item{xlim}{vector with longitude bounds for downscaling;
-the full input field is downscaled if `xlim` and `ylim` are not specified.}
+\item{xlim}{Vector with longitude bounds for downscaling; the full input field 
+is downscaled if `xlim` and `ylim` are not specified.}
 
-\item{ylim}{vector with latitude bounds for downscaling}
+\item{ylim}{Vector with latitude bounds for downscaling.}
 
-\item{lapse}{float with environmental lapse rate}
+\item{lapse}{Float with environmental lapse rate.}
 
-\item{lon_dim}{string with name of longitude dimension}
+\item{lon_dim}{String with name of longitude dimension.}
 
-\item{lat_dim}{string with name of latitude dimension}
+\item{lat_dim}{String with name of latitude dimension.}
 
-\item{time_dim}{a vector of character string indicating the name of temporal dimension. By default, it is set to NULL and it considers "ftime", "sdate" and "time" as temporal dimensions.}
+\item{time_dim}{A vector of character string indicating the name of temporal 
+dimension. By default, it is set to NULL and it considers "ftime", "sdate" 
+and "time" as temporal dimensions.}
 
-\item{nolapse}{logical, if true `oro` is interpreted as a
-fine-scale climatology and used directly for bias correction}
+\item{nolapse}{Logical, if true `oro` is interpreted as a fine-scale 
+climatology and used directly for bias correction.}
 
-\item{verbose}{logical if to print diagnostic output}
+\item{verbose}{Logical if to print diagnostic output.}
 
-\item{compute_delta}{logical if true returns only a delta to be used for
+\item{compute_delta}{Logical if true returns only a delta to be used for
 out-of-sample forecasts.}
 
-\item{method}{string indicating the method used for interpolation:
+\item{method}{String indicating the method used for interpolation:
 "nearest" (nearest neighbours followed by smoothing with a circular
 uniform weights kernel), "bilinear" (bilinear interpolation)
 The two methods provide similar results, but nearest is slightly better
 provided that the fine-scale grid is correctly centered as a subdivision
-of the large-scale grid}
+of the large-scale grid.}
 
-\item{delta}{matrix containing a delta to be applied to the downscaled
+\item{delta}{Matrix containing a delta to be applied to the downscaled
 input data. The grid of this matrix is supposed to be same as that of
-the required output field}
+the required output field.}
 }
 \value{
-CST_RFTemp() returns a downscaled CSTools object
+CST_RFTemp() returns a downscaled CSTools object.
 
 RFTemp() returns a list containing the fine-scale
 longitudes, latitudes and the downscaled fields.
@@ -99,15 +99,15 @@ dim(o) <- c(lat = 29, lon = 29)
 lono <- seq(3, 10, 0.25)
 lato <- seq(41, 48, 0.25)
 res <- RFTemp(t, lon, lat, o, lono, lato, xlim = c(4, 8), ylim = c(43, 46),
-              lapse = 6.5)
+             lapse = 6.5, time_dim = 'ftime')
 }
 \references{
 Method described in ERA4CS MEDSCOPE milestone M3.2: 
-High-quality climate prediction data available to WP4
-[https://www.medscope-project.eu/the-project/deliverables-reports/]([https://www.medscope-project.eu/the-project/deliverables-reports/)
+High-quality climate prediction data available to WP4 here:
+\ url{https://www.medscope-project.eu/the-project/deliverables-reports/}
 and in H2020 ECOPOTENTIAL Deliverable No. 8.1:
-High resolution (1-10 km) climate, land use and ocean change scenarios
-[https://www.ecopotential-project.eu/images/ecopotential/documents/D8.1.pdf](https://www.ecopotential-project.eu/images/ecopotential/documents/D8.1.pdf)
+High resolution (1-10 km) climate, land use and ocean change scenarios here: 
+\url{https://ec.europa.eu/research/participants/documents/downloadPublic?documentIds=080166e5b6cd2324&appId=PPGMS}.
 }
 \author{
 Jost von Hardenberg - ISAC-CNR, \email{j.vonhardenberg@isac.cnr.it}

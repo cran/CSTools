@@ -30,16 +30,17 @@ is applied in object 'exp'.}
 cross-validation would be applied when exp_cor is not provided. 'sdate' by 
 default.}
 
-\item{memb_dim}{A character string indicating the dimension name where 
-ensemble members are stored in the experimental arrays. 'member' by default.}
+\item{memb_dim}{A character string indicating the dimension name where
+ensemble members are stored in the experimental arrays. It can be NULL if 
+there is no ensemble member dimension. It is set as 'member' by default.}
 
 \item{window_dim}{A character string indicating the dimension name where 
 samples have been stored. It can be NULL (default) in case all samples are 
 used.}
 
-\item{method}{A character string indicating the method to be used:'PTF',
-'DIST','RQUANT','QUANT','SSPLIN'. By default, the empirical quantile mapping
-'QUANT' is used.}
+\item{method}{A character string indicating the method to be used:'PTF', 
+'DIST', 'RQUANT', 'QUANT', 'SSPLIN'. By default, the empirical quantile 
+mapping 'QUANT' is used.}
 
 \item{na.rm}{A logical value indicating if missing values should be removed
 (FALSE by default).}
@@ -67,28 +68,12 @@ exp$data <- 1 : c(1 * 3 * 5 * 4 * 3 * 2)
 dim(exp$data) <- c(dataset = 1, member = 3, sdate = 5, ftime = 4,
                   lat = 3, lon = 2)
 class(exp) <- 's2dv_cube'
+obs <- NULL
 obs$data <- 101 : c(100 + 1 * 1 * 5 * 4 * 3 * 2)
 dim(obs$data) <- c(dataset = 1, member = 1, sdate = 5, ftime = 4,
                   lat = 3, lon = 2)
 class(obs) <- 's2dv_cube'
 res <- CST_QuantileMapping(exp, obs)
-
-# Use data in package
-\donttest{
-exp <- lonlat_temp$exp
-exp$data <- exp$data[, , 1:4, , 1:2, 1:3]
-dim(exp$data) <- c(dataset = 1, member = 15, sdate = 4, ftime = 3, 
-                  lat = 2, lon = 3)
-obs <- lonlat_temp$obs
-obs$data <- obs$data[, , 1:4, , 1:2, 1:3]
-dim(obs$data) <- c(dataset = 1, member = 1, sdate = 4, ftime = 3, 
-                  lat = 2, lon = 3)
-exp_cor <- lonlat_temp$exp
-exp_cor$data <- exp_cor$data[, 1, 5:6, , 1:2, 1:3]
-dim(exp_cor$data) <- c(dataset = 1, member = 1, sdate = 2, ftime = 3, 
-                      lat = 2, lon = 3)
-res <- CST_QuantileMapping(exp, obs, exp_cor, window_dim = 'ftime')
-}
 
 }
 \seealso{

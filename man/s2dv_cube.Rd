@@ -6,60 +6,88 @@
 \usage{
 s2dv_cube(
   data,
-  lon = NULL,
-  lat = NULL,
-  Variable = NULL,
+  coords = NULL,
+  varName = NULL,
+  metadata = NULL,
   Datasets = NULL,
   Dates = NULL,
-  time_dims = NULL,
   when = NULL,
-  source_files = NULL
+  source_files = NULL,
+  ...
 )
 }
 \arguments{
-\item{data}{an array with any number of named dimensions, typically an object
-output from CST_Load, with the following dimensions: dataset, member, sdate, 
-ftime, lat and lon.}
+\item{data}{A multidimensional array with named dimensions, typically with 
+dimensions: dataset, member, sdate, ftime, lat and lon.}
 
-\item{lon}{an array with one dimension containing the longitudes and 
-attributes: dim, cdo_grid_name, data_across_gw, array_across_gw, first_lon, 
-last_lon and projection.}
+\item{coords}{A named list with elements of the coordinates corresponding to 
+the dimensions of the data parameter. The names and length of each element 
+must correspond to the names of the dimensions. If any coordinate is not 
+provided, it is set as an index vector with the values from 1 to the length 
+of the corresponding dimension.}
 
-\item{lat}{an array with one dimension containing the latitudes and 
-attributes: dim, cdo_grid_name, first_lat, last_lat and projection.}
+\item{varName}{A character string indicating the abbreviation of the variable 
+name.}
 
-\item{Variable}{a list of two elements: \code{varName} a character string 
-indicating the abbreviation of a variable name and \code{level} a character 
-string indicating the level (e.g., "2m"), if it is not required it could be
-set as NULL.}
+\item{metadata}{A named list where each element is a variable containing the
+corresponding information. The information can be contained in a list of 
+lists for each variable.}
 
-\item{Datasets}{a named list with the dataset model with two elements: 
-\code{InitiatlizationDates}, containing a list of the start dates for each 
-member named with the names of each member, and \code{Members} containing a 
-vector with the member names (e.g., "Member_1")}
+\item{Datasets}{Character strings indicating the names of the dataset. It 
+there are multiple datasets it can be a vector of its names or a list of
+lists with additional information.}
 
-\item{Dates}{a named list of one to two elements: The first element, 
-\code{start}, is an array of dimensions (sdate, time) with the POSIX initial 
-date of each forecast time of each starting date. The second element, 
-\code{end} (optional), is an array of dimensions (sdate, time) with the POSIX}
+\item{Dates}{A POSIXct array of time dimensions containing the Dates.}
 
-\item{time_dims}{a vector of strings containing the names of the temporal 
-dimensions found in \code{data}.}
+\item{when}{A time stamp of the date when the data has been loaded. This 
+parameter is also found in Load() and Start() functions output.}
 
-\item{when}{a time stamp of the date issued by the Load() call to obtain the 
-data.}
+\item{source_files}{A vector of character strings with complete paths to all 
+the found files involved in loading the data.}
 
-\item{source_files}{a vector of character strings with complete paths to all 
-the found files involved in the Load() call.}
+\item{\dots}{Additional elements to be added in the object. They will be 
+stored in the end of 'attrs' element. Multiple elements are accepted.}
 }
 \value{
-The function returns an object of class 's2dv_cube'.
+The function returns an object of class 's2dv_cube' with the following 
+elements in the structure:\cr
+\itemize{
+ \item{'data', array with named dimensions.}
+ \item{'dims', named vector of the data dimensions.}
+ \item{'coords', named list with elements of the coordinates corresponding to
+ the dimensions of the data parameter. If any coordinate is not provided, it 
+ is set as an index vector with the values from 1 to the length of the 
+ corresponding dimension. The attribute 'indices' indicates wether the 
+ coordinate is an index vector (TRUE) or not (FALSE).}
+ \item{'attrs', named list with elements:
+   \itemize{
+     \item{'Dates', array with named temporal dimensions of class 'POSIXct' from 
+     time values in the data.}
+     \item{'Variable', has the following components:
+       \itemize{
+         \item{'varName', with the short name of the loaded variable as specified 
+         in the parameter 'var'.}
+         \item{''metadata', named list of elements with variable metadata. 
+               They can be from coordinates variables (e.g. longitude) or 
+               main variables (e.g. 'var').}
+       }
+     }
+     \item{'Datasets', character strings indicating the names of the dataset.}
+     \item{'source_files', a vector of character strings with complete paths to 
+     all the found files involved in loading the data.}
+     \item{'when', a time stamp of the date issued by the Start() or Load() call to 
+     obtain the data.}
+     \item{'load_parameters', it contains the components used in the arguments to 
+     load the data from Start() or Load() functions.}
+   }
+ }
+}
 }
 \description{
-This function allows to create a 's2dv_cube' object by passing 
+This function allows to create an 's2dv_cube' object by passing 
 information through its parameters. This function will be needed if the data 
 hasn't been loaded using CST_Load or has been transformed with other methods. 
-A 's2dv_cube' object has many different components including metadata. This 
+An 's2dv_cube' object has many different components including metadata. This 
 function will allow to create 's2dv_cube' objects even if not all elements 
 are defined and for each expected missed parameter a warning message will be 
 returned.
@@ -69,44 +97,42 @@ exp_original <- 1:100
 dim(exp_original) <- c(lat = 2, time = 10, lon = 5)
 exp1 <- s2dv_cube(data = exp_original)
 class(exp1)
-exp2 <- s2dv_cube(data = exp_original, lon = seq(-10, 10, 5), lat = c(45, 50)) 
+coords <- list(lon = seq(-10, 10, 5), lat = c(45, 50))
+exp2 <- s2dv_cube(data = exp_original, coords = coords) 
 class(exp2)
-exp3 <- s2dv_cube(data = exp_original, lon = seq(-10, 10, 5), lat = c(45, 50),
-                  Variable = list(varName = 'tas', level = '2m')) 
+metadata <- list(tas = list(level = '2m'))
+exp3 <- s2dv_cube(data = exp_original, coords = coords,
+                 varName = 'tas', metadata = metadata)
 class(exp3)
-exp4 <- s2dv_cube(data = exp_original, lon = seq(-10, 10, 5), lat = c(45, 50),
-                 Variable = list(varName = 'tas', level = '2m'),
-                 Dates = list(start = paste0(rep("01", 10), rep("01", 10), 1990:1999),
-                              end = paste0(rep("31", 10), rep("01", 10), 1990:1999)))  
+Dates = as.POSIXct(paste0(rep("01", 10), rep("01", 10), 1990:1999), format = "\%d\%m\%Y")
+dim(Dates) <- c(time = 10)
+exp4 <- s2dv_cube(data = exp_original, coords = coords,
+                 varName = 'tas', metadata = metadata,
+                 Dates = Dates)  
 class(exp4)
-exp5 <- s2dv_cube(data = exp_original, lon = seq(-10, 10, 5), lat = c(45, 50),
-                 Variable = list(varName = 'tas', level = '2m'),
-                 Dates = list(start = paste0(rep("01", 10), rep("01", 10), 1990:1999),
-                              end = paste0(rep("31", 10), rep("01", 10), 1990:1999)),
-                 when = "2019-10-23 19:15:29 CET")  
+exp5 <- s2dv_cube(data = exp_original, coords = coords,
+                 varName = 'tas', metadata = metadata,
+                 Dates = Dates, when = "2019-10-23 19:15:29 CET")  
 class(exp5)
-exp6 <- s2dv_cube(data = exp_original, lon = seq(-10, 10, 5), lat = c(45, 50),
-                 Variable = list(varName = 'tas', level = '2m'),
-                 Dates = list(start = paste0(rep("01", 10), rep("01", 10), 1990:1999),
-                              end = paste0(rep("31", 10), rep("01", 10), 1990:1999)),
+exp6 <- s2dv_cube(data = exp_original, coords = coords,
+                 varName = 'tas', metadata = metadata,
+                 Dates = Dates,
                  when = "2019-10-23 19:15:29 CET", 
-                 source_files = c("/path/to/file1.nc", "/path/to/file2.nc"))  
+                 source_files = c("/path/to/file1.nc", "/path/to/file2.nc"))
 class(exp6)
-exp7 <- s2dv_cube(data = exp_original, lon = seq(-10, 10, 5), lat = c(45, 50),
-                 Variable = list(varName = 'tas', level = '2m'),
-                 Dates = list(start = paste0(rep("01", 10), rep("01", 10), 1990:1999),
-                              end = paste0(rep("31", 10), rep("01", 10), 1990:1999)),
+exp7 <- s2dv_cube(data = exp_original, coords = coords,
+                 varName = 'tas', metadata = metadata,
+                 Dates = Dates,
                  when = "2019-10-23 19:15:29 CET", 
                  source_files = c("/path/to/file1.nc", "/path/to/file2.nc"),
                  Datasets = list(
                    exp1 = list(InitializationsDates = list(Member_1 = "01011990", 
                                                            Members = "Member_1"))))  
 class(exp7)
-dim(exp_original) <- c(dataset = 1, member = 1, sdate = 2, ftime = 5, lat = 2, lon = 5)
-exp8 <- s2dv_cube(data = exp_original, lon = seq(-10, 10, 5), lat = c(45, 50),
-                 Variable = list(varName = 'tas', level = '2m'),
-                 Dates = list(start = paste0(rep("01", 10), rep("01", 10), 1990:1999),
-                              end = paste0(rep("31", 10), rep("01", 10), 1990:1999)))  
+dim(exp_original) <- c(dataset = 1, member = 1, time = 10, lat = 2, lon = 5)
+exp8 <- s2dv_cube(data = exp_original, coords = coords,
+                 varName = 'tas', metadata = metadata,
+                 Dates = Dates, original_dates = Dates)  
 class(exp8)
 }
 \seealso{

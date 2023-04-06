@@ -1,63 +1,47 @@
-#' Plotting two probability density gaussian functions and the optimal linear 
-#' estimation (OLE) as result of combining them.
+#'Plotting two probability density gaussian functions and the optimal linear 
+#'estimation (OLE) as result of combining them.
 #'
-#' @author Eroteida Sanchez-Garcia - AEMET, //email{esanchezg@aemet.es}
+#'@author Eroteida Sanchez-Garcia - AEMET, //email{esanchezg@aemet.es}
 #'
-#' @description This function plots two probability density gaussian functions 
-#' and the optimal linear estimation (OLE) as result of combining them.
+#'@description This function plots two probability density gaussian functions 
+#'and the optimal linear estimation (OLE) as result of combining them.
 #'
-#' @param pdf_1 A numeric array with a dimension named 'statistic', containg 
-#' two parameters: mean' and 'standard deviation' of the first gaussian pdf 
-#' to combining.
-#' @param pdf_2 A numeric array with a dimension named 'statistic', containg 
-#' two parameters: mean' and 'standard deviation' of the second gaussian pdf 
+#'@param pdf_1 A numeric array with a dimension named 'statistic', containg 
+#'  two parameters: mean' and 'standard deviation' of the first gaussian pdf 
 #'  to combining.
-#' @param nsigma (optional) A numeric value for setting the limits of X axis. 
-#' (Default nsigma = 3). 
-#' @param legendPos (optional) A character value for setting the position of the
-#' legend ("bottom", "top", "right" or "left")(Default 'bottom'). 
-#' @param legendSize (optional) A numeric value for setting the size of the 
-#' legend text. (Default 1.0). 
-#' @param plotfile (optional) A filename where the plot will be saved. 
-#' (Default: the plot is not saved).
-#' @param width (optional) A numeric value indicating the plot width in 
-#' units ("in", "cm", or "mm"). (Default width = 30). 
-#' @param height (optional) A numeric value indicating the plot height. 
-#' (Default height = 15). 
-#' @param units (optional) A character value indicating the plot size 
-#' unit. (Default units = 'cm'). 
-#' @param dpi (optional) A numeric value indicating the plot resolution.
-#' (Default dpi = 300).
-#'   
-#' @return PlotPDFsOLE() returns a ggplot object containing the plot.
-#' 
-#' @import ggplot2
-#' 
-#' @examples
-#' # Example 1
-#' pdf_1 <- c(1.1,0.6)
-#' attr(pdf_1, "name") <- "NAO1"
-#' dim(pdf_1) <-  c(statistic = 2)
-#' pdf_2 <- c(1,0.5)
-#' attr(pdf_2, "name") <- "NAO2"
-#' dim(pdf_2) <-  c(statistic = 2)
-#' 
-#' PlotPDFsOLE(pdf_1, pdf_2)
-#' 
-#' # Example 2
-#' Glosea5PDF <- c(2.25, 0.67)
-#' attr(Glosea5PDF, "name") <- "Glosea5"
-#' dim(Glosea5PDF) <-  c(statistic = 2)
-#' ECMWFPDF <- c(2.38, 0.61)
-#' attr(ECMWFPDF, "name") <- "ECMWF"
-#' dim(ECMWFPDF) <-  c(statistic = 2)
-#' MFPDF <- c(4.52, 0.34)
-#' attr(MFPDF, "name") <- "MF"
-#' dim(MFPDF) <-  c(statistic = 2)
-#' PlotPDFsOLE(pdf_1 = Glosea5PDF, pdf_2 = ECMWFPDF, legendPos = 'left')
-#' PlotPDFsOLE(pdf_1 = Glosea5PDF, pdf_2 = MFPDF, legendPos = 'top')
-#' PlotPDFsOLE(pdf_1 = ECMWFPDF, pdf_2 = MFPDF, legendSize = 1.2)
-
+#'@param pdf_2 A numeric array with a dimension named 'statistic', containg 
+#'  two parameters: mean' and 'standard deviation' of the second gaussian pdf 
+#'  to combining.
+#'@param nsigma (optional) A numeric value for setting the limits of X axis. 
+#'  (Default nsigma = 3). 
+#'@param legendPos (optional) A character value for setting the position of the
+#'  legend ("bottom", "top", "right" or "left")(Default 'bottom'). 
+#'@param legendSize (optional) A numeric value for setting the size of the 
+#'  legend text. (Default 1.0). 
+#'@param plotfile (optional) A filename where the plot will be saved. 
+#'  (Default: the plot is not saved).
+#'@param width (optional) A numeric value indicating the plot width in 
+#'  units ("in", "cm", or "mm"). (Default width = 30). 
+#'@param height (optional) A numeric value indicating the plot height. 
+#'  (Default height = 15). 
+#'@param units (optional) A character value indicating the plot size 
+#'  unit. (Default units = 'cm'). 
+#'@param dpi (optional) A numeric value indicating the plot resolution.
+#'  (Default dpi = 300).
+#'  
+#'@return PlotPDFsOLE() returns a ggplot object containing the plot.
+#'
+#'@examples
+#'# Example 1
+#'pdf_1 <- c(1.1,0.6)
+#'attr(pdf_1, "name") <- "NAO1"
+#'dim(pdf_1) <-  c(statistic = 2)
+#'pdf_2 <- c(1,0.5)
+#'attr(pdf_2, "name") <- "NAO2"
+#'dim(pdf_2) <-  c(statistic = 2)
+#'
+#'PlotPDFsOLE(pdf_1, pdf_2)
+#'@import ggplot2
 #'@export
 PlotPDFsOLE <- function(pdf_1, pdf_2, nsigma = 3, legendPos = 'bottom', 
                         legendSize = 1.0, plotfile = NULL, width = 30, 

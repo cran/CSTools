@@ -9,41 +9,49 @@
 #'@description This function computes two dinamical proxies of the attractor: 
 #'The local dimension (d) and the inverse of the persistence (theta) for an
 #''s2dv_cube' object.
-#'These two parameters will be used as a condition for the computation of dynamical 
-#'scores to measure predictability and to compute bias correction conditioned  by
-#'the dynamics with the function DynBiasCorrection  
-#'Funtion based on the matlab code (davide.faranda@lsce.ipsl.fr) used in 
-#'@references Faranda, D., Alvarez-Castro, M.C., Messori, G., Rodriguez, D., and Yiou, P. (2019). 
-#' The hammam effect or how a warm ocean enhances large scale atmospheric predictability.
-#' Nature Communications, 10(1), 1316. DOI = https://doi.org/10.1038/s41467-019-09305-8 "
+#'These two parameters will be used as a condition for the computation of 
+#'dynamical scores to measure predictability and to compute bias correction 
+#'conditioned  by the dynamics with the function DynBiasCorrection Function 
+#'based on the matlab code (davide.faranda@lsce.ipsl.fr) used in 
+#'@references Faranda, D., Alvarez-Castro, M.C., Messori, G., Rodriguez, D., 
+#'and Yiou, P. (2019). The hammam effect or how a warm ocean enhances large 
+#'scale atmospheric predictability. Nature Communications, 10(1), 1316. 
+#'\doi{10.1038/s41467-019-09305-8}"
 #'@references Faranda, D., Gabriele Messori and Pascal Yiou. (2017).
-#' Dynamical proxies of North Atlantic predictability and extremes. 
-#' Scientific Reports, 7-41278, 2017.
+#'Dynamical proxies of North Atlantic predictability and extremes. 
+#'Scientific Reports, 7-41278, 2017.
 #'
-#'@param data a s2dv_cube object with the data to create the attractor. Must be a matrix with the timesteps in nrow 
-#'and the grids in ncol(dat(time,grids)
-# 
-#'@param quanti a number lower than 1 indicating the quantile to perform the computation of local dimension and theta
-#' 
-#'@param ncores The number of cores to use in parallel computation
-#' 
+#'@param data An s2dv_cube object with the data to create the attractor. Must be 
+#'  a matrix with the timesteps in nrow and the grids in ncol(dat(time,grids)
+#'@param quanti A number lower than 1 indicating the quantile to perform the 
+#'  computation of local dimension and theta.
+#'@param ncores The number of cores to use in parallel computation.
 #'@return dim and theta
-#'
 #'@examples
 #'# Example 1: Computing the attractor using simple s2dv data
-#'attractor <- CST_ProxiesAttractor(data = lonlat_temp$obs, quanti = 0.6)
-#'
+#'obs <- rnorm(2 * 3 * 4 * 8 * 8)
+#'dim(obs) <- c(dataset = 1, member = 2, sdate = 3, ftime = 4, lat = 8, lon = 8)
+#'lon <- seq(10, 13.5, 0.5)
+#'lat <- seq(40, 43.5, 0.5)
+#'coords <- list(lon = lon, lat = lat)
+#'data <- list(data = obs, coords = coords)
+#'class(data) <- "s2dv_cube"
+#'attractor <- CST_ProxiesAttractor(data = data, quanti = 0.6)
+#'@import multiApply
 #'@export
-CST_ProxiesAttractor <- function(data, quanti, ncores = NULL){
+CST_ProxiesAttractor <- function(data, quanti, ncores = NULL) {
+  # Check 's2dv_cube'
   if (!inherits(data, 's2dv_cube')) {
     stop("Parameter 'data' must be of the class 's2dv_cube', ",
          "as output by CSTools::CST_Load.")
   }
+  # Check quanti
   if (is.null(quanti)) {
     stop("Parameter 'quanti' cannot be NULL.")
   }        
   
-  data$data <- ProxiesAttractor(data = data$data, quanti = quanti, ncores = ncores)
+  data$data <- ProxiesAttractor(data = data$data, quanti = quanti, 
+                                ncores = ncores)
 
   return(data)
 }
@@ -58,24 +66,26 @@ CST_ProxiesAttractor <- function(data, quanti, ncores = NULL){
 #'@description This function computes two dinamical proxies of the attractor: 
 #'The local dimension (d) and the inverse of the persistence (theta). 
 #'These two parameters will be used as a condition for the computation of dynamical 
-#'scores to measure predictability and to compute bias correction conditioned  by
+#'scores to measure predictability and to compute bias correction conditioned by
 #'the dynamics with the function DynBiasCorrection.  
 #'Funtion based on the matlab code (davide.faranda@lsce.ipsl.fr) used in:
-#'@references Faranda, D., Alvarez-Castro, M.C., Messori, G., Rodriguez, D., and Yiou, P. (2019). 
-#' The hammam effect or how a warm ocean enhances large scale atmospheric predictability.
-#' Nature Communications, 10(1), 1316. DOI = https://doi.org/10.1038/s41467-019-09305-8 "
+#'@references Faranda, D., Alvarez-Castro, M.C., Messori, G., Rodriguez, D., and 
+#'Yiou, P. (2019). The hammam effect or how a warm ocean enhances large scale 
+#'atmospheric predictability. Nature Communications, 10(1), 1316. 
+#'\doi{10.1038/s41467-019-09305-8}"
 #'@references Faranda, D., Gabriele Messori and Pascal Yiou. (2017).
 #' Dynamical proxies of North Atlantic predictability and extremes. 
 #' Scientific Reports, 7-41278, 2017. 
 #'
-#'@param data a multidimensional array with named dimensions to create the attractor. It requires a temporal dimension named 'time' and spatial dimensions called 'lat' and 'lon', or 'latitude' and 'longitude' or 'grid'. 
-#'@param quanti a number lower than 1 indicating the quantile to perform the computation of local dimension and theta
+#'@param data A multidimensional array with named dimensions to create the 
+#'  attractor. It requires a temporal dimension named 'time' and spatial 
+#'  dimensions called 'lat' and 'lon', or 'latitude' and 'longitude' or 'grid'. 
+#'@param quanti A number lower than 1 indicating the quantile to perform the 
+#'  computation of local dimension and theta
 #'@param ncores The number of cores to use in parallel computation.
 #'
 #'@return dim and theta
-#'
-#'@import multiApply
-#'
+#' 
 #'@examples
 #'# Example 1: Computing the attractor using simple data
 #'# Creating an example of matrix data(time,grids):
@@ -84,16 +94,10 @@ CST_ProxiesAttractor <- function(data, quanti, ncores = NULL){
 #'Attractor <- ProxiesAttractor(data = mat, quanti = qm)
 #'# to plot the result
 #'time = c(1:length(Attractor$theta))
-#'layout(matrix(c(1, 3, 2, 3), 2, 2))
 #'plot(time, Attractor$dim, xlab = 'time', ylab = 'd',
 #'     main = 'local dimension', type = 'l')
-#'plot(time, Attractor$theta, xlab = 'time', ylab = 'theta', main = 'theta') 
-#'plot(Attractor$dim, Attractor$theta, col = 'blue', 
-#'     main = "Proxies of the Attractor",
-#'     xlab = "local dimension", ylab = "theta", lwd = 8, 'p')
-#'
+#'@import multiApply
 #'@export
-
 ProxiesAttractor <- function(data, quanti, ncores = NULL){
   if (is.null(data)) {
     stop("Parameter 'data' cannot be NULL.")
@@ -104,7 +108,7 @@ ProxiesAttractor <- function(data, quanti, ncores = NULL){
    if (any(names(dim(data)) %in% 'sdate')) {
     if (any(names(dim(data)) %in% 'ftime')) {
       data <- MergeDims(data, merge_dims = c('ftime', 'sdate'),
-                             rename_dim = 'time')
+                        rename_dim = 'time')
     }
   }
   if (!(any(names(dim(data)) %in% 'time'))){

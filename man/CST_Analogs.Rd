@@ -25,7 +25,9 @@ large scale for which the analog is aimed. This field is used to in all the
 criterias. If parameter 'expVar' is not provided, the function will return 
 the expL analog. The element 'data' in the 's2dv_cube' object must have, at
 least, latitudinal and longitudinal dimensions. The object is expect to be 
-already subset for the desired large scale region.}
+already subset for the desired large scale region. Latitudinal dimension 
+accepted names: 'lat', 'lats', 'latitude', 'y', 'j', 'nav_lat'. Longitudinal 
+dimension accepted names: 'lon', 'lons','longitude', 'x', 'i', 'nav_lon'.}
 
 \item{obsL}{An 's2dv_cube' object containing the observational field on the
 large scale. The element 'data' in the 's2dv_cube' object must have the same 
@@ -63,11 +65,11 @@ time_obsL), by default time_expL will be removed during the search of analogs.}
 
 \item{time_expL}{A character string indicating the date of the experiment 
 in the same format than time_obsL (i.e. "yyyy-mm-dd"). By default it is NULL 
-and dates are taken from element \code{$Dates$start} from expL.}
+and dates are taken from element \code{$attrs$Dates} from expL.}
 
 \item{time_obsL}{A character string indicating the date of the observations 
 in the date format (i.e. "yyyy-mm-dd"). By default it is NULL and dates are 
-taken from element \code{$Dates$start} from obsL.}
+taken from element \code{$attrs$Dates} from obsL.}
 
 \item{nAnalogs}{Number of Analogs to be selected to apply the criterias 
 'Local_dist' or 'Local_cor'. This is not the necessary the number of analogs 
@@ -126,17 +128,22 @@ function within 'CSTools' package.
 }
 \examples{
 expL <- rnorm(1:200)
-dim(expL) <- c(member = 10,lat = 4, lon = 5)
-obsL <- c(rnorm(1:180),expL[1,,]*1.2)
-dim(obsL) <- c(time = 10,lat = 4, lon = 5)
-time_obsL <- paste(rep("01", 10), rep("01", 10), 1994:2003, sep = "-")
+dim(expL) <- c(member = 10, lat = 4, lon = 5)
+obsL <- c(rnorm(1:180), expL[1, , ]*1.2)
+dim(obsL) <- c(time = 10, lat = 4, lon = 5)
+time_obsL <- as.POSIXct(paste(rep("01", 10), rep("01", 10), 1994:2003, sep = "-"), 
+                       format = "\%d-\%m-\%y")
+dim(time_obsL) <- c(time = 10)
 time_expL <- time_obsL[1]
-lon <- seq(-1,5,1.5)
-lat <- seq(30,35,1.5)
-expL <- s2dv_cube(data = expL, lat = lat, lon = lon, 
-                 Dates = list(start = time_expL, end = time_expL))
-obsL <- s2dv_cube(data = obsL, lat = lat, lon = lon,
-                 Dates = list(start = time_obsL, end = time_obsL))
+lon <-  seq(-1, 5, 1.5)
+lat <- seq(30, 35, 1.5)
+coords <- list(lon = seq(-1, 5, 1.5), lat = seq(30, 35, 1.5))
+attrs_expL <- list(Dates = time_expL)
+attrs_obsL <- list(Dates = time_obsL)
+expL <- list(data = expL, coords = coords, attrs = attrs_expL)
+obsL <- list(data = obsL, coords = coords, attrs = attrs_obsL)
+class(expL) <- 's2dv_cube'
+class(obsL) <- 's2dv_cube'
 region <- c(min(lon), max(lon), min(lat), max(lat))
 downscaled_field <- CST_Analogs(expL = expL, obsL = obsL, region = region)
 
@@ -148,7 +155,7 @@ from surface pressure using analogues.  Clim. Dyn., 41, 1419-1437.
 \email{pascal.yiou@lsce.ipsl.fr}
 }
 \seealso{
-code{\link{CST_Load}}, \code{\link[s2dv]{Load}} and 
+\code{\link{CST_Load}}, \code{\link[s2dv]{Load}} and 
 \code{\link[s2dv]{CDORemap}}
 }
 \author{

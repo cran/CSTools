@@ -2,38 +2,98 @@
 % Please edit documentation in R/CST_SaveExp.R
 \name{CST_SaveExp}
 \alias{CST_SaveExp}
-\title{Save CSTools objects of class 's2dv_cube' containing experiments or observed 
-data in NetCDF format}
+\title{Save objects of class 's2dv_cube' to data in NetCDF format}
 \usage{
-CST_SaveExp(data, destination = "./CST_Data", extra_string = NULL)
+CST_SaveExp(
+  data,
+  destination = "./",
+  sdate_dim = "sdate",
+  ftime_dim = "time",
+  dat_dim = "dataset",
+  var_dim = "var",
+  memb_dim = "member",
+  single_file = FALSE,
+  extra_string = NULL
+)
 }
 \arguments{
-\item{data}{an object of class \code{s2dv_cube}.}
+\item{data}{An object of class \code{s2dv_cube}.}
 
-\item{destination}{a character string containing the directory name in which 
+\item{destination}{A character string containing the directory name in which 
 to save the data. NetCDF file for each starting date are saved into the 
-folder tree: destination/experiment/variable/. By default the function 
-creates and saves the data into the folder "CST_Data" in the working 
-directory.}
+folder tree: \cr
+destination/Dataset/variable/. By default the function 
+creates and saves the data into the working directory.}
 
-\item{extra_string}{a character string to be include as part of the file name, for instance, to identify member or realization. It would be added to the file name between underscore characters.}
+\item{sdate_dim}{A character string indicating the name of the start date 
+dimension. By default, it is set to 'sdate'. It can be NULL if there is no
+start date dimension.}
+
+\item{ftime_dim}{A character string indicating the name of the forecast time
+dimension. By default, it is set to 'time'. It can be NULL if there is no 
+forecast time dimension.}
+
+\item{dat_dim}{A character string indicating the name of dataset dimension. 
+By default, it is set to 'dataset'. It can be NULL if there is no dataset  
+dimension.}
+
+\item{var_dim}{A character string indicating the name of variable dimension. 
+By default, it is set to 'var'. It can be NULL if there is no variable  
+dimension.}
+
+\item{memb_dim}{A character string indicating the name of the member dimension.
+By default, it is set to 'member'. It can be NULL if there is no member 
+dimension.}
+
+\item{single_file}{A logical value indicating if all object is saved in a 
+single file (TRUE) or in multiple files (FALSE). When it is FALSE, 
+the array is separated for Datasets, variable and start date. It is FALSE  
+by default.}
+
+\item{extra_string}{A character string to be include as part of the file name, 
+for instance, to identify member or realization. It would be added to the 
+file name between underscore characters.}
+}
+\value{
+Multiple or single NetCDF files containing the data array.\cr
+\item{\code{single_file = TRUE}}{
+ All data is saved in a single file located in the specified destination  
+ path with the following name: 
+ <variable_name>_<extra_string>_<first_sdate>_<last_sdate>.nc. Multiple 
+ variables are saved separately in the same file. The forecast time units 
+ is extracted from the frequency of the time steps (hours, days, months). 
+ The first value of forecast time is 1. If no frequency is found, the units 
+ will be 'hours since' each start date and the time steps are assumed to be 
+ equally spaced.
+}
+\item{\code{single_file = FALSE}}{
+ The data array is subset and stored into multiple files. Each file 
+ contains the data subset for each start date, variable and dataset. Files 
+ with different variables and Datasets are stored in separated directories 
+ within the following directory tree: destination/Dataset/variable/. 
+ The name of each file will be: 
+ <variable_name>_<extra_string>_<sdate>.nc.
+}
 }
 \description{
 This function allows to divide and save a object of class 
 's2dv_cube' into a NetCDF file, allowing to reload the saved data using 
-\code{CST_Load} function.
+\code{Start} function from StartR package. If the original 's2dv_cube' object 
+has been created from \code{CST_Load()}, then it can be reloaded with 
+\code{Load()}.
 }
 \examples{
 \dontrun{
-library(CSTools)
 data <- lonlat_temp$exp
-destination <- "./path2/"
-CST_SaveExp(data = data, destination = destination)
+destination <- "./"
+CST_SaveExp(data = data, destination = destination, ftime_dim = 'ftime', 
+           var_dim = NULL, ftime_dim = 'ftime', var_dim = NULL)
 }
 
 }
 \seealso{
-\code{\link{CST_Load}}, \code{\link{as.s2dv_cube}} and \code{\link{s2dv_cube}}
+\code{\link[startR]{Start}}, \code{\link{as.s2dv_cube}} and 
+\code{\link{s2dv_cube}}
 }
 \author{
 Perez-Zanon Nuria, \email{nuria.perez@bsc.es}

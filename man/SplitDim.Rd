@@ -13,21 +13,29 @@ SplitDim(
 )
 }
 \arguments{
-\item{data}{an n-dimensional array with named dimensions}
+\item{data}{An n-dimensional array with named dimensions.}
 
-\item{split_dim}{a character string indicating the name of the dimension to split}
+\item{split_dim}{A character string indicating the name of the dimension to 
+split.}
 
-\item{indices}{a vector of numeric indices or dates}
+\item{indices}{A vector of numeric indices or dates.}
 
-\item{freq}{a character string indicating the frequency: by 'day', 'month' and 'year' or 'monthly' (by default). 'month' identifies months between 1 and 12 independetly of the year they belong to, while 'monthly' differenciates months from different years. Parameter 'freq' can also be numeric indicating the length in which to subset the dimension.}
+\item{freq}{A character string indicating the frequency: by 'day', 'month' and 
+'year' or 'monthly' (by default). 'month' identifies months between 1 and 12 
+independetly of the year they belong to, while 'monthly' differenciates 
+months from different years. Parameter 'freq' can also be numeric indicating 
+the length in which to subset the dimension.}
 
-\item{new_dim_name}{a character string indicating the name of the new dimension.}
+\item{new_dim_name}{A character string indicating the name of the new 
+dimension.}
 }
 \description{
-This function split a dimension in two. The user can select the dimension to split and provide indices indicating how to split that dimension or dates and the frequency expected (monthly or by day, month and year). The user can also provide a numeric frequency indicating the length of each division.
+This function split a dimension in two. The user can select the 
+dimension to split and provide indices indicating how to split that dimension 
+or dates and the frequency expected (monthly or by day, month and year). The 
+user can also provide a numeric frequency indicating the length of each division.
 }
 \examples{
-
 data <- 1 : 20
 dim(data) <- c(time = 10, lat = 2)
 indices <- c(rep(1,5), rep(2,5))
