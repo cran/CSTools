@@ -21,33 +21,30 @@
 #'functions with the prefix \code{CST} from CSTools and CSIndicators packages. 
 #'The object is mainly a list with the following elements:\cr
 #'\itemize{
-#'  \item{'data', array with named dimensions.}
-#'  \item{'dims', named vector of the data dimensions.}
-#'  \item{'coords', named list with elements of the coordinates corresponding to
-#'  the dimensions of the data parameter. If any coordinate is not provided, it 
-#'  is set as an index vector with the values from 1 to the length of the 
-#'  corresponding dimension. The attribute 'indices' indicates wether the 
-#'  coordinate is an index vector (TRUE) or not (FALSE).}
+#'  \item{'data', array with named dimensions;}
+#'  \item{'dims', named vector of the data dimensions;}
+#'  \item{'coords', list of named vectors with the coordinates corresponding to 
+#'        the dimensions of the data parameter;}
 #'  \item{'attrs', named list with elements:
 #'    \itemize{
 #'      \item{'Dates', array with named temporal dimensions of class 'POSIXct' 
-#'            from time values in the data.}
+#'            from time values in the data;}
 #'      \item{'Variable', has the following components:
 #'        \itemize{
 #'          \item{'varName', character vector of the short variable name. It is  
 #'                usually specified in the parameter 'var' from the functions 
-#'                Start and Load.}
+#'                Start and Load;}
 #'          \item{'metadata', named list of elements with variable metadata. 
 #'                They can be from coordinates variables (e.g. longitude) or 
-#'                main variables (e.g. 'var').}
+#'                main variables (e.g. 'var');}
 #'        }
 #'      }
 #'      \item{'Datasets', character strings indicating the names of the 
-#'            datasets.}
+#'            datasets;}
 #'      \item{'source_files', a vector of character strings with complete paths 
-#'            to all the found files involved in loading the data.}
+#'            to all the found files involved in loading the data;}
 #'      \item{'when', a time stamp of the date issued by the Start() or Load() 
-#'            call to obtain the data.}
+#'            call to obtain the data;}
 #'      \item{'load_parameters', it contains the components used in the 
 #'            arguments to load the data from Start() or Load() functions.}
 #'    }
@@ -148,6 +145,7 @@ as.s2dv_cube <- function(object, remove_attrs_coords = FALSE,
           obj_i$coords$lon <- as.vector(obj_i$attrs$lon)
         } else {
           obj_i$coords$lon <- obj_i$attrs$lon
+          dim(obj_i$coords$lon) <- NULL
           attr(obj_i$coords$lon, 'indices') <- FALSE
         }
         obj_i$attrs$Variable$metadata$lon <- obj_i$attrs$lon
@@ -159,6 +157,7 @@ as.s2dv_cube <- function(object, remove_attrs_coords = FALSE,
           obj_i$coords$lat <- as.vector(obj_i$attrs$lat)
         } else {
           obj_i$coords$lat <- obj_i$attrs$lat
+          dim(obj_i$coords$lat) <- NULL
           attr(obj_i$coords$lat, 'indices') <- FALSE
         }
         obj_i$attrs$Variable$metadata$lat <- obj_i$attrs$lat
@@ -183,7 +182,7 @@ as.s2dv_cube <- function(object, remove_attrs_coords = FALSE,
       if (isTRUE(remove_null)) {
         obj_i$attrs$load_parameters <- .rmNullObs(obj_i$attrs$load_parameters)
       }
-      obj_i <- obj_i[c('data','dims','coords','attrs')]
+      obj_i <- obj_i[c('data', 'dims', 'coords', 'attrs')]
       class(obj_i) <- 's2dv_cube'
       if (names(obs_exp)[[i]] == 'exp') {
         result$exp <- obj_i
@@ -231,8 +230,8 @@ as.s2dv_cube <- function(object, remove_attrs_coords = FALSE,
               result$coords[[i_coord]] <- as.vector(coord_in_fileselector[[i_coord]][[1]])
             } else {
               result$coords[[i_coord]] <- coord_in_fileselector[[i_coord]][[1]]
+              attr(result$coords[[i_coord]], 'indices') <- FALSE
             }
-            if (!remove_attrs_coords) attr(result$coords[[i_coord]], 'indices') <- FALSE
           } else {
             result$coords[[i_coord]] <- 1:dims[i_coord]
             if (!remove_attrs_coords) attr(result$coords[[i_coord]], 'indices') <- TRUE
@@ -246,14 +245,15 @@ as.s2dv_cube <- function(object, remove_attrs_coords = FALSE,
         if (length(coord_in_common) == dims[i_coord]) {
           if (remove_attrs_coords) {
             if (inherits(coord_in_common, "POSIXct")) {
-              result$coords[[i_coord]] <- coord_in_common
+              result$coords[[i_coord]] <- 1:dims[i_coord]
+              attr(result$coords[[i_coord]], 'indices') <- TRUE
             } else {
               result$coords[[i_coord]] <- as.vector(coord_in_common)
             }
           } else {
             result$coords[[i_coord]] <- coord_in_common
+            attr(result$coords[[i_coord]], 'indices') <- FALSE
           }
-          if (!remove_attrs_coords) attr(result$coords[[i_coord]], 'indices') <- FALSE
         } else {
           result$coords[[i_coord]] <- 1:dims[i_coord]
           if (!remove_attrs_coords) attr(result$coords[[i_coord]], 'indices') <- TRUE
@@ -273,8 +273,8 @@ as.s2dv_cube <- function(object, remove_attrs_coords = FALSE,
               }
             } else {
               result$coords[[i_coord]] <- coord_in_dat
+              attr(result$coords[[i_coord]], 'indices') <- FALSE
             }
-            if (!remove_attrs_coords) attr(result$coords[[i_coord]], 'indices') <- FALSE
           } else {
             result$coords[[i_coord]] <- 1:dims[i_coord]
             if (!remove_attrs_coords) attr(result$coords[[i_coord]], 'indices') <- TRUE
@@ -287,6 +287,7 @@ as.s2dv_cube <- function(object, remove_attrs_coords = FALSE,
         result$coords[[i_coord]] <- 1:dims[i_coord]
         if (!remove_attrs_coords) attr(result$coords[[i_coord]], 'indices') <- TRUE
       }
+      dim(result$coords[[i_coord]]) <- NULL
     }
 
     # attrs

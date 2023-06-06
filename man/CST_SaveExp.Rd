@@ -12,6 +12,7 @@ CST_SaveExp(
   dat_dim = "dataset",
   var_dim = "var",
   memb_dim = "member",
+  startdates = NULL,
   single_file = FALSE,
   extra_string = NULL
 )
@@ -44,6 +45,14 @@ dimension.}
 \item{memb_dim}{A character string indicating the name of the member dimension.
 By default, it is set to 'member'. It can be NULL if there is no member 
 dimension.}
+
+\item{startdates}{A vector of dates that will be used for the filenames 
+when saving the data in multiple files. It must be a vector of the same 
+length as the start date dimension of data. It must be a vector of class 
+\code{Dates}, \code{'POSIXct'} or character with lenghts between 1 and 10. 
+If it is NULL, the coordinate corresponding the the start date dimension or 
+the first Date of each time step will be used as the name of the files.
+It is NULL by default.}
 
 \item{single_file}{A logical value indicating if all object is saved in a 
 single file (TRUE) or in multiple files (FALSE). When it is FALSE, 

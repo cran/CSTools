@@ -189,8 +189,8 @@ CategoricalEnsCombination <- function (fc, obs, cat.method, eval.method, amt.cat
   if (any(is.na(obs)))  {
     warning("Parameter 'obs' contains NA values.")
   }
-  fc.merged <- merge.datasets(fc = fc) 
-  amt.sdate=dim(fc.merged)["sdate"]
+  fc.merged <- mergedatasets(fc = fc) 
+  amt.sdate = dim(fc.merged)["sdate"]
   target.dims <- c("member", "sdate")
   return.feat <- list(amt.cat = amt.cat)
   return.feat$dim <- c(amt.cat, amt.sdate)
@@ -209,7 +209,7 @@ CategoricalEnsCombination <- function (fc, obs, cat.method, eval.method, amt.cat
   return(cat_fc_out)
 }
 
-merge.datasets <- function(fc){
+mergedatasets <- function(fc) {
   dims.tmp <- dim(fc)
   dimnames.tmp <- dimnames(fc)
   names.dim.tmp <- names(dims.tmp)

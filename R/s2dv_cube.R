@@ -12,11 +12,12 @@
 #'
 #'@param data A multidimensional array with named dimensions, typically with 
 #'  dimensions: dataset, member, sdate, ftime, lat and lon.
-#'@param coords A named list with elements of the coordinates corresponding to 
-#'  the dimensions of the data parameter. The names and length of each element 
-#'  must correspond to the names of the dimensions. If any coordinate is not 
-#'  provided, it is set as an index vector with the values from 1 to the length 
-#'  of the corresponding dimension.
+#'@param coords A list of named vectors with the coordinates corresponding to 
+#'  the dimensions of the data parameter. If any coordinate has dimensions, they 
+#'  will be set as NULL. If any coordinate is not provided, it is set as an 
+#'  index vector with the values from 1 to the length of the corresponding 
+#'  dimension. The attribute 'indices' indicates wether the coordinate is an 
+#'  index vector (TRUE) or not (FALSE).
 #'@param varName A character string indicating the abbreviation of the variable 
 #'  name.
 #'@param metadata A named list where each element is a variable containing the
@@ -36,33 +37,30 @@
 #'@return The function returns an object of class 's2dv_cube' with the following 
 #' elements in the structure:\cr
 #'\itemize{
-#'  \item{'data', array with named dimensions.}
-#'  \item{'dims', named vector of the data dimensions.}
-#'  \item{'coords', named list with elements of the coordinates corresponding to
-#'  the dimensions of the data parameter. If any coordinate is not provided, it 
-#'  is set as an index vector with the values from 1 to the length of the 
-#'  corresponding dimension. The attribute 'indices' indicates wether the 
-#'  coordinate is an index vector (TRUE) or not (FALSE).}
+#'  \item{'data', array with named dimensions;}
+#'  \item{'dims', named vector of the data dimensions;}
+#'  \item{'coords', list of named vectors with the coordinates corresponding to 
+#'  the dimensions of the data parameter;}
 #'  \item{'attrs', named list with elements:
 #'    \itemize{
 #'      \item{'Dates', array with named temporal dimensions of class 'POSIXct' from 
-#'      time values in the data.}
+#'      time values in the data;}
 #'      \item{'Variable', has the following components:
 #'        \itemize{
 #'          \item{'varName', with the short name of the loaded variable as specified 
-#'          in the parameter 'var'.}
-#'          \item{''metadata', named list of elements with variable metadata. 
+#'          in the parameter 'var';}
+#'          \item{'metadata', named list of elements with variable metadata. 
 #'                They can be from coordinates variables (e.g. longitude) or 
-#'                main variables (e.g. 'var').}
+#'                main variables (e.g. 'var');}
 #'        }
 #'      }
-#'      \item{'Datasets', character strings indicating the names of the dataset.}
-#'      \item{'source_files', a vector of character strings with complete paths to 
-#'      all the found files involved in loading the data.}
-#'      \item{'when', a time stamp of the date issued by the Start() or Load() call to 
-#'      obtain the data.}
-#'      \item{'load_parameters', it contains the components used in the arguments to 
-#'      load the data from Start() or Load() functions.}
+#'      \item{'Datasets', character strings indicating the names of the dataset;}
+#'      \item{'source_files', a vector of character strings with complete paths 
+#'            to all the found files involved in loading the data;}
+#'      \item{'when', a time stamp of the date issued by the Start() or Load() 
+#'            call to obtain the data;}
+#'      \item{'load_parameters', it contains the components used in the 
+#'            arguments to load the data from Start() or Load() functions.}
 #'    }
 #'  }
 #'}
@@ -144,6 +142,7 @@ s2dv_cube <- function(data, coords = NULL, varName = NULL, metadata = NULL,
         attr(coords[[i_coord]], 'indices') <- TRUE
       }
     }
+    dim(coords[[i_coord]]) <- NULL
   } else {
     coords <- sapply(names(dims), function(x) 1:dims[x])
     for (i in 1:length(coords)) {

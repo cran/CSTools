@@ -28,7 +28,14 @@
 #'  dimension.
 #'@param memb_dim A character string indicating the name of the member dimension.
 #'  By default, it is set to 'member'. It can be NULL if there is no member 
-#'  dimension.  
+#'  dimension. 
+#'@param startdates A vector of dates that will be used for the filenames 
+#'  when saving the data in multiple files. It must be a vector of the same 
+#'  length as the start date dimension of data. It must be a vector of class 
+#'  \code{Dates}, \code{'POSIXct'} or character with lenghts between 1 and 10. 
+#'  If it is NULL, the coordinate corresponding the the start date dimension or 
+#'  the first Date of each time step will be used as the name of the files.
+#'  It is NULL by default.
 #'@param single_file A logical value indicating if all object is saved in a 
 #'  single file (TRUE) or in multiple files (FALSE). When it is FALSE, 
 #'  the array is separated for Datasets, variable and start date. It is FALSE  
@@ -76,7 +83,8 @@
 CST_SaveExp <- function(data, destination = "./", sdate_dim = 'sdate',  
                         ftime_dim = 'time', dat_dim = 'dataset',
                         var_dim = 'var', memb_dim = 'member', 
-                        single_file = FALSE, extra_string = NULL) {
+                        startdates = NULL, single_file = FALSE, 
+                        extra_string = NULL) {
   # Check 's2dv_cube'
   if (!inherits(data, 's2dv_cube')) {
     stop("Parameter 'data' must be of the class 's2dv_cube', ",
@@ -124,13 +132,28 @@ CST_SaveExp <- function(data, destination = "./", sdate_dim = 'sdate',
               "only the first element will be used.")
       sdate_dim <- sdate_dim[1]
     }
+  } else if (length(dim(data$attrs$Dates)) == 1) {
+    sdate_dim <- 'sdate'
+    dim(data$data) <- c(sdate = 1, dim(data$data))
+    data$dims <- dim(data$data)
+    dim(data$attrs$Dates) <- c(sdate = 1, dim(data$attrs$Dates))
+    data$coords[[sdate_dim]] <- data$attrs$Dates[1]
+  }
+  # startdates
+  if (is.null(startdates)) {
+    startdates <- data$coords[[sdate_dim]]
   } else {
-    if (length(dim(data$attrs$Dates)) == 1) {
-      sdate_dim <- 'sdate'
-      dim(data$data) <- c(sdate = 1, dim(data$data))
-      data$dims <- dim(data$data)
-      dim(data$attrs$Dates) <- c(sdate = 1, dim(data$attrs$Dates))
-      data$coords[[sdate_dim]] <- data$attrs$Dates[1]
+    if (!is.character(startdates)) {
+      warning(paste0("Parameter 'startdates' is not a character string, ",
+                     "it will not be used."))
+      startdates <- data$coords[[sdate_dim]]
+    }
+    if (!is.null(sdate_dim)) {
+      if (dim(data$data)[sdate_dim] != length(startdates)) {
+        warning(paste0("Parameter 'startdates' doesn't have the same length ",
+                       "as dimension '", sdate_dim,"', it will not be used."))
+        startdates <- data$coords[[sdate_dim]]
+      }
     }
   }
 
@@ -141,7 +164,7 @@ CST_SaveExp <- function(data, destination = "./", sdate_dim = 'sdate',
           varname = data$attrs$Variable$varName,
           metadata = data$attrs$Variable$metadata,
           Datasets = data$attrs$Datasets, 
-          startdates = data$coords[[sdate_dim]],
+          startdates = startdates,
           dat_dim = dat_dim, sdate_dim = sdate_dim, 
           ftime_dim = ftime_dim, var_dim = var_dim, 
           memb_dim = memb_dim,
@@ -173,8 +196,12 @@ CST_SaveExp <- function(data, destination = "./", sdate_dim = 'sdate',
 #'  lists for each variable.
 #'@param Datasets A vector of character string indicating the names of the 
 #'  datasets.
-#'@param startdates A vector of dates indicating the initialization date of each 
-#'  simulations.
+#'@param startdates A vector of dates that will be used for the filenames 
+#'  when saving the data in multiple files. It must be a vector of the same 
+#'  length as the start date dimension of data. It must be a vector of class 
+#'  \code{Dates}, \code{'POSIXct'} or character with lenghts between 1 and 10. 
+#'  If it is NULL, the first Date of each time step will be used as the name of 
+#'  the files. It is NULL by default.
 #'@param sdate_dim A character string indicating the name of the start date 
 #'  dimension. By default, it is set to 'sdate'. It can be NULL if there is no
 #'  start date dimension.
@@ -325,8 +352,7 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
   # Spatial coordinates
   if (!any(dimnames %in% .KnownLonNames()) | 
       !any(dimnames %in% .KnownLatNames())) {
-    warning("Spatial coordinate names do not match any of the names accepted by ",
-            "the package.")
+    warning("Spatial coordinates not found.")
     lon_dim <- NULL
     lat_dim <- NULL
   } else {
@@ -433,17 +459,21 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
         all(names(dim(Dates)) == c(sdate_dim, ftime_dim))) {
       if (is.null(startdates)) {
         startdates <- Subset(Dates, along = ftime_dim, 1, drop = 'selected')
-      } else if ((!inherits(startdates, "POSIXct") & !inherits(startdates, "Date")) &&
-                 (!is.character(startdates) | (all(nchar(startdates) != 10) &
-                  all(nchar(startdates) != 8) & all(nchar(startdates) != 6)))) {
+      } else if ((!inherits(startdates, "POSIXct") & !inherits(startdates, "Date")) && 
+                 (!is.character(startdates) | (any(nchar(startdates) > 10) | any(nchar(startdates) < 1)))) {
         warning("Parameter 'startdates' should be a character string containing ", 
                 "the start dates in the format 'yyyy-mm-dd', 'yyyymmdd', 'yyyymm', ", 
-                "'POSIXct' or 'Dates' class.")
+                "'POSIXct' or 'Dates' class. Files will be named with Dates instead.")
         startdates <- Subset(Dates, along = ftime_dim, 1, drop = 'selected')
+        if (!is.null(format(startdates, "%Y%m%d"))) {
+          startdates <- format(startdates, "%Y%m%d")
+        }
       }
+    } else if (all(dim(Dates)[!names(dim(Dates)) %in% c(ftime_dim, sdate_dim)] == 1)) {
+      dim(Dates) <- dim(Dates)[names(dim(Dates)) %in% c(ftime_dim, sdate_dim)]
     } else {
       stop("Parameter 'Dates' must have start date dimension and ", 
-          "forecast time dimension.")
+           "forecast time dimension.")
     }
   }
   # startdates
@@ -487,7 +517,7 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
   alldims <- c(dat_dim, var_dim, sdate_dim, lon_dim, lat_dim, memb_dim, ftime_dim)
   if (!all(dimnames %in% alldims)) {
     unknown_dims <- dimnames[which(!dimnames %in% alldims)]
-    warning("Detected unknown dimension: ", paste(unknown_dims, collapse = ', '))
+    # warning("Detected unknown dimension: ", paste(unknown_dims, collapse = ', '))
     memb_dim <- c(memb_dim, unknown_dims)
     alldims <- c(dat_dim, var_dim, sdate_dim, lon_dim, lat_dim, memb_dim, ftime_dim)
   }

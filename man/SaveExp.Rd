@@ -47,8 +47,12 @@ lists for each variable.}
 \item{Datasets}{A vector of character string indicating the names of the 
 datasets.}
 
-\item{startdates}{A vector of dates indicating the initialization date of each 
-simulations.}
+\item{startdates}{A vector of dates that will be used for the filenames 
+when saving the data in multiple files. It must be a vector of the same 
+length as the start date dimension of data. It must be a vector of class 
+\code{Dates}, \code{'POSIXct'} or character with lenghts between 1 and 10. 
+If it is NULL, the first Date of each time step will be used as the name of 
+the files. It is NULL by default.}
 
 \item{dat_dim}{A character string indicating the name of dataset dimension. 
 By default, it is set to 'dataset'. It can be NULL if there is no dataset  
