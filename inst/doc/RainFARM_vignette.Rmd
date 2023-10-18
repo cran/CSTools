@@ -2,6 +2,8 @@
 title: "Rainfall Filtered Autoregressive Model (RainFARM) precipitation downscaling"
 author: "Jost von Hardenberg (ISAC-CNR)"
 date: "26/03/2019"
+revisor: "Eva Rifà"
+revision date: "October 2023"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteEngine{knitr::knitr}
@@ -38,23 +40,22 @@ library(CSTools)
 We use test data provided by CSTools to load a seasonal precipitation forecast: 
 
 ```{r}
-library(CSTools)
-exp <- lonlat_prec
+exp <- lonlat_prec_st
 ```
 
 This gives us a CSTools object `exp`, containing an element `exp$data` with dimensions:
 ```{r}  
 dim(exp$data)
-# dataset  member   sdate   ftime     lat    lon 
-#     1       6       3       31       4      4 
+#   dataset   var   member   sdate   ftime     lat    lon 
+#      1       1       6       3       31       4      4 
 ```
 There are 6 ensemble members available in the data set, 3 starting dates and 31 forecast times, which refer to daily values in the month of March following starting dates on November 1st in the years 2010, 2011, 2012. Please notice that RainFARM (in this version) only accepts square domains, possibly with an even number of pixels on each side, so we always need to select an appropriate cutout. Also, there are time and memory limitations when a large ensemble of downscaled realizations is generated with RainFARM, so that selecting a smaller target area is advised. On the other hand, if spectral slopes are to be determined from the large scales we will still need enough resolution to allow this estimation. In this example we have preselected a 4x4 pixel cutout at resolution 1 degree in a smaller area lon=[6,9], lat=[44,47] covering Northern Italy.
 
 ```{r}  
 ilon <- which(exp$coords$lon %in% 5:12)
-ilat <- which(exp$coords$lat %in% 40:47 )
-exp$data <- exp$data[ , , , , ilon, ilat, drop = FALSE]
-names(dim(exp$data)) <- names(dim(lonlat_prec$data))
+ilat <- which(exp$coords$lat %in% 40:47)
+exp$data <- exp$data[, , , , , ilat, ilon, drop = FALSE]
+names(dim(exp$data)) <- names(dim(lonlat_prec_st$data))
 exp$coords$lon <- exp$coords$lon[ilon]
 exp$coords$lat <- exp$coords$lat[ilat]
 ```
@@ -65,13 +66,14 @@ Our goal is to downscale with RainFARM these data from the resolution of 1 degre
 RainFARM can compute automatically its only free parameter, i.e. the spatial spectral slope, from the large-scale field (here only with size 4x4 pixel, but in general we reccomend selecting at least 8x8 pixels). 
 In this example we would like to compute this slope as an average over the _member_ and _ftime_ dimensions, while we will use different slopes for the remaining _dataset_ and _sdate_ dimensions (a different choice may be more appropriate in a real application). To obtain this we specify the parameter `time_dim = c("member", "ftime")`. The slope is computed starting from the wavenumber corresponding to the box, `kmin = 1`. We create 3 stochastic realizations for each dataset, member, starting date and forecast time with `nens = 5`. The command to donwscale and the resulting fields are:
 
-```{r}  
+```
 exp_down <- CST_RainFARM(exp, nf = 20, kmin = 1, nens = 3,
                          time_dim = c("member", "ftime"))
 
 dim(exp_down$data)
-#    dataset      member realization       sdate       ftime         lat        lon
-#          1           6           3           3         31           80         80
+#   dataset    var    member   realization   sdate    ftime    lat    lon 
+#      1        1         6          3         3        31      80     80 
+
 str(exp_down$coords$lon)
 # num [1:80] 5.53 5.58 5.62 5.67 5.72 ...
 str(exp_down$coords$lat)
@@ -95,13 +97,13 @@ png("Figures/RainFARM_fig1.png", width = 640, height = 365)
 par(mfrow = c(1,2))
 -->
 ```{r}  
-a <- exp$data[1, 1, 1, 17, , ] * 86400 * 1000
+a <- exp$data[1, 1, 1, 1, 17, , ] * 86400 * 1000
 a[a > 60] <- 60
 image(exp$coords$lon, rev(exp$coords$lat), t(apply(a, 2, rev)), xlab = "lon", ylab = "lat",
       col = rev(terrain.colors(20)), zlim = c(0,60))
 map("world", add = TRUE)
 title(main = "pr 17/03/2010 original")
-a <- exp_down$data[1, 1, 1, 1, 17, , ] * 86400 * 1000
+a <- exp_down$data[1, 1, 1, 1, 1, 17, , ] * 86400 * 1000
 a[a > 60] <- 60
 image(exp_down$coords$lon, rev(exp_down$coords$lat), t(apply(a, 2, rev)), xlab = "lon", ylab = "lat", 
       col = rev(terrain.colors(20)), zlim = c(0, 60))
@@ -137,8 +139,8 @@ From a single realization and time it is not possible to see that a more realist
 
 <!--
 ```{r}
-exp_down1 <- exp_down$data[1, , , 1, , , ]
-exp_down_weights1 <- exp_down_weights$data[1, , , 1, , , ]
+exp_down1 <- exp_down$data[, , , , , , , 1]
+exp_down_weights1 <- exp_down_weights$data[, , , , , , , 1]
 dim(exp_down1) <- c(member = 6 * 3 * 31, lat = 80, lon = 80) 
 dim(exp_down_weights1) <- c(member = 6 * 3 * 31, lat = 80, lon = 80) 
 ad <- apply(exp_down1, c(2, 3), mean)
@@ -146,7 +148,7 @@ adw <- apply(exp_down_weights1, c(2, 3), mean);
 
 png("Figures/RainFARM_fig2.png", width = 640, height = 243)
 par(mfrow = c(1,3))
-a <- exp_down_weights$data[1, 1, 1, 1, 17, , ] * 86400 * 1000
+a <- exp_down_weights$data[1, 1, 1, 1, 17, , ,1] * 86400 * 1000
 a[a > 60] <- 60
 image(exp_down$coords$lon, rev(exp_down$coords$lat), t(apply(a, 2, rev)), xlab = "lon",
       ylab = "lat", col = rev(terrain.colors(20)), zlim = c(0, 60))
@@ -176,11 +178,23 @@ The only free parameter of the RainFARM method is represented by the spatial spe
 ```{r}  
 slopes <- CST_RFSlope(exp, time_dim = c("member", "ftime"))
 dim(slopes)
-#    dataset   sdate 
-#          1       3   
+#    dataset   var   sdate 
+#       1       1      3   
 slopes
-        [,1]     [,2]     [,3]
-[1,] 1.09958 1.768862 1.190185
+, , 1
+
+        [,1]
+[1,] 1.09957
+
+, , 2
+
+         [,1]
+[1,] 1.768861
+
+, , 3
+
+         [,1]
+[1,] 1.190176
 ```
 which return an array of spectral slopes, one for each "dataset" and starting date "sdate".
 

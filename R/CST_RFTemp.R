@@ -144,7 +144,7 @@ CST_RFTemp <- function(data, oro, xlim = NULL, ylim = NULL, lapse = 6.5,
 #'The output grid can be irregularly spaced in lon and/or lat.
 #'@references Method described in ERA4CS MEDSCOPE milestone M3.2: 
 #'High-quality climate prediction data available to WP4 here:
-#'\ url{https://www.medscope-project.eu/the-project/deliverables-reports/}
+#'\url{https://www.medscope-project.eu/the-project/deliverables-reports/}
 #'and in H2020 ECOPOTENTIAL Deliverable No. 8.1:
 #'High resolution (1-10 km) climate, land use and ocean change scenarios here: 
 #'\url{https://ec.europa.eu/research/participants/documents/downloadPublic?documentIds=080166e5b6cd2324&appId=PPGMS}.

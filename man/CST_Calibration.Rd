@@ -22,18 +22,18 @@ CST_Calibration(
 )
 }
 \arguments{
-\item{exp}{An object of class \code{s2dv_cube} as returned by \code{CST_Load} 
+\item{exp}{An object of class \code{s2dv_cube} as returned by \code{CST_Start} 
 function with at least 'sdate' and 'member' dimensions, containing the  
 seasonal hindcast experiment data in the element named \code{data}. The 
 hindcast is used to calibrate the forecast in case the forecast is provided; 
 if not, the same hindcast will be calibrated instead.}
 
-\item{obs}{An object of class \code{s2dv_cube} as returned by \code{CST_Load} 
+\item{obs}{An object of class \code{s2dv_cube} as returned by \code{CST_Start} 
 function with at least 'sdate' dimension, containing the observed data in 
 the element named \code{$data}.}
 
 \item{exp_cor}{An optional object of class \code{s2dv_cube} as returned by 
-\code{CST_Load} function with at least 'sdate' and 'member' dimensions, 
+\code{CST_Start} function with at least 'sdate' and 'member' dimensions, 
 containing the seasonal forecast experiment data in the element named 
 \code{data}. If the forecast is provided, it will be calibrated using the 
 hindcast and observations; if not, the hindcast will be calibrated instead. 
@@ -181,7 +181,7 @@ Quarterly Journal of the Royal Meteorological Society, 141(688), 807-818.
 \doi{10.1002/qj.2397}
 }
 \seealso{
-\code{\link{CST_Load}}
+\code{\link{CST_Start}}
 }
 \author{
 Verónica Torralba, \email{veronica.torralba@bsc.es}

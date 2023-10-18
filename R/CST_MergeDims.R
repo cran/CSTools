@@ -33,8 +33,7 @@ CST_MergeDims <- function(data, merge_dims = c('ftime', 'monthly'),
                           rename_dim = NULL, na.rm = FALSE) {
   # Check 's2dv_cube'
   if (!inherits(data, 's2dv_cube')) {
-    stop("Parameter 'data' must be of the class 's2dv_cube', ",
-         "as output by CSTools::CST_Load.")
+    stop("Parameter 'data' must be of the class 's2dv_cube'.")
   }
   data$data <- MergeDims(data$data, merge_dims = merge_dims,
                          rename_dim = rename_dim, na.rm = na.rm)

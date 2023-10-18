@@ -51,7 +51,7 @@
 #'  }
 #'}
 #'
-#'@seealso \code{\link{s2dv_cube}}, \code{\link[s2dv]{Load}}, 
+#'@seealso \code{\link{s2dv_cube}}, \code{\link{CST_Start}}, 
 #'\code{\link[startR]{Start}} and \code{\link{CST_Load}}
 #'@examples
 #'\dontrun{

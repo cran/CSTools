@@ -9,6 +9,7 @@ CST_Analogs(
   obsL,
   expVar = NULL,
   obsVar = NULL,
+  sdate_dim = "sdate",
   region = NULL,
   criteria = "Large_dist",
   excludeTime = NULL,
@@ -42,6 +43,9 @@ analog of parameter 'expVar'.}
 \item{obsVar}{An 's2dv_cube' containing the field of the same variable as the 
 passed in parameter 'expVar' for the same region.}
 
+\item{sdate_dim}{A character string indicating the name of the start date 
+dimension. By default, it is set to 'sdate'.}
+
 \item{region}{A vector of length four indicating the minimum longitude, 
 the maximum longitude, the minimum latitude and the maximum latitude.}
 
@@ -69,7 +73,8 @@ and dates are taken from element \code{$attrs$Dates} from expL.}
 
 \item{time_obsL}{A character string indicating the date of the observations 
 in the date format (i.e. "yyyy-mm-dd"). By default it is NULL and dates are 
-taken from element \code{$attrs$Dates} from obsL.}
+taken from element \code{$attrs$Dates} from obsL. It must have time 
+dimensions.}
 
 \item{nAnalogs}{Number of Analogs to be selected to apply the criterias 
 'Local_dist' or 'Local_cor'. This is not the necessary the number of analogs 
@@ -119,7 +124,7 @@ analogs.
 This function has not constrains of specific regions, variables to downscale,
 or data to be used (seasonal forecast data, climate projections data, 
 reanalyses data). The regrid into a finner scale is done interpolating with 
-CST_Load. Then, this interpolation is corrected selecting the analogs in the 
+CST_Start. Then, this interpolation is corrected selecting the analogs in the 
 large and local scale in based of the observations. The function is an 
 adapted version of the method of Yiou et al 2013. For an advanced search of 
 Analogs (multiple Analogs, different criterias, further information from the
@@ -135,6 +140,7 @@ time_obsL <- as.POSIXct(paste(rep("01", 10), rep("01", 10), 1994:2003, sep = "-"
                        format = "\%d-\%m-\%y")
 dim(time_obsL) <- c(time = 10)
 time_expL <- time_obsL[1]
+dim(time_expL) <- c(time = 1)
 lon <-  seq(-1, 5, 1.5)
 lat <- seq(30, 35, 1.5)
 coords <- list(lon = seq(-1, 5, 1.5), lat = seq(30, 35, 1.5))
@@ -155,8 +161,7 @@ from surface pressure using analogues.  Clim. Dyn., 41, 1419-1437.
 \email{pascal.yiou@lsce.ipsl.fr}
 }
 \seealso{
-\code{\link{CST_Load}}, \code{\link[s2dv]{Load}} and 
-\code{\link[s2dv]{CDORemap}}
+\code{\link{CST_Start}}, \code{\link[startR]{Start}}
 }
 \author{
 M. Carmen Alvarez-Castro, \email{carmen.alvarez-castro@cmcc.it}

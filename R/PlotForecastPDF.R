@@ -441,7 +441,9 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
               panel.border = element_rect(fill = NA, color = "black"),
               strip.background = element_rect(colour = "black", fill = "gray80"), 
               panel.spacing = unit(0.2, "in"), 
-              panel.grid.major.x = element_line(color = "grey93")) + 
+              panel.grid.major.x = element_line(color = "grey93"), 
+              panel.background = element_rect(fill = "white"), 
+              plot.background = element_rect(fill = "white", color = NA)) + 
         guides(fill = guide_legend(order = 1), 
                color = guide_legend(order = 2), 
                shape = guide_legend(order = 3, label = F),

@@ -18,7 +18,7 @@ s2dv_cube(
 }
 \arguments{
 \item{data}{A multidimensional array with named dimensions, typically with 
-dimensions: dataset, member, sdate, ftime, lat and lon.}
+dimensions: dataset, member, sdate, time, lat and lon.}
 
 \item{coords}{A list of named vectors with the coordinates corresponding to 
 the dimensions of the data parameter. If any coordinate has dimensions, they 
@@ -84,7 +84,7 @@ elements in the structure:\cr
 \description{
 This function allows to create an 's2dv_cube' object by passing 
 information through its parameters. This function will be needed if the data 
-hasn't been loaded using CST_Load or has been transformed with other methods. 
+hasn't been loaded using CST_Start or has been transformed with other methods. 
 An 's2dv_cube' object has many different components including metadata. This 
 function will allow to create 's2dv_cube' objects even if not all elements 
 are defined and for each expected missed parameter a warning message will be 
@@ -134,7 +134,7 @@ exp8 <- s2dv_cube(data = exp_original, coords = coords,
 class(exp8)
 }
 \seealso{
-\code{\link[s2dv]{Load}} and \code{\link{CST_Load}}
+\code{\link[s2dv]{Load}} and \code{\link{CST_Start}}
 }
 \author{
 Perez-Zanon Nuria, \email{nuria.perez@bsc.es}

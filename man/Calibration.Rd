@@ -151,7 +151,7 @@ Quarterly Journal of the Royal Meteorological Society, 141(688), 807-818.
 \doi{10.1002/qj.2397}
 }
 \seealso{
-\code{\link{CST_Load}}
+\code{\link{CST_Start}}
 }
 \author{
 Verónica Torralba, \email{veronica.torralba@bsc.es}

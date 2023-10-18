@@ -1,6 +1,8 @@
 ---
 author: "Louis-Philippe Caron and Núria Pérez-Zanón"
 date: "`r Sys.Date()`"
+revisor: "Eva Rifà"
+revision date: "October 2023"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteEngine{knitr::knitr}
@@ -66,40 +68,84 @@ mon1 <- 2
 monf <- 4
 ```
 
-
 Finally, we define the forecast system, an observational reference, the variable of interest and the common grid onto which to interpolate. 
 
 
 ```r
-forecastsys <- 'system5c3s'
-obs <- 'erainterim'
-grid <- "256x128"
 clim_var = 'tas'
 ```
 
-Finally, the data are loaded using `CST_Load`: 
-
+Finally, the data are loaded using `CST_Start`: 
 
 ```r
-c(exp, obs) %<-% CST_Load(var = clim_var, exp = forecastsys, obs = obs,
-                          sdates = dateseq, leadtimemin = mon1, leadtimemax = monf,
-                          lonmin = lon_min, lonmax = lon_max,
-                          latmin = lat_min, latmax = lat_max, 
-                          storefreq = "monthly", sampleperiod = 1,  nmember = 10, 
-                          output = "lonlat", method = "bilinear", 
-                          grid = paste("r", grid, sep = ""))
+repos_exp <- paste0('/esarchive/exp/ecmwf/system5c3s/monthly_mean/',
+                    '$var$_f6h/$var$_$sdate$.nc')
+exp <- CST_Start(dataset = repos_exp,
+                 var = clim_var,
+                 member = indices(1:10),
+                 sdate = dateseq,
+                 ftime = indices(2:4),
+                 lat = values(list(lat_min, lat_max)),
+                 lat_reorder = Sort(decreasing = TRUE), 
+                 lon = values(list(lon_min, lon_max)),
+                 lon_reorder = CircularSort(0, 360),
+                 synonims = list(lon = c('lon', 'longitude'),
+                                 lat = c('lat', 'latitude'),
+                                 member = c('member', 'ensemble'),
+                                 ftime = c('ftime', 'time')),
+                 transform = CDORemapper,
+                 transform_extra_cells = 2,
+                 transform_params = list(grid = 'r256x128',
+                                         method = 'bilinear'),
+                 transform_vars = c('lat', 'lon'),
+                 return_vars = list(lat = NULL, 
+                                    lon = NULL, ftime = 'sdate'),
+                                    retrieve = TRUE)
+
+# Give the correct time values (identical as the netCDF files)
+dates_obs <- c(paste0(ini:fin, '-06-30 18:00:00'),
+               paste0(ini:fin, '-07-31 18:00:00'),
+               paste0(ini:fin, '-08-31 18:00:00'))
+dates_obs <- as.POSIXct(dates_obs, tz = "UTC")
+dim(dates_obs) <- c(sdate = 40, ftime = 3)
+
+date_arr <- array(format(dates_obs, '%Y%m'), dim = c(sdate = 40, ftime = 3))
+
+repos_obs <- paste0('/esarchive/recon/ecmwf/erainterim/monthly_mean/',
+                    '$var$/$var$_$date$.nc')
+
+obs <- CST_Start(dataset = repos_obs,
+                 var = clim_var,
+                 date = date_arr,
+                 split_multiselected_dims = TRUE,
+                 lat = values(list(lat_min, lat_max)),
+                 lat_reorder = Sort(decreasing = TRUE),
+                 lon = values(list(lon_min, lon_max)),
+                 lon_reorder = CircularSort(0, 360),
+                 synonims = list(lon = c('lon', 'longitude'),
+                                 lat = c('lat', 'latitude'),
+                                 ftime = c('ftime', 'time')),
+                 transform = CDORemapper,
+                 transform_extra_cells = 2,
+                 transform_params = list(grid = 'r256x128',
+                                         method = 'bilinear'),
+                 transform_vars = c('lat', 'lon'),
+                 return_vars = list(lon = NULL,
+                                    lat = NULL,
+                                    ftime = 'date'),
+                 retrieve = TRUE)
 ```
 
-Loading the data using CST_Load returns two objects, one for the experimental data and another one for the observe data, with the same elements and compatible dimensions of the data element:
+Loading the data using CST_Start returns two objects, one for the experimental data and another one for the observe data, with the same elements and compatible dimensions of the data element:
 
 
 ```r
 > dim(exp$data)
-dataset  member   sdate   ftime     lat     lon 
-      1      10      40       3      19      36 
+dataset   var  member   sdate   ftime     lat     lon 
+      1    1      10      40       3       19      36 
 > dim(obs$data)
-dataset  member   sdate   ftime     lat     lon 
-      1       1      40       3      19      36 
+dataset    var    sdate   ftime     lat     lon 
+      1     1      40        3        19      36 
 ```
 
 
@@ -130,7 +176,7 @@ Finally, the probabilities of each tercile are computed by evaluating which terc
 
 ```r
 PB <- ProbBins(Ano_Exp$data, fcyr = numyears, thr = c(1/3, 2/3), compPeriod = "Without fcyr")
-prob_map <- MeanDims(PB, c('sdate', 'member', 'dataset'))
+prob_map <- MeanDims(PB, c('sdate', 'member', 'dataset', 'var'))
 ```
 
 ### 4. Visualization with PlotMostLikelyQuantileMap
@@ -163,8 +209,10 @@ First, we evaluate and plot the RPSS. Therefore, we use `RPSS` metric included i
 
 
 ```r
-Ano_Exp$data <- Subset(Ano_Exp$data, along = 'sdate', indices = 1:38)
-Ano_Obs$data <- Subset(Ano_Obs$data, along = 'sdate', indices = 1:38) 
+Ano_Exp <- CST_Subset(Ano_Exp, along = 'sdate', indices = 1:38)
+Ano_Obs <- CST_Subset(Ano_Obs, along = 'sdate', indices = 1:38) 
+Ano_Obs <- CST_InsertDim(Ano_Obs, posdim = 3, lendim = 1, name = "member")
+
 RPSS <- CST_MultiMetric(Ano_Exp, Ano_Obs, metric = 'rpss', multimodel = FALSE)
 
 PlotEquiMap(RPSS$data[[1]], lat = Lat, lon = Lon, brks = seq(-1, 1, by = 0.1),
@@ -190,7 +238,7 @@ Finally, we plot the latest forecast, as in the previous step, but add the mask 
 
 ```r
 PlotMostLikelyQuantileMap(probs = prob_map, lon = Lon, lat = Lat, coast_width = 1.5,
-                          legend_scale = 0.5, mask = mask_rpss[ , , 1],
+                          legend_scale = 0.5, mask = mask_rpss[ , , ,],
                           toptitle = paste('Most likely tercile -', clim_var,
                                            '- ECMWF System5 - JJA 2020'),
                           width = 10, height = 8)

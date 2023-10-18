@@ -13,6 +13,7 @@ CST_SaveExp(
   var_dim = "var",
   memb_dim = "member",
   startdates = NULL,
+  drop_dims = NULL,
   single_file = FALSE,
   extra_string = NULL
 )
@@ -54,6 +55,10 @@ If it is NULL, the coordinate corresponding the the start date dimension or
 the first Date of each time step will be used as the name of the files.
 It is NULL by default.}
 
+\item{drop_dims}{A vector of character strings indicating the dimension names 
+of length 1 that need to be dropped in order that they don't appear in the 
+netCDF file. It is NULL by default (optional).}
+
 \item{single_file}{A logical value indicating if all object is saved in a 
 single file (TRUE) or in multiple files (FALSE). When it is FALSE, 
 the array is separated for Datasets, variable and start date. It is FALSE  
@@ -93,10 +98,10 @@ has been created from \code{CST_Load()}, then it can be reloaded with
 }
 \examples{
 \dontrun{
-data <- lonlat_temp$exp
+data <- lonlat_temp_st$exp
 destination <- "./"
 CST_SaveExp(data = data, destination = destination, ftime_dim = 'ftime', 
-           var_dim = NULL, ftime_dim = 'ftime', var_dim = NULL)
+           var_dim = 'var', dat_dim = 'dataset')
 }
 
 }

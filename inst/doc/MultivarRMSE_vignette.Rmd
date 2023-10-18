@@ -2,7 +2,7 @@
 author: "Deborah Verfaillie"
 date: "`r Sys.Date()`"
 revisor: "Eva Rifà"
-revision date: "March 2023"
+revision date: "October 2023"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteEngine{knitr::knitr}
@@ -20,6 +20,7 @@ To run this vignette, the next R packages should be installed and loaded:
 ```r
 library(s2dv)
 library(RColorBrewer)
+library(zeallot)
 ```
 
 Library *CSTools*, should be installed from CRAN and loaded:
@@ -61,30 +62,114 @@ grid <- "256x128"
 obs <- "erainterim"
 ```
 
-Using the `CST_Load` function from **CSTool package**, the data available in our data store can be loaded. The following lines show how this function can be used. Here, the data is loaded from a previous saved `.RData` file:
+Using the `CST_Start` function from **CSTool package**, the data available in our data store can be loaded. The following lines show how this function can be used. Here, the data is loaded from a previous saved `.RData` file:
 Ask nuria.perez at bsc.es for the data to run the recipe.
 
 ```r
-require(zeallot)
- 
-glosea5 <- '/esarchive/exp/glosea5/glosea5c3s/$STORE_FREQ$_mean/$VAR_NAME$_f6h/$VAR_NAME$_$YEAR$$MONTH$.nc'
+latmin = 25
+latmax = 75
+lonmin = -20
+lonmax = 70
+dateseq <- format(seq(start, end, by = "year"), "%Y%m")
 
-c(exp_T, obs_T) %<-% 
-   CST_Load(var = temp, exp = list(list(name = 'glosea5', path = glosea5)),
-            obs = obs, sdates = dateseq, leadtimemin = 2, leadtimemax = 4,
-            latmin = 25, latmax = 75, lonmin = -20, lonmax = 70, output = 'lonlat',
-            nprocs = 1, storefreq = "monthly", sampleperiod = 1, nmember = 9,
-            method = "bilinear", grid = paste("r", grid, sep = ""))
+repos1 <- "/esarchive/exp/glosea5/glosea5c3s/monthly_mean/$var$_f6h/$var$_$sdate$.nc"
 
-glosea5 <- '/esarchive/exp/glosea5/glosea5c3s/$STORE_FREQ$_mean/$VAR_NAME$_f24h/$VAR_NAME$_$YEAR$$MONTH$.nc'
+exp_T <- CST_Start(dataset = list(list(name = 'glosea5c3s', path = repos1)),
+                   var = temp,
+                   member = indices(1:9),
+                   sdate = dateseq,
+                   ftime = indices(2:4),
+                   lat = values(list(latmin, latmax)),
+                   lat_reorder = Sort(decreasing = TRUE), 
+                   lon = values(list(lonmin, lonmax)),
+                   lon_reorder = CircularSort(0, 360),
+                   synonims = list(lon = c('lon', 'longitude'),
+                                   lat = c('lat', 'latitude'),
+                                   member = c('member', 'ensemble'),
+                                   ftime = c('ftime', 'time')),
+                   transform = CDORemapper,
+                   transform_extra_cells = 2,
+                   transform_params = list(grid = 'r256x128',
+                                           method = 'bilinear'),
+                   transform_vars = c('lat', 'lon'),
+                   return_vars = list(lat = NULL, 
+                                      lon = NULL, ftime = 'sdate'),
+                                      retrieve = TRUE)
+dates_exp <- exp_T$attrs$Dates
+repos2 <- "/esarchive/recon/ecmwf/erainterim/monthly_mean/$var$/$var$_$date$.nc"
+obs_T <- CST_Start(dataset = list(list(name = 'erainterim', path = repos2)),
+                   var = temp,
+                   date =  unique(format(dates_exp, '%Y%m')),
+                   ftime = values(dates_exp), 
+                   ftime_across = 'date',
+                   ftime_var = 'ftime',
+                   merge_across_dims = TRUE,
+                   split_multiselected_dims = TRUE,
+                   lat = values(list(latmin, latmax)),
+                   lat_reorder = Sort(decreasing = TRUE),
+                   lon = values(list(lonmin, lonmax)),
+                   lon_reorder = CircularSort(0, 360),
+                   synonims = list(lon = c('lon', 'longitude'),
+                                   lat = c('lat', 'latitude'),
+                                   ftime = c('ftime', 'time')),
+                   transform = CDORemapper,
+                   transform_extra_cells = 2,
+                   transform_params = list(grid = 'r256x128',
+                                           method = 'bilinear'),
+                   transform_vars = c('lat', 'lon'),
+                   return_vars = list(lon = NULL,
+                                      lat = NULL,
+                                      ftime = 'date'),
+                   retrieve = TRUE)
 
-c(exp_P, obs_P) %<-% 
-   CST_Load(var = precip,  exp = list(list(name = 'glosea5', path = glosea5)),
-            obs = obs, sdates = dateseq, leadtimemin = 2, leadtimemax = 4,
-            latmin = 25, latmax = 75, lonmin = -20, lonmax = 70, output = 'lonlat',
-            nprocs = 1, storefreq = "monthly", sampleperiod = 1, nmember = 9,
-            method = "bilinear", grid = paste("r", grid, sep = ""))
+repos3 <- "/esarchive/exp/glosea5/glosea5c3s/monthly_mean/$var$_f24h/$var$_$sdate$.nc"
 
+exp_P <- CST_Start(dataset = list(list(name = 'glosea5c3s', path = repos3)),
+                   var = precip,
+                   member = indices(1:9),
+                   sdate = dateseq,
+                   ftime = indices(2:4),
+                   lat = values(list(latmin, latmax)),
+                   lat_reorder = Sort(decreasing = TRUE), 
+                   lon = values(list(lonmin, lonmax)),
+                   lon_reorder = CircularSort(0, 360),
+                   synonims = list(lon = c('lon', 'longitude'),
+                                   lat = c('lat', 'latitude'),
+                                   member = c('member', 'ensemble'),
+                                   ftime = c('ftime', 'time')),
+                   transform = CDORemapper,
+                   transform_extra_cells = 2,
+                   transform_params = list(grid = 'r256x128',
+                                           method = 'bilinear'),
+                   transform_vars = c('lat', 'lon'),
+                   return_vars = list(lat = NULL, 
+                                      lon = NULL, ftime = 'sdate'),
+                                      retrieve = TRUE)
+dates_exp <- exp_P$attrs$Dates
+obs_P <- CST_Start(dataset = list(list(name = 'erainterim', path = repos2)),
+                   var = precip,
+                   date =  unique(format(dates_exp, '%Y%m')),
+                   ftime = values(dates_exp), 
+                   ftime_across = 'date',
+                   ftime_var = 'ftime',
+                   merge_across_dims = TRUE,
+                   split_multiselected_dims = TRUE,
+                   lat = values(list(latmin, latmax)),
+                   lat_reorder = Sort(decreasing = TRUE),
+                   lon = values(list(lonmin, lonmax)),
+                   lon_reorder = CircularSort(0, 360),
+                   synonims = list(lon = c('lon', 'longitude'),
+                                   lat = c('lat', 'latitude'),
+                                   ftime = c('ftime', 'time')),
+                   transform = CDORemapper,
+                   transform_extra_cells = 2,
+                   transform_params = list(grid = 'r256x128',
+                                           method = 'bilinear'),
+                   transform_vars = c('lat', 'lon'),
+                   return_vars = list(lon = NULL,
+                                      lat = NULL,
+                                      ftime = 'date'),
+                   retrieve = TRUE)
 # save(exp_T, obs_T, exp_P, obs_P, file = "./tas_prlr_toydata.RData")         
 # Or use the following line to load the file provided in .RData format:
 # load(file = "./tas_prlr_toydata.RData")
@@ -105,11 +190,11 @@ Loading the data using `CST_Load` allows to obtain two lists, one for the experi
 
 ```
 > dim(exp_T$data)
-dataset  member   sdate   ftime     lat     lon 
-      1       9      20       3      35      64
+dataset    var  member   sdate   ftime     lat     lon 
+      1     1       9      20       3       35      64
 > dim(obs_T$data)
-dataset  member   sdate   ftime     lat     lon 
-      1       1      20       3      35      64
+dataset   var   sdate   ftime    lat     lon 
+      1    1      20       3      35      64
 ```
 
 Latitudes and longitudes of the common grid can be saved:
@@ -131,9 +216,9 @@ The original dimensions are preserved and the anomalies are stored in the `data`
 
 ```
 > str(ano_exp_T$data)
- num [1:20, 1, 1:9, 1:3, 1:35, 1:64] -1.3958 -0.0484 -0.1326 0.3621 -5.6905 ...
+ num [1:20, 1, 1:9, 1, 1:3, 1:35, 1:64] -1.399 -0.046 -0.133 0.361 -5.696 ...
 > str(ano_obs_T$data)
- num [1:20, 1, 1, 1:3, 1:35, 1:64] 1.551 1.393 -0.344 -5.986 -0.27 ...
+ num [1:20, 1, 1, 1, 1:3, 1:35, 1:64] 1.556 1.397 -0.346 -5.99 -0.273 ...
 ```
 
 Two lists containing the experiment ,`ano_exp`, and the observation, `ano_obs`, lists should be put together to serve as input of the function to compute multivariate RMSEs.
@@ -154,6 +239,8 @@ It is obtained by running the `CST_MultivarRMSE` function:
 
 
 ```r
+ano_obs[[1]] <- CST_InsertDim(ano_obs[[1]], posdim = 3, lendim = 1, name = "member")
+ano_obs[[2]] <- CST_InsertDim(ano_obs[[2]], posdim = 3, lendim = 1, name = "member")
 mvrmse <- CST_MultivarRMSE(exp = ano_exp, obs = ano_obs, weight)
 ```
 
@@ -163,51 +250,185 @@ The function `CST_MultivarRMSE` returns the multivariate RMSE value for 2 or mor
 ```r
 > class(mvrmse)
 > str(mvrmse$data)
- num [1, 1, 1:35, 1:64] 1002261 1034354 1041180 1034907 1238147 ...
+  num [1, 1, 1, 1:35, 1:64] 806916 832753 838254 833206 996828 ...
 > str(mvrmse$attrs$Variable)
 List of 2
  $ varName : chr [1:2] "tas" "prlr"
- $ metadata:List of 6
-  ..$ tas :List of 7
-  .. ..$ use_dictionary     : logi FALSE
-  .. ..$ units              : chr "K"
-  .. ..$ longname           : chr "2 metre temperature"
-  .. ..$ description        : chr "none"
-  .. ..$ daily_agg_cellfun  : chr "none"
-  .. ..$ monthly_agg_cellfun: chr "none"
-  .. ..$ verification_time  : chr "none"
-  ..$ lon : num [1:64(1d)] 0 1.41 2.81 4.22 5.62 ...
-  .. ..- attr(*, "cdo_grid_name")= chr "r256x128"
-  .. ..- attr(*, "data_across_gw")= logi TRUE
-  .. ..- attr(*, "array_across_gw")= logi FALSE
-  .. ..- attr(*, "first_lon")= num 340
-  .. ..- attr(*, "last_lon")= num 68.9
-  .. ..- attr(*, "projection")= chr "none"
-  ..$ lat : num [1:35(1d)] 73.8 72.4 71 69.6 68.2 ...
-  .. ..- attr(*, "cdo_grid_name")= chr "r256x128"
-  .. ..- attr(*, "first_lat")= num [1(1d)] 26
-  .. ..- attr(*, "last_lat")= num [1(1d)] 73.8
-  .. ..- attr(*, "projection")= chr "none"
-  ..$ prlr:List of 7
-  .. ..$ use_dictionary     : logi FALSE
-  .. ..$ units              : chr "m s-1"
-  .. ..$ longname           : chr "Total precipitation"
-  .. ..$ description        : chr "none"
-  .. ..$ daily_agg_cellfun  : chr "none"
-  .. ..$ monthly_agg_cellfun: chr "none"
-  .. ..$ verification_time  : chr "none"
-  ..$ lon : num [1:64(1d)] 0 1.41 2.81 4.22 5.62 ...
-  .. ..- attr(*, "cdo_grid_name")= chr "r256x128"
-  .. ..- attr(*, "data_across_gw")= logi TRUE
-  .. ..- attr(*, "array_across_gw")= logi FALSE
-  .. ..- attr(*, "first_lon")= num 340
-  .. ..- attr(*, "last_lon")= num 68.9
-  .. ..- attr(*, "projection")= chr "none"
-  ..$ lat : num [1:35(1d)] 73.8 72.4 71 69.6 68.2 ...
-  .. ..- attr(*, "cdo_grid_name")= chr "r256x128"
-  .. ..- attr(*, "first_lat")= num [1(1d)] 26
-  .. ..- attr(*, "last_lat")= num [1(1d)] 73.8
-  .. ..- attr(*, "projection")= chr "none"
+ $ metadata:List of 8
+  ..$ lat  : num [1:35(1d)] 73.8 72.4 71 69.6 68.2 ...
+  ..$ lon  : num [1:64(1d)] 0 1.41 2.81 4.22 5.62 ...
+  ..$ ftime: POSIXct[1:60], format: "1993-12-16 00:00:00" "1994-12-16 00:00:00" ...
+  ..$ tas  :List of 11
+  .. ..$ prec              : chr "float"
+  .. ..$ units             : chr "K"
+  .. ..$ dim               :List of 4
+  .. .. ..$ :List of 10
+  .. .. .. ..$ name         : chr "lon"
+  .. .. .. ..$ len          : int 64
+  .. .. .. ..$ unlim        : logi FALSE
+  .. .. .. ..$ group_index  : int 1
+  .. .. .. ..$ group_id     : int 65536
+  .. .. .. ..$ id           : int 1
+  .. .. .. ..$ dimvarid     :List of 5
+  .. .. .. .. ..$ id         : int 1
+  .. .. .. .. ..$ group_index: int 1
+  .. .. .. .. ..$ group_id   : int 65536
+  .. .. .. .. ..$ list_index : num -1
+  .. .. .. .. ..$ isdimvar   : logi TRUE
+  .. .. .. .. ..- attr(*, "class")= chr "ncid4"
+  .. .. .. ..$ units        : chr "degrees_east"
+  .. .. .. ..$ vals         : num [1:64(1d)] -19.7 -18.3 -16.9 -15.5 -14.1 ...
+  .. .. .. ..$ create_dimvar: logi TRUE
+  .. .. .. ..- attr(*, "class")= chr "ncdim4"
+  .. .. ..$ :List of 10
+  .. .. .. ..$ name         : chr "lat"
+  .. .. .. ..$ len          : int 35
+  .. .. .. ..$ unlim        : logi FALSE
+  .. .. .. ..$ group_index  : int 1
+  .. .. .. ..$ group_id     : int 65536
+  .. .. .. ..$ id           : int 0
+  .. .. .. ..$ dimvarid     :List of 5
+  .. .. .. .. ..$ id         : int 0
+  .. .. .. .. ..$ group_index: int 1
+  .. .. .. .. ..$ group_id   : int 65536
+  .. .. .. .. ..$ list_index : num -1
+  .. .. .. .. ..$ isdimvar   : logi TRUE
+  .. .. .. .. ..- attr(*, "class")= chr "ncid4"
+  .. .. .. ..$ units        : chr "degrees_north"
+  .. .. .. ..$ vals         : num [1:35(1d)] 26 27.4 28.8 30.2 31.6 ...
+  .. .. .. ..$ create_dimvar: logi TRUE
+  .. .. .. ..- attr(*, "class")= chr "ncdim4"
+  .. .. ..$ :List of 10
+  .. .. .. ..$ name         : chr "ensemble"
+  .. .. .. ..$ len          : int 14
+  .. .. .. ..$ unlim        : logi FALSE
+  .. .. .. ..$ group_index  : int 1
+  .. .. .. ..$ group_id     : int 65536
+  .. .. .. ..$ id           : int 3
+  .. .. .. ..$ dimvarid     :List of 5
+  .. .. .. .. ..$ id         : int -1
+  .. .. .. .. ..$ group_index: int 1
+  .. .. .. .. ..$ group_id   : int 65536
+  .. .. .. .. ..$ list_index : num -1
+  .. .. .. .. ..$ isdimvar   : logi TRUE
+  .. .. .. .. ..- attr(*, "class")= chr "ncid4"
+  .. .. .. ..$ vals         : int [1:14] 1 2 3 4 5 6 7 8 9 10 ...
+  .. .. .. ..$ units        : chr ""
+  .. .. .. ..$ create_dimvar: logi FALSE
+  .. .. .. ..- attr(*, "class")= chr "ncdim4"
+  .. .. ..$ :List of 11
+  .. .. .. ..$ name         : chr "time"
+  .. .. .. ..$ len          : int 7
+  .. .. .. ..$ unlim        : logi TRUE
+  .. .. .. ..$ group_index  : int 1
+  .. .. .. ..$ group_id     : int 65536
+  .. .. .. ..$ id           : int 2
+  .. .. .. ..$ dimvarid     :List of 5
+  .. .. .. .. ..$ id         : int 2
+  .. .. .. .. ..$ group_index: int 1
+  .. .. .. .. ..$ group_id   : int 65536
+  .. .. .. .. ..$ list_index : num -1
+  .. .. .. .. ..$ isdimvar   : logi TRUE
+  .. .. .. .. ..- attr(*, "class")= chr "ncid4"
+  .. .. .. ..$ units        : chr "months since 1993-11-15 12:00:00"
+  .. .. .. ..$ calendar     : chr "proleptic_gregorian"
+  .. .. .. ..$ vals         : num [1:7(1d)] 0 1 2 3 4 5 6
+  .. .. .. ..$ create_dimvar: logi TRUE
+  .. .. .. ..- attr(*, "class")= chr "ncdim4"
+  .. ..$ unlim             : logi TRUE
+  .. ..$ make_missing_value: logi TRUE
+  .. ..$ missval           : num -9e+33
+  .. ..$ hasAddOffset      : logi FALSE
+  .. ..$ hasScaleFact      : logi FALSE
+  .. ..$ table             : int 128
+  .. ..$ _FillValue        : num -9e+33
+  .. ..$ missing_value     : num -9e+33
+  ..$ lat  : num [1:35(1d)] 73.8 72.4 71 69.6 68.2 ...
+  ..$ lon  : num [1:64(1d)] 0 1.41 2.81 4.22 5.62 ...
+  ..$ ftime: POSIXct[1:60], format: "1993-12-16 00:00:00" "1994-12-16 00:00:00" ...
+  ..$ prlr :List of 9
+  .. ..$ prec              : chr "float"
+  .. ..$ units             : chr "m s-1"
+  .. ..$ dim               :List of 4
+  .. .. ..$ :List of 10
+  .. .. .. ..$ name         : chr "lon"
+  .. .. .. ..$ len          : int 64
+  .. .. .. ..$ unlim        : logi FALSE
+  .. .. .. ..$ group_index  : int 1
+  .. .. .. ..$ group_id     : int 65536
+  .. .. .. ..$ id           : int 1
+  .. .. .. ..$ dimvarid     :List of 5
+  .. .. .. .. ..$ id         : int 1
+  .. .. .. .. ..$ group_index: int 1
+  .. .. .. .. ..$ group_id   : int 65536
+  .. .. .. .. ..$ list_index : num -1
+  .. .. .. .. ..$ isdimvar   : logi TRUE
+  .. .. .. .. ..- attr(*, "class")= chr "ncid4"
+  .. .. .. ..$ units        : chr "degrees_east"
+  .. .. .. ..$ vals         : num [1:64(1d)] -19.7 -18.3 -16.9 -15.5 -14.1 ...
+  .. .. .. ..$ create_dimvar: logi TRUE
+  .. .. .. ..- attr(*, "class")= chr "ncdim4"
+  .. .. ..$ :List of 10
+  .. .. .. ..$ name         : chr "lat"
+  .. .. .. ..$ len          : int 35
+  .. .. .. ..$ unlim        : logi FALSE
+  .. .. .. ..$ group_index  : int 1
+  .. .. .. ..$ group_id     : int 65536
+  .. .. .. ..$ id           : int 0
+  .. .. .. ..$ dimvarid     :List of 5
+  .. .. .. .. ..$ id         : int 0
+  .. .. .. .. ..$ group_index: int 1
+  .. .. .. .. ..$ group_id   : int 65536
+  .. .. .. .. ..$ list_index : num -1
+  .. .. .. .. ..$ isdimvar   : logi TRUE
+  .. .. .. .. ..- attr(*, "class")= chr "ncid4"
+  .. .. .. ..$ units        : chr "degrees_north"
+  .. .. .. ..$ vals         : num [1:35(1d)] 26 27.4 28.8 30.2 31.6 ...
+  .. .. .. ..$ create_dimvar: logi TRUE
+  .. .. .. ..- attr(*, "class")= chr "ncdim4"
+  .. .. ..$ :List of 10
+  .. .. .. ..$ name         : chr "ensemble"
+  .. .. .. ..$ len          : int 14
+  .. .. .. ..$ unlim        : logi FALSE
+  .. .. .. ..$ group_index  : int 1
+  .. .. .. ..$ group_id     : int 65536
+  .. .. .. ..$ id           : int 3
+  .. .. .. ..$ dimvarid     :List of 5
+  .. .. .. .. ..$ id         : int -1
+  .. .. .. .. ..$ group_index: int 1
+  .. .. .. .. ..$ group_id   : int 65536
+  .. .. .. .. ..$ list_index : num -1
+  .. .. .. .. ..$ isdimvar   : logi TRUE
+  .. .. .. .. ..- attr(*, "class")= chr "ncid4"
+  .. .. .. ..$ vals         : int [1:14] 1 2 3 4 5 6 7 8 9 10 ...
+  .. .. .. ..$ units        : chr ""
+  .. .. .. ..$ create_dimvar: logi FALSE
+  .. .. .. ..- attr(*, "class")= chr "ncdim4"
+  .. .. ..$ :List of 11
+  .. .. .. ..$ name         : chr "time"
+  .. .. .. ..$ len          : int 7
+  .. .. .. ..$ unlim        : logi TRUE
+  .. .. .. ..$ group_index  : int 1
+  .. .. .. ..$ group_id     : int 65536
+  .. .. .. ..$ id           : int 2
+  .. .. .. ..$ dimvarid     :List of 5
+  .. .. .. .. ..$ id         : int 2
+  .. .. .. .. ..$ group_index: int 1
+  .. .. .. .. ..$ group_id   : int 65536
+  .. .. .. .. ..$ list_index : num -1
+  .. .. .. .. ..$ isdimvar   : logi TRUE
+  .. .. .. .. ..- attr(*, "class")= chr "ncid4"
+  .. .. .. ..$ units        : chr "months since 1993-11-15 12:00:00"
+  .. .. .. ..$ calendar     : chr "proleptic_gregorian"
+  .. .. .. ..$ vals         : num [1:7(1d)] 0 1 2 3 4 5 6
+  .. .. .. ..$ create_dimvar: logi TRUE
+  .. .. .. ..- attr(*, "class")= chr "ncdim4"
+  .. ..$ unlim             : logi TRUE
+  .. ..$ make_missing_value: logi FALSE
+  .. ..$ missval           : num 1e+30
+  .. ..$ hasAddOffset      : logi FALSE
+  .. ..$ hasScaleFact      : logi FALSE
+  .. ..$ table             : int 128
 ```
 
 The following lines plot the multivariate RMSE 

@@ -2,7 +2,7 @@
 author: "Nuria Perez"
 date: "`r Sys.Date()`"
 revisor: "Eva Rifà"
-revision date: "March 2023"
+revision date: "October 2023"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteEngine{knitr::knitr}
@@ -20,6 +20,7 @@ The R package s2dv should be loaded by running:
 
 ```r
 library(s2dv)
+library(zeallot)
 ```
 
 Library *CSTools*, should be installed from CRAN and loaded:
@@ -51,35 +52,68 @@ ini <- 1993
 fin <- 2012
 start <- as.Date(paste(ini, mth, "01", sep = ""), "%Y%m%d")
 end <- as.Date(paste(fin, mth, "01", sep = ""), "%Y%m%d")
-dateseq <- format(seq(start, end, by = "year"), "%Y%m%d")
+dateseq <- format(seq(start, end, by = "year"), "%Y%m")
 ``` 
 
+The grid in which all data will be interpolated needs to be specified within the `CST_Start` call (256x128 grid). The observational dataset used in this example is the EraInterim. 
 
-The grid in which all data will be interpolated should be also specified. The observational dataset used in this example is the EraInterim. 
-
-
-```r
-grid <- "256x128"
-obs <- "erainterim"
-```
-
-Using the `CST_Load` function, the data available in our data store can be loaded. The following lines, shows how this function can be used. However, the data is loaded from a previous saved `.RData` file:
+Using the `CST_Start` function, the data available in our data store can be loaded. The following lines, shows how this function can be used. However, the data is loaded from a previous saved `.RData` file:
 Ask nuria.perez at bsc.es to achieve the data to run the recipe.
 
 ```r
-require(zeallot)
+lonmin = -20
+lonmax = 70
+latmin = 25
+latmax = 75
+repos1 <- "/esarchive/exp/glosea5/glosea5c3s/monthly_mean/$var$_f6h/$var$_$sdate$.nc"
+repos2 <- "/esarchive/exp/ecmwf/system4_m1/monthly_mean/$var$_f6h/$var$_$sdate$01.nc"
+repos3 <- "/esarchive/exp/meteofrance/system5_m1/monthly_mean/$var$_f6h/$var$_$sdate$01.nc"
 
-glosea5 <- '/esarchive/exp/glosea5/glosea5c3s/$STORE_FREQ$_mean/$VAR_NAME$_f6h/$VAR_NAME$_$YEAR$$MONTH$.nc'
+exp <- CST_Start(dataset = list(list(name = 'glosea5c3s', path = repos1),
+                                list(name = 'ecmwf/system4_m1', path = repos2),
+                                list(name = 'meteofrance/system5_m1', path = repos3)),
+                 var = clim_var,
+                 member = indices(1:4), sdate = dateseq, ftime = indices(2:4),
+                 lat = values(list(latmin, latmax)),
+                 lat_reorder = Sort(decreasing = TRUE),
+                 lon = values(list(lonmin, lonmax)),
+                 lon_reorder = CircularSort(0, 360),
+                 synonims = list(lon = c('lon', 'longitude'), lat = c('lat', 'latitude'),
+                                 member = c('member', 'ensemble'), ftime = c('ftime', 'time')),
+                 transform = CDORemapper,
+                 transform_extra_cells = 2,
+                 transform_params = list(grid = 'r256x128', method = 'bilinear'),
+                 transform_vars = c('lat', 'lon'),
+                 return_vars = list(lat = 'dataset', lon = 'dataset', ftime = 'sdate'),
+                                    retrieve = TRUE)
 
-c(exp, obs) %<-% 
-   CST_Load(var = clim_var, exp = list(list(name = 'glosea5', path = glosea5), 
-                                  list(name = 'ecmwf/system4_m1'),
-                                  list(name = 'meteofrance/system5_m1')),
-                  obs = obs, sdates = dateseq, leadtimemin = 2, leadtimemax = 4,
-                  lonmin = -20, lonmax = 70, latmin = 25, latmax = 75, 
-                  storefreq = "monthly", sampleperiod = 1,  nmember = 9, 
-                  output = "lonlat", method = "bilinear", 
-                  grid = paste("r", grid, sep = ""))
+dates_exp <- exp$attrs$Dates
+repos_obs <- "/esarchive/recon/ecmwf/erainterim/monthly_mean/$var$/$var$_$date$.nc"
+obs <- CST_Start(dataset = list(list(name = 'erainterim', path = repos_obs)),
+                 var = clim_var,
+                 date =  unique(format(dates_exp, '%Y%m')),
+                 ftime = values(dates_exp), 
+                 ftime_across = 'date',
+                 ftime_var = 'ftime',
+                 merge_across_dims = TRUE,
+                 split_multiselected_dims = TRUE,
+                 lat = values(list(latmin, latmax)),
+                 lat_reorder = Sort(decreasing = TRUE),
+                 lon = values(list(lonmin, lonmax)),
+                 lon_reorder = CircularSort(0, 360),
+                 synonims = list(lon = c('lon', 'longitude'),
+                                 lat = c('lat', 'latitude'),
+                                 ftime = c('ftime', 'time')),
+                 transform = CDORemapper,
+                 transform_extra_cells = 2,
+                 transform_params = list(grid = 'r256x128',
+                                         method = 'bilinear'),
+                 transform_vars = c('lat', 'lon'),
+                 return_vars = list(lon = NULL,
+                                    lat = NULL,
+                                    ftime = 'date'),
+                 retrieve = TRUE)
+
 # save(exp, obs, file = "../tas_toydata.RData")   
 
 # Or use the following line to load the file provided in .RData format:
@@ -87,7 +121,6 @@ c(exp, obs) %<-%
 ```
 
 There should be two new elements loaded in the R working environment: `exp` and `obs`, containing the experimental and the observed data for temperature. It is possible to check that they are of class `sd2v_cube` by running:
-
 
 ```
 class(exp)
@@ -98,10 +131,10 @@ The corresponding data is saved in the element `data` of each object, while othe
 
 ```r
 > dim(exp$data)
-dataset  member   sdate   ftime     lat     lon 
-      3       9      20       3      35      64 
+dataset   var   member   sdate   ftime     lat     lon 
+      3    1       9       20       3       35      64 
 > dim(obs$data)
-dataset  member   sdate   ftime     lat     lon 
+dataset     var   sdate   ftime     lat     lon 
       1       1      20       3      35      64 
 Lat <- exp$coords$lat
 Lon <- exp$coords$lon
@@ -121,15 +154,16 @@ The dimensions are preserved:
 
 ```
 > str(ano_exp$data)
- num [1:20, 1:3, 1:9, 1:3, 1:35, 1:64] -1.3958 -0.0484 -0.1326 0.3621 -5.6905 ...
+ num [1:20, 1:3, 1:9, 1, 1:3, 1:35, 1:64] -1.399 -0.046 -0.133 0.361 -5.696 ...
 > str(ano_obs$data)
- num [1:20, 1, 1, 1:3, 1:35, 1:64] 1.551 1.393 -0.344 -5.986 -0.27 ...
+ num [1:20, 1, 1, 1, 1:3, 1:35, 1:64] 1.556 1.397 -0.346 -5.99 -0.273 ...
 ```
 
 The ACC is obtained by running the `CST_MultiMetric` function defining the parameter 'metric' as correlation. The function also includes the option of computing the Multi-Model Mean ensemble (MMM).
 
 
 ```r
+ano_obs <- CST_InsertDim(ano_obs, posdim = 3, lendim = 1, name = "member")
 AnomDJF <- CST_MultiMetric(exp = ano_exp, obs = ano_obs, metric = 'correlation', 
                            multimodel = TRUE)
 ```
@@ -141,13 +175,13 @@ While other relevant data is being stored in the corresponding element of the ob
 ```r
 > str(AnomDJF$data)
 List of 4
- $ corr      : num [1:4, 1, 1:35, 1:64] 0.584 0.649 0.131 0.565 0.484 ...
- $ p.val     : num [1:4, 1, 1:35, 1:64] 0.0034 0.000989 0.291589 0.00475 0.015262 ...
- $ conf.lower: num [1:4, 1, 1:35, 1:64] 0.192 0.289 -0.331 0.163 0.053 ...
- $ conf.upper: num [1:4, 1, 1:35, 1:64] 0.816 0.848 0.542 0.806 0.763 ...
+ $ corr      : num [1:4, 1, 1, 1:35, 1:64] 0.3061 0.4401 0.0821 0.2086 0.1948 ...
+ $ p.val     : num [1:4, 1, 1, 1:35, 1:64] 0.0947 0.0261 0.3653 0.1887 0.2052 ...
+ $ conf.lower: num [1:4, 1, 1, 1:35, 1:64] -0.15782 -0.00297 -0.37399 -0.25768 -0.27106 ...
+ $ conf.upper: num [1:4, 1, 1, 1:35, 1:64] 0.659 0.739 0.506 0.596 0.587 ...
 > names(AnomDJF)
 [1] "data"   "dims"   "coords" "attrs" 
-> names(AnomDJF$attrs$Datasets)
+> AnomDJF$attrs$Datasets
 [1] "glosea5"                "ecmwf/system4_m1"       "meteofrance/system5_m1" "erainterim"    
 ```
  
@@ -156,14 +190,14 @@ In the element $data of the `AnomDJF` object is a list of object for the metric 
 To obtain a spatial plot with a scale from -1 to 1 value of correlation for the model with the highest correlation for each grid point, the following lines should be run:
 
 ```r
-PlotCombinedMap(AnomDJF$data$corr[,1,,], lon = Lon, lat = Lat, map_select_fun = max,
+PlotCombinedMap(AnomDJF$data$corr[,1,1,,], lon = Lon, lat = Lat, map_select_fun = max,
                 display_range = c(0, 1), map_dim = 'nexp',
                 legend_scale = 0.5, brks = 11,
                 cols = list(c('white', 'black'),
                             c('white', 'darkblue'),
                             c('white', 'darkred'),
                             c('white', 'darkorange')),
-                bar_titles = c("MMM", names(AnomDJF$attrs$Datasets)),
+                bar_titles = c("MMM", AnomDJF$attrs$Datasets),
                 width = 14, height = 8)                
 ```
 
@@ -186,15 +220,14 @@ AnomDJF <- CST_MultiMetric(exp = ano_exp, obs = ano_obs, metric = 'rms',
 The following lines are necessary to obtain the plot which visualizes the best model given this metric for each grid point. 
 
 ```r
-names(dim(RMS)) <- c("maps", "lat", "lon")
-PlotCombinedMap(AnomDJF$data$rms[,1,,], lon = Lon, lat = Lat, map_select_fun = min,
+PlotCombinedMap(AnomDJF$data$rms[,1,1,,], lon = Lon, lat = Lat, map_select_fun = min,
                 display_range = c(0, ceiling(max(abs(AnomDJF$data$rms)))), map_dim = 'nexp',
                 legend_scale = 0.5, brks = 11,
                 cols = list(c('black', 'white'),
                             c('darkblue', 'white'),
                             c('darkred', 'white'),
                             c('darkorange', 'white')),
-                bar_titles = c("MMM", names(AnomDJF$attrs$Datasets)), 
+                bar_titles = c("MMM", AnomDJF$attrs$Datasets), 
                 width = 14, height = 8)              
 ```
 
@@ -211,9 +244,9 @@ Notice that the perfect RMSSS is 1 and the parameter  `map_select_fun` from `Plo
 
 ```r
 AnomDJF <- CST_MultiMetric(exp = ano_exp, obs = ano_obs, metric = 'rmsss', 
-                          multimodel = TRUE)
+                           multimodel = TRUE)
 
-PlotCombinedMap(AnomDJF$data$rmsss[,1,,], lon = Lon, lat = Lat, 
+PlotCombinedMap(AnomDJF$data$rmsss[,1,1,,], lon = Lon, lat = Lat, 
                 map_select_fun = function(x) {x[which.min(abs(x - 1))]},
                 display_range = c(0, 
                                   ceiling(max(abs(AnomDJF$data$rmsss)))), map_dim = 'nexp',
@@ -222,7 +255,7 @@ PlotCombinedMap(AnomDJF$data$rmsss[,1,,], lon = Lon, lat = Lat,
                             c('white', 'darkblue'),
                             c('white', 'darkred'),
                             c('white', 'darkorange')),
-                bar_titles = c("MMM", names(AnomDJF$attrs$Datasets)), 
+                bar_titles = c("MMM", AnomDJF$attrs$Datasets), 
                 width = 14, height = 8)                
 ```
 

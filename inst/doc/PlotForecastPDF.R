@@ -28,8 +28,8 @@ PlotForecastPDF(fcst, tercile.limits = rbind(c(20, 26), c(22, 28), c(15, 22)),
 								color.set = "s2s4e")
 
 ## ----fig.show = 'hide',warning=F----------------------------------------------
-fcst <- data.frame(fcst1 = lonlat_temp$exp$data[1,,1,1,1,1] - 273.15,
-                   fcst2 = lonlat_temp$exp$data[1,,1,2,1,1] - 273.15)
+fcst <- data.frame(fcst1 = lonlat_temp_st$exp$data[1,1,,1,1,1,1] - 273.15,
+                   fcst2 = lonlat_temp_st$exp$data[1,1,,1,2,1,1] - 273.15)
 PlotForecastPDF(fcst, tercile.limits = c(5, 7), extreme.limits = c(4, 8), 
 								var.name = "Temperature (ºC)",
 								title = "Forecasts initialized on Nov 2000 at sample Mediterranean region", 

@@ -70,5 +70,5 @@ dim(pdf_2) <-  c(statistic = 2)
 PlotPDFsOLE(pdf_1, pdf_2)
 }
 \author{
-Eroteida Sanchez-Garcia - AEMET, //email{esanchezg@aemet.es}
+Eroteida Sanchez-Garcia - AEMET, \email{esanchezg@aemet.es}
 }

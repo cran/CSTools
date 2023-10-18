@@ -19,11 +19,11 @@ CST_Anomaly(
 )
 }
 \arguments{
-\item{exp}{An object of class \code{s2dv_cube} as returned by \code{CST_Load} 
+\item{exp}{An object of class \code{s2dv_cube} as returned by \code{CST_Start} 
 function, containing the seasonal forecast experiment data in the element 
 named \code{$data}.}
 
-\item{obs}{An object of class \code{s2dv_cube} as returned by \code{CST_Load} 
+\item{obs}{An object of class \code{s2dv_cube} as returned by \code{CST_Start} 
 function, containing the observed data in the element named \code{$data}.}
 
 \item{dim_anom}{A character string indicating the name of the dimension 
@@ -86,7 +86,7 @@ anom <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = TRUE)
 }
 \seealso{
 \code{\link[s2dv]{Ano_CrossValid}}, \code{\link[s2dv]{Clim}} and 
-\code{\link{CST_Load}}
+\code{\link{CST_Start}}
 }
 \author{
 Perez-Zanon Nuria, \email{nuria.perez@bsc.es}

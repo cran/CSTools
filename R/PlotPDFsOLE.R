@@ -1,7 +1,7 @@
 #'Plotting two probability density gaussian functions and the optimal linear 
 #'estimation (OLE) as result of combining them.
 #'
-#'@author Eroteida Sanchez-Garcia - AEMET, //email{esanchezg@aemet.es}
+#'@author Eroteida Sanchez-Garcia - AEMET, \email{esanchezg@aemet.es}
 #'
 #'@description This function plots two probability density gaussian functions 
 #'and the optimal linear estimation (OLE) as result of combining them.

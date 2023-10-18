@@ -36,6 +36,9 @@
 #'  If it is NULL, the coordinate corresponding the the start date dimension or 
 #'  the first Date of each time step will be used as the name of the files.
 #'  It is NULL by default.
+#'@param drop_dims A vector of character strings indicating the dimension names 
+#'  of length 1 that need to be dropped in order that they don't appear in the 
+#'  netCDF file. It is NULL by default (optional).
 #'@param single_file A logical value indicating if all object is saved in a 
 #'  single file (TRUE) or in multiple files (FALSE). When it is FALSE, 
 #'  the array is separated for Datasets, variable and start date. It is FALSE  
@@ -69,10 +72,10 @@
 #'
 #'@examples
 #'\dontrun{
-#'data <- lonlat_temp$exp
+#'data <- lonlat_temp_st$exp
 #'destination <- "./"
 #'CST_SaveExp(data = data, destination = destination, ftime_dim = 'ftime', 
-#'            var_dim = NULL, ftime_dim = 'ftime', var_dim = NULL)
+#'            var_dim = 'var', dat_dim = 'dataset')
 #'}
 #'
 #'@import ncdf4
@@ -83,12 +86,11 @@
 CST_SaveExp <- function(data, destination = "./", sdate_dim = 'sdate',  
                         ftime_dim = 'time', dat_dim = 'dataset',
                         var_dim = 'var', memb_dim = 'member', 
-                        startdates = NULL, single_file = FALSE, 
-                        extra_string = NULL) {
+                        startdates = NULL, drop_dims = NULL, 
+                        single_file = FALSE, extra_string = NULL) {
   # Check 's2dv_cube'
   if (!inherits(data, 's2dv_cube')) {
-    stop("Parameter 'data' must be of the class 's2dv_cube', ",
-         "as output by CSTools::CST_Load.")
+    stop("Parameter 'data' must be of the class 's2dv_cube'.")
   }
   # Check object structure
   if (!all(c('data', 'attrs') %in% names(data))) {
@@ -167,7 +169,8 @@ CST_SaveExp <- function(data, destination = "./", sdate_dim = 'sdate',
           startdates = startdates,
           dat_dim = dat_dim, sdate_dim = sdate_dim, 
           ftime_dim = ftime_dim, var_dim = var_dim, 
-          memb_dim = memb_dim,
+          memb_dim = memb_dim, 
+          drop_dims = drop_dims, 
           extra_string = extra_string, 
           single_file = single_file)
 }
@@ -217,13 +220,16 @@ CST_SaveExp <- function(data, destination = "./", sdate_dim = 'sdate',
 #'@param memb_dim A character string indicating the name of the member dimension.
 #'  By default, it is set to 'member'. It can be NULL if there is no member 
 #'  dimension.  
+#'@param drop_dims A vector of character strings indicating the dimension names 
+#'  of length 1 that need to be dropped in order that they don't appear in the 
+#'  netCDF file. It is NULL by default (optional).
 #'@param single_file A logical value indicating if all object is saved in a 
 #'  unique file (TRUE) or in separated directories (FALSE). When it is FALSE, 
 #'  the array is separated for Datasets, variable and start date. It is FALSE  
-#'  by default.
+#'  by default (optional).
 #'@param extra_string A character string to be include as part of the file name, 
 #'  for instance, to identify member or realization. It would be added to the 
-#'  file name between underscore characters.
+#'  file name between underscore characters (optional).
 #'
 #'@return Multiple or single NetCDF files containing the data array.\cr
 #'\item{\code{single_file = TRUE}}{
@@ -247,19 +253,19 @@ CST_SaveExp <- function(data, destination = "./", sdate_dim = 'sdate',
 #' 
 #'@examples
 #'\dontrun{
-#'data <- lonlat_temp$exp$data
-#'lon <- lonlat_temp$exp$coords$lon
-#'lat <- lonlat_temp$exp$coords$lat
+#'data <- lonlat_temp_st$exp$data
+#'lon <- lonlat_temp_st$exp$coords$lon
+#'lat <- lonlat_temp_st$exp$coords$lat
 #'coords <- list(lon = lon, lat = lat)
-#'Datasets <- lonlat_temp$exp$attrs$Datasets
+#'Datasets <- lonlat_temp_st$exp$attrs$Datasets
 #'varname <- 'tas'
-#'Dates <- lonlat_temp$exp$attrs$Dates
+#'Dates <- lonlat_temp_st$exp$attrs$Dates
 #'destination = './'
-#'metadata <- lonlat_temp$exp$attrs$Variable$metadata
+#'metadata <- lonlat_temp_st$exp$attrs$Variable$metadata
 #'SaveExp(data = data, destination = destination, coords = coords, 
 #'        Datasets = Datasets, varname = varname, Dates = Dates, 
 #'        metadata = metadata, single_file = TRUE, ftime_dim = 'ftime', 
-#'        var_dim = NULL)
+#'        var_dim = 'var', dat_dim = 'dataset')
 #'}
 #' 
 #'@import ncdf4
@@ -271,7 +277,7 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
                     varname = NULL, metadata = NULL, Datasets = NULL, 
                     startdates = NULL, dat_dim = 'dataset', sdate_dim = 'sdate', 
                     ftime_dim = 'time', var_dim = 'var', memb_dim = 'member',
-                    single_file = FALSE, extra_string = NULL) {
+                    drop_dims = NULL, single_file = FALSE, extra_string = NULL) {
   ## Initial checks
   # data
   if (is.null(data)) {
@@ -294,6 +300,21 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
     }
     if (is.null(dim(Dates))) {
       stop("Parameter 'Dates' must have dimension names.")
+    }
+  }
+  # drop_dims
+  if (!is.null(drop_dims)) {
+    if (!is.character(drop_dims) | any(!drop_dims %in% names(dim(data)))) {
+      warning("Parameter 'drop_dims' must be character string containing ", 
+              "the data dimension names to be dropped. It will not be used.")
+    } else if (!all(dim(data)[drop_dims] %in% 1)) {
+      warning("Parameter 'drop_dims' can only contain dimension names ", 
+              "that are of length 1. It will not be used.")
+    } else {
+      data <- Subset(x = data, along = drop_dims, 
+                     indices = lapply(1:length(drop_dims), function(x) 1), 
+                     drop = 'selected')
+      dimnames <- names(dim(data))
     }
   }
   # coords
@@ -352,7 +373,6 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
   # Spatial coordinates
   if (!any(dimnames %in% .KnownLonNames()) | 
       !any(dimnames %in% .KnownLatNames())) {
-    warning("Spatial coordinates not found.")
     lon_dim <- NULL
     lat_dim <- NULL
   } else {
@@ -517,7 +537,6 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
   alldims <- c(dat_dim, var_dim, sdate_dim, lon_dim, lat_dim, memb_dim, ftime_dim)
   if (!all(dimnames %in% alldims)) {
     unknown_dims <- dimnames[which(!dimnames %in% alldims)]
-    # warning("Detected unknown dimension: ", paste(unknown_dims, collapse = ', '))
     memb_dim <- c(memb_dim, unknown_dims)
     alldims <- c(dat_dim, var_dim, sdate_dim, lon_dim, lat_dim, memb_dim, ftime_dim)
   }
@@ -823,7 +842,8 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
     for (dim in names(defined_dims)) {
       if (dim %in% names(extra_info_dim)) {
         for (info_dim in names(extra_info_dim[[dim]])) {
-          ncatt_put(file_nc, dim, info_dim, as.character(extra_info_dim[[dim]][[info_dim]]))
+          add_info_dim <- paste0(extra_info_dim[[dim]][[info_dim]], collapse = ', ')
+          ncatt_put(file_nc, dim, info_dim, add_info_dim)
         }
       }
     }
@@ -831,7 +851,8 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
     for (var in names(defined_vars)) {
       if (var %in% names(extra_info_var)) {
         for (info_var in names(extra_info_var[[var]])) {
-          ncatt_put(file_nc, var, info_var, as.character(extra_info_var[[var]][[info_var]]))
+          add_info_var <- paste0(extra_info_var[[var]][[info_var]], collapse = ', ')
+          ncatt_put(file_nc, var, info_var, add_info_var)
         }
       }
     }
@@ -924,14 +945,16 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
   for (dim in names(defined_dims)) {
     if (dim %in% names(extra_info_dim)) {
       for (info_dim in names(extra_info_dim[[dim]])) {
-        ncatt_put(file_nc, dim, info_dim, as.character(extra_info_dim[[dim]][[info_dim]]))
+        add_info_dim <- paste0(extra_info_dim[[dim]][[info_dim]], collapse = ', ')
+        ncatt_put(file_nc, dim, info_dim, add_info_dim)
       }
     }
   }
   # Additional dimension attributes
   if (!is.null(extra_info_var)) {
     for (info_var in names(extra_info_var)) {
-      ncatt_put(file_nc, varname, info_var, as.character(extra_info_var[[info_var]]))
+      add_info_var <- paste0(extra_info_var[[info_var]], collapse = ', ')
+      ncatt_put(file_nc, varname, info_var, add_info_var)
     }
   }
 

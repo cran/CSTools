@@ -207,6 +207,7 @@ hr {
 
 <pre><code class="r">library(s2dv)
 library(RColorBrewer)
+library(zeallot)
 </code></pre>
 
 <p>Library <em>CSTools</em>, should be installed from CRAN and loaded:</p>
@@ -241,29 +242,113 @@ dateseq &lt;- format(seq(start, end, by = &quot;year&quot;), &quot;%Y%m%d&quot;)
 obs &lt;- &quot;erainterim&quot;
 </code></pre>
 
-<p>Using the <code>CST_Load</code> function from <strong>CSTool package</strong>, the data available in our data store can be loaded. The following lines show how this function can be used. Here, the data is loaded from a previous saved <code>.RData</code> file:
+<p>Using the <code>CST_Start</code> function from <strong>CSTool package</strong>, the data available in our data store can be loaded. The following lines show how this function can be used. Here, the data is loaded from a previous saved <code>.RData</code> file:
 Ask nuria.perez at bsc.es for the data to run the recipe.</p>
 
-<pre><code class="r">require(zeallot)
+<pre><code class="r">latmin = 25
+latmax = 75
+lonmin = -20
+lonmax = 70
+dateseq &lt;- format(seq(start, end, by = &quot;year&quot;), &quot;%Y%m&quot;)
 
-glosea5 &lt;- &#39;/esarchive/exp/glosea5/glosea5c3s/$STORE_FREQ$_mean/$VAR_NAME$_f6h/$VAR_NAME$_$YEAR$$MONTH$.nc&#39;
+repos1 &lt;- &quot;/esarchive/exp/glosea5/glosea5c3s/monthly_mean/$var$_f6h/$var$_$sdate$.nc&quot;
 
-c(exp_T, obs_T) %&lt;-% 
-   CST_Load(var = temp, exp = list(list(name = &#39;glosea5&#39;, path = glosea5)),
-            obs = obs, sdates = dateseq, leadtimemin = 2, leadtimemax = 4,
-            latmin = 25, latmax = 75, lonmin = -20, lonmax = 70, output = &#39;lonlat&#39;,
-            nprocs = 1, storefreq = &quot;monthly&quot;, sampleperiod = 1, nmember = 9,
-            method = &quot;bilinear&quot;, grid = paste(&quot;r&quot;, grid, sep = &quot;&quot;))
+exp_T &lt;- CST_Start(dataset = list(list(name = &#39;glosea5c3s&#39;, path = repos1)),
+                   var = temp,
+                   member = indices(1:9),
+                   sdate = dateseq,
+                   ftime = indices(2:4),
+                   lat = values(list(latmin, latmax)),
+                   lat_reorder = Sort(decreasing = TRUE), 
+                   lon = values(list(lonmin, lonmax)),
+                   lon_reorder = CircularSort(0, 360),
+                   synonims = list(lon = c(&#39;lon&#39;, &#39;longitude&#39;),
+                                   lat = c(&#39;lat&#39;, &#39;latitude&#39;),
+                                   member = c(&#39;member&#39;, &#39;ensemble&#39;),
+                                   ftime = c(&#39;ftime&#39;, &#39;time&#39;)),
+                   transform = CDORemapper,
+                   transform_extra_cells = 2,
+                   transform_params = list(grid = &#39;r256x128&#39;,
+                                           method = &#39;bilinear&#39;),
+                   transform_vars = c(&#39;lat&#39;, &#39;lon&#39;),
+                   return_vars = list(lat = NULL, 
+                                      lon = NULL, ftime = &#39;sdate&#39;),
+                                      retrieve = TRUE)
+dates_exp &lt;- exp_T$attrs$Dates
+repos2 &lt;- &quot;/esarchive/recon/ecmwf/erainterim/monthly_mean/$var$/$var$_$date$.nc&quot;
+obs_T &lt;- CST_Start(dataset = list(list(name = &#39;erainterim&#39;, path = repos2)),
+                   var = temp,
+                   date =  unique(format(dates_exp, &#39;%Y%m&#39;)),
+                   ftime = values(dates_exp), 
+                   ftime_across = &#39;date&#39;,
+                   ftime_var = &#39;ftime&#39;,
+                   merge_across_dims = TRUE,
+                   split_multiselected_dims = TRUE,
+                   lat = values(list(latmin, latmax)),
+                   lat_reorder = Sort(decreasing = TRUE),
+                   lon = values(list(lonmin, lonmax)),
+                   lon_reorder = CircularSort(0, 360),
+                   synonims = list(lon = c(&#39;lon&#39;, &#39;longitude&#39;),
+                                   lat = c(&#39;lat&#39;, &#39;latitude&#39;),
+                                   ftime = c(&#39;ftime&#39;, &#39;time&#39;)),
+                   transform = CDORemapper,
+                   transform_extra_cells = 2,
+                   transform_params = list(grid = &#39;r256x128&#39;,
+                                           method = &#39;bilinear&#39;),
+                   transform_vars = c(&#39;lat&#39;, &#39;lon&#39;),
+                   return_vars = list(lon = NULL,
+                                      lat = NULL,
+                                      ftime = &#39;date&#39;),
+                   retrieve = TRUE)
 
-glosea5 &lt;- &#39;/esarchive/exp/glosea5/glosea5c3s/$STORE_FREQ$_mean/$VAR_NAME$_f24h/$VAR_NAME$_$YEAR$$MONTH$.nc&#39;
+repos3 &lt;- &quot;/esarchive/exp/glosea5/glosea5c3s/monthly_mean/$var$_f24h/$var$_$sdate$.nc&quot;
 
-c(exp_P, obs_P) %&lt;-% 
-   CST_Load(var = precip,  exp = list(list(name = &#39;glosea5&#39;, path = glosea5)),
-            obs = obs, sdates = dateseq, leadtimemin = 2, leadtimemax = 4,
-            latmin = 25, latmax = 75, lonmin = -20, lonmax = 70, output = &#39;lonlat&#39;,
-            nprocs = 1, storefreq = &quot;monthly&quot;, sampleperiod = 1, nmember = 9,
-            method = &quot;bilinear&quot;, grid = paste(&quot;r&quot;, grid, sep = &quot;&quot;))
-
+exp_P &lt;- CST_Start(dataset = list(list(name = &#39;glosea5c3s&#39;, path = repos3)),
+                   var = precip,
+                   member = indices(1:9),
+                   sdate = dateseq,
+                   ftime = indices(2:4),
+                   lat = values(list(latmin, latmax)),
+                   lat_reorder = Sort(decreasing = TRUE), 
+                   lon = values(list(lonmin, lonmax)),
+                   lon_reorder = CircularSort(0, 360),
+                   synonims = list(lon = c(&#39;lon&#39;, &#39;longitude&#39;),
+                                   lat = c(&#39;lat&#39;, &#39;latitude&#39;),
+                                   member = c(&#39;member&#39;, &#39;ensemble&#39;),
+                                   ftime = c(&#39;ftime&#39;, &#39;time&#39;)),
+                   transform = CDORemapper,
+                   transform_extra_cells = 2,
+                   transform_params = list(grid = &#39;r256x128&#39;,
+                                           method = &#39;bilinear&#39;),
+                   transform_vars = c(&#39;lat&#39;, &#39;lon&#39;),
+                   return_vars = list(lat = NULL, 
+                                      lon = NULL, ftime = &#39;sdate&#39;),
+                                      retrieve = TRUE)
+dates_exp &lt;- exp_P$attrs$Dates
+obs_P &lt;- CST_Start(dataset = list(list(name = &#39;erainterim&#39;, path = repos2)),
+                   var = precip,
+                   date =  unique(format(dates_exp, &#39;%Y%m&#39;)),
+                   ftime = values(dates_exp), 
+                   ftime_across = &#39;date&#39;,
+                   ftime_var = &#39;ftime&#39;,
+                   merge_across_dims = TRUE,
+                   split_multiselected_dims = TRUE,
+                   lat = values(list(latmin, latmax)),
+                   lat_reorder = Sort(decreasing = TRUE),
+                   lon = values(list(lonmin, lonmax)),
+                   lon_reorder = CircularSort(0, 360),
+                   synonims = list(lon = c(&#39;lon&#39;, &#39;longitude&#39;),
+                                   lat = c(&#39;lat&#39;, &#39;latitude&#39;),
+                                   ftime = c(&#39;ftime&#39;, &#39;time&#39;)),
+                   transform = CDORemapper,
+                   transform_extra_cells = 2,
+                   transform_params = list(grid = &#39;r256x128&#39;,
+                                           method = &#39;bilinear&#39;),
+                   transform_vars = c(&#39;lat&#39;, &#39;lon&#39;),
+                   return_vars = list(lon = NULL,
+                                      lat = NULL,
+                                      ftime = &#39;date&#39;),
+                   retrieve = TRUE)
 # save(exp_T, obs_T, exp_P, obs_P, file = &quot;./tas_prlr_toydata.RData&quot;)         
 # Or use the following line to load the file provided in .RData format:
 # load(file = &quot;./tas_prlr_toydata.RData&quot;)
@@ -280,11 +365,11 @@ class(obs_P)
 <p>Loading the data using <code>CST_Load</code> allows to obtain two lists, one for the experimental data and another for the observe data, with the same elements and compatible dimensions of the data element:</p>
 
 <pre><code>&gt; dim(exp_T$data)
-dataset  member   sdate   ftime     lat     lon 
-      1       9      20       3      35      64
+dataset    var  member   sdate   ftime     lat     lon 
+      1     1       9      20       3       35      64
 &gt; dim(obs_T$data)
-dataset  member   sdate   ftime     lat     lon 
-      1       1      20       3      35      64
+dataset   var   sdate   ftime    lat     lon 
+      1    1      20       3      35      64
 </code></pre>
 
 <p>Latitudes and longitudes of the common grid can be saved:</p>
@@ -302,9 +387,9 @@ c(ano_exp_P, ano_obs_P) %&lt;-% CST_Anomaly(exp = exp_P, obs = obs_P, cross = TR
 <p>The original dimensions are preserved and the anomalies are stored in the <code>data</code> element of the correspondent object:</p>
 
 <pre><code>&gt; str(ano_exp_T$data)
- num [1:20, 1, 1:9, 1:3, 1:35, 1:64] -1.3958 -0.0484 -0.1326 0.3621 -5.6905 ...
+ num [1:20, 1, 1:9, 1, 1:3, 1:35, 1:64] -1.399 -0.046 -0.133 0.361 -5.696 ...
 &gt; str(ano_obs_T$data)
- num [1:20, 1, 1, 1:3, 1:35, 1:64] 1.551 1.393 -0.344 -5.986 -0.27 ...
+ num [1:20, 1, 1, 1, 1:3, 1:35, 1:64] 1.556 1.397 -0.346 -5.99 -0.273 ...
 </code></pre>
 
 <p>Two lists containing the experiment ,<code>ano_exp</code>, and the observation, <code>ano_obs</code>, lists should be put together to serve as input of the function to compute multivariate RMSEs.</p>
@@ -321,58 +406,194 @@ weight &lt;- c(2, 1)
 <p>The multivariate RMSE gives an indication of the forecast performance (RMSE) for multiple variables simultaneously. Variables can be weighted based on their relative importance.
 It is obtained by running the <code>CST_MultivarRMSE</code> function:</p>
 
-<pre><code class="r">mvrmse &lt;- CST_MultivarRMSE(exp = ano_exp, obs = ano_obs, weight)
+<pre><code class="r">ano_obs[[1]] &lt;- CST_InsertDim(ano_obs[[1]], posdim = 3, lendim = 1, name = &quot;member&quot;)
+ano_obs[[2]] &lt;- CST_InsertDim(ano_obs[[2]], posdim = 3, lendim = 1, name = &quot;member&quot;)
+mvrmse &lt;- CST_MultivarRMSE(exp = ano_exp, obs = ano_obs, weight)
 </code></pre>
 
 <p>The function <code>CST_MultivarRMSE</code> returns the multivariate RMSE value for 2 or more variables. The output is a CSTool object containing  the RMSE values in the <code>data</code> element and other relevant information:</p>
 
 <pre><code class="r">&gt; class(mvrmse)
 &gt; str(mvrmse$data)
- num [1, 1, 1:35, 1:64] 1002261 1034354 1041180 1034907 1238147 ...
+  num [1, 1, 1, 1:35, 1:64] 806916 832753 838254 833206 996828 ...
 &gt; str(mvrmse$attrs$Variable)
 List of 2
  $ varName : chr [1:2] &quot;tas&quot; &quot;prlr&quot;
- $ metadata:List of 6
-  ..$ tas :List of 7
-  .. ..$ use_dictionary     : logi FALSE
-  .. ..$ units              : chr &quot;K&quot;
-  .. ..$ longname           : chr &quot;2 metre temperature&quot;
-  .. ..$ description        : chr &quot;none&quot;
-  .. ..$ daily_agg_cellfun  : chr &quot;none&quot;
-  .. ..$ monthly_agg_cellfun: chr &quot;none&quot;
-  .. ..$ verification_time  : chr &quot;none&quot;
-  ..$ lon : num [1:64(1d)] 0 1.41 2.81 4.22 5.62 ...
-  .. ..- attr(*, &quot;cdo_grid_name&quot;)= chr &quot;r256x128&quot;
-  .. ..- attr(*, &quot;data_across_gw&quot;)= logi TRUE
-  .. ..- attr(*, &quot;array_across_gw&quot;)= logi FALSE
-  .. ..- attr(*, &quot;first_lon&quot;)= num 340
-  .. ..- attr(*, &quot;last_lon&quot;)= num 68.9
-  .. ..- attr(*, &quot;projection&quot;)= chr &quot;none&quot;
-  ..$ lat : num [1:35(1d)] 73.8 72.4 71 69.6 68.2 ...
-  .. ..- attr(*, &quot;cdo_grid_name&quot;)= chr &quot;r256x128&quot;
-  .. ..- attr(*, &quot;first_lat&quot;)= num [1(1d)] 26
-  .. ..- attr(*, &quot;last_lat&quot;)= num [1(1d)] 73.8
-  .. ..- attr(*, &quot;projection&quot;)= chr &quot;none&quot;
-  ..$ prlr:List of 7
-  .. ..$ use_dictionary     : logi FALSE
-  .. ..$ units              : chr &quot;m s-1&quot;
-  .. ..$ longname           : chr &quot;Total precipitation&quot;
-  .. ..$ description        : chr &quot;none&quot;
-  .. ..$ daily_agg_cellfun  : chr &quot;none&quot;
-  .. ..$ monthly_agg_cellfun: chr &quot;none&quot;
-  .. ..$ verification_time  : chr &quot;none&quot;
-  ..$ lon : num [1:64(1d)] 0 1.41 2.81 4.22 5.62 ...
-  .. ..- attr(*, &quot;cdo_grid_name&quot;)= chr &quot;r256x128&quot;
-  .. ..- attr(*, &quot;data_across_gw&quot;)= logi TRUE
-  .. ..- attr(*, &quot;array_across_gw&quot;)= logi FALSE
-  .. ..- attr(*, &quot;first_lon&quot;)= num 340
-  .. ..- attr(*, &quot;last_lon&quot;)= num 68.9
-  .. ..- attr(*, &quot;projection&quot;)= chr &quot;none&quot;
-  ..$ lat : num [1:35(1d)] 73.8 72.4 71 69.6 68.2 ...
-  .. ..- attr(*, &quot;cdo_grid_name&quot;)= chr &quot;r256x128&quot;
-  .. ..- attr(*, &quot;first_lat&quot;)= num [1(1d)] 26
-  .. ..- attr(*, &quot;last_lat&quot;)= num [1(1d)] 73.8
-  .. ..- attr(*, &quot;projection&quot;)= chr &quot;none&quot;
+ $ metadata:List of 8
+  ..$ lat  : num [1:35(1d)] 73.8 72.4 71 69.6 68.2 ...
+  ..$ lon  : num [1:64(1d)] 0 1.41 2.81 4.22 5.62 ...
+  ..$ ftime: POSIXct[1:60], format: &quot;1993-12-16 00:00:00&quot; &quot;1994-12-16 00:00:00&quot; ...
+  ..$ tas  :List of 11
+  .. ..$ prec              : chr &quot;float&quot;
+  .. ..$ units             : chr &quot;K&quot;
+  .. ..$ dim               :List of 4
+  .. .. ..$ :List of 10
+  .. .. .. ..$ name         : chr &quot;lon&quot;
+  .. .. .. ..$ len          : int 64
+  .. .. .. ..$ unlim        : logi FALSE
+  .. .. .. ..$ group_index  : int 1
+  .. .. .. ..$ group_id     : int 65536
+  .. .. .. ..$ id           : int 1
+  .. .. .. ..$ dimvarid     :List of 5
+  .. .. .. .. ..$ id         : int 1
+  .. .. .. .. ..$ group_index: int 1
+  .. .. .. .. ..$ group_id   : int 65536
+  .. .. .. .. ..$ list_index : num -1
+  .. .. .. .. ..$ isdimvar   : logi TRUE
+  .. .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;ncid4&quot;
+  .. .. .. ..$ units        : chr &quot;degrees_east&quot;
+  .. .. .. ..$ vals         : num [1:64(1d)] -19.7 -18.3 -16.9 -15.5 -14.1 ...
+  .. .. .. ..$ create_dimvar: logi TRUE
+  .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;ncdim4&quot;
+  .. .. ..$ :List of 10
+  .. .. .. ..$ name         : chr &quot;lat&quot;
+  .. .. .. ..$ len          : int 35
+  .. .. .. ..$ unlim        : logi FALSE
+  .. .. .. ..$ group_index  : int 1
+  .. .. .. ..$ group_id     : int 65536
+  .. .. .. ..$ id           : int 0
+  .. .. .. ..$ dimvarid     :List of 5
+  .. .. .. .. ..$ id         : int 0
+  .. .. .. .. ..$ group_index: int 1
+  .. .. .. .. ..$ group_id   : int 65536
+  .. .. .. .. ..$ list_index : num -1
+  .. .. .. .. ..$ isdimvar   : logi TRUE
+  .. .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;ncid4&quot;
+  .. .. .. ..$ units        : chr &quot;degrees_north&quot;
+  .. .. .. ..$ vals         : num [1:35(1d)] 26 27.4 28.8 30.2 31.6 ...
+  .. .. .. ..$ create_dimvar: logi TRUE
+  .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;ncdim4&quot;
+  .. .. ..$ :List of 10
+  .. .. .. ..$ name         : chr &quot;ensemble&quot;
+  .. .. .. ..$ len          : int 14
+  .. .. .. ..$ unlim        : logi FALSE
+  .. .. .. ..$ group_index  : int 1
+  .. .. .. ..$ group_id     : int 65536
+  .. .. .. ..$ id           : int 3
+  .. .. .. ..$ dimvarid     :List of 5
+  .. .. .. .. ..$ id         : int -1
+  .. .. .. .. ..$ group_index: int 1
+  .. .. .. .. ..$ group_id   : int 65536
+  .. .. .. .. ..$ list_index : num -1
+  .. .. .. .. ..$ isdimvar   : logi TRUE
+  .. .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;ncid4&quot;
+  .. .. .. ..$ vals         : int [1:14] 1 2 3 4 5 6 7 8 9 10 ...
+  .. .. .. ..$ units        : chr &quot;&quot;
+  .. .. .. ..$ create_dimvar: logi FALSE
+  .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;ncdim4&quot;
+  .. .. ..$ :List of 11
+  .. .. .. ..$ name         : chr &quot;time&quot;
+  .. .. .. ..$ len          : int 7
+  .. .. .. ..$ unlim        : logi TRUE
+  .. .. .. ..$ group_index  : int 1
+  .. .. .. ..$ group_id     : int 65536
+  .. .. .. ..$ id           : int 2
+  .. .. .. ..$ dimvarid     :List of 5
+  .. .. .. .. ..$ id         : int 2
+  .. .. .. .. ..$ group_index: int 1
+  .. .. .. .. ..$ group_id   : int 65536
+  .. .. .. .. ..$ list_index : num -1
+  .. .. .. .. ..$ isdimvar   : logi TRUE
+  .. .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;ncid4&quot;
+  .. .. .. ..$ units        : chr &quot;months since 1993-11-15 12:00:00&quot;
+  .. .. .. ..$ calendar     : chr &quot;proleptic_gregorian&quot;
+  .. .. .. ..$ vals         : num [1:7(1d)] 0 1 2 3 4 5 6
+  .. .. .. ..$ create_dimvar: logi TRUE
+  .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;ncdim4&quot;
+  .. ..$ unlim             : logi TRUE
+  .. ..$ make_missing_value: logi TRUE
+  .. ..$ missval           : num -9e+33
+  .. ..$ hasAddOffset      : logi FALSE
+  .. ..$ hasScaleFact      : logi FALSE
+  .. ..$ table             : int 128
+  .. ..$ _FillValue        : num -9e+33
+  .. ..$ missing_value     : num -9e+33
+  ..$ lat  : num [1:35(1d)] 73.8 72.4 71 69.6 68.2 ...
+  ..$ lon  : num [1:64(1d)] 0 1.41 2.81 4.22 5.62 ...
+  ..$ ftime: POSIXct[1:60], format: &quot;1993-12-16 00:00:00&quot; &quot;1994-12-16 00:00:00&quot; ...
+  ..$ prlr :List of 9
+  .. ..$ prec              : chr &quot;float&quot;
+  .. ..$ units             : chr &quot;m s-1&quot;
+  .. ..$ dim               :List of 4
+  .. .. ..$ :List of 10
+  .. .. .. ..$ name         : chr &quot;lon&quot;
+  .. .. .. ..$ len          : int 64
+  .. .. .. ..$ unlim        : logi FALSE
+  .. .. .. ..$ group_index  : int 1
+  .. .. .. ..$ group_id     : int 65536
+  .. .. .. ..$ id           : int 1
+  .. .. .. ..$ dimvarid     :List of 5
+  .. .. .. .. ..$ id         : int 1
+  .. .. .. .. ..$ group_index: int 1
+  .. .. .. .. ..$ group_id   : int 65536
+  .. .. .. .. ..$ list_index : num -1
+  .. .. .. .. ..$ isdimvar   : logi TRUE
+  .. .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;ncid4&quot;
+  .. .. .. ..$ units        : chr &quot;degrees_east&quot;
+  .. .. .. ..$ vals         : num [1:64(1d)] -19.7 -18.3 -16.9 -15.5 -14.1 ...
+  .. .. .. ..$ create_dimvar: logi TRUE
+  .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;ncdim4&quot;
+  .. .. ..$ :List of 10
+  .. .. .. ..$ name         : chr &quot;lat&quot;
+  .. .. .. ..$ len          : int 35
+  .. .. .. ..$ unlim        : logi FALSE
+  .. .. .. ..$ group_index  : int 1
+  .. .. .. ..$ group_id     : int 65536
+  .. .. .. ..$ id           : int 0
+  .. .. .. ..$ dimvarid     :List of 5
+  .. .. .. .. ..$ id         : int 0
+  .. .. .. .. ..$ group_index: int 1
+  .. .. .. .. ..$ group_id   : int 65536
+  .. .. .. .. ..$ list_index : num -1
+  .. .. .. .. ..$ isdimvar   : logi TRUE
+  .. .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;ncid4&quot;
+  .. .. .. ..$ units        : chr &quot;degrees_north&quot;
+  .. .. .. ..$ vals         : num [1:35(1d)] 26 27.4 28.8 30.2 31.6 ...
+  .. .. .. ..$ create_dimvar: logi TRUE
+  .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;ncdim4&quot;
+  .. .. ..$ :List of 10
+  .. .. .. ..$ name         : chr &quot;ensemble&quot;
+  .. .. .. ..$ len          : int 14
+  .. .. .. ..$ unlim        : logi FALSE
+  .. .. .. ..$ group_index  : int 1
+  .. .. .. ..$ group_id     : int 65536
+  .. .. .. ..$ id           : int 3
+  .. .. .. ..$ dimvarid     :List of 5
+  .. .. .. .. ..$ id         : int -1
+  .. .. .. .. ..$ group_index: int 1
+  .. .. .. .. ..$ group_id   : int 65536
+  .. .. .. .. ..$ list_index : num -1
+  .. .. .. .. ..$ isdimvar   : logi TRUE
+  .. .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;ncid4&quot;
+  .. .. .. ..$ vals         : int [1:14] 1 2 3 4 5 6 7 8 9 10 ...
+  .. .. .. ..$ units        : chr &quot;&quot;
+  .. .. .. ..$ create_dimvar: logi FALSE
+  .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;ncdim4&quot;
+  .. .. ..$ :List of 11
+  .. .. .. ..$ name         : chr &quot;time&quot;
+  .. .. .. ..$ len          : int 7
+  .. .. .. ..$ unlim        : logi TRUE
+  .. .. .. ..$ group_index  : int 1
+  .. .. .. ..$ group_id     : int 65536
+  .. .. .. ..$ id           : int 2
+  .. .. .. ..$ dimvarid     :List of 5
+  .. .. .. .. ..$ id         : int 2
+  .. .. .. .. ..$ group_index: int 1
+  .. .. .. .. ..$ group_id   : int 65536
+  .. .. .. .. ..$ list_index : num -1
+  .. .. .. .. ..$ isdimvar   : logi TRUE
+  .. .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;ncid4&quot;
+  .. .. .. ..$ units        : chr &quot;months since 1993-11-15 12:00:00&quot;
+  .. .. .. ..$ calendar     : chr &quot;proleptic_gregorian&quot;
+  .. .. .. ..$ vals         : num [1:7(1d)] 0 1 2 3 4 5 6
+  .. .. .. ..$ create_dimvar: logi TRUE
+  .. .. .. ..- attr(*, &quot;class&quot;)= chr &quot;ncdim4&quot;
+  .. ..$ unlim             : logi TRUE
+  .. ..$ make_missing_value: logi FALSE
+  .. ..$ missval           : num 1e+30
+  .. ..$ hasAddOffset      : logi FALSE
+  .. ..$ hasScaleFact      : logi FALSE
+  .. ..$ table             : int 128
 </code></pre>
 
 <p>The following lines plot the multivariate RMSE </p>
@@ -381,7 +602,7 @@ List of 2
             toptitle = &quot;Multivariate RMSE tas, prlr 1993 - 2012&quot;, colNA = &quot;white&quot;)
 </code></pre>
 
-<p><img src="data:image/png;base64,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" alt="Multivariate RMSE"/></p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAjAAAAFeCAMAAACsOdXqAAAAQlBMVEUAAAAFMGETTIgiaK00gLlLmMVnAB90stSODCWbyuCzGyy92urGQT7Y6PHZZ1Loi27s8vX1rYz47+r6ybH74NH///9yaHNvAAAACXBIWXMAAArDAAAKwwE0KSSrAAAgAElEQVR4nO2di2LjKKyGdbbt9uR0OttpJ+//qicGBJJABmx8SaJ/d5rEF8DSZ3ExtuFqMnUIji6A6b5kwJi6ZMCYumTAmLpkwJi6ZMCYumTAmLpkwJi6ZMCYumTAmLpkwJi6ZMCYumTAmLpkwJi6tD8wMAm/5OsKX/WEWrOLWRUyFyuhUKx+jUjjnDojMOFPNzDFPYBhkGVOESkAs9TvxdLHZSSL8tfSQZS2atl3sAwYsXI7YHhMg5mv5WPItyqluLVOC8yilMvZsaR55unXtejlYcBkPmeI8q+FxNQd5Aab60hgrtxn4Xs4dvxHtyC/2VpuQG46ehaqmStBjTsnLcuP6FoqW/jOkyqE0VpY1XYopbi5jgMG6sCwMz87t8Ri/gkkO/JFyVxsyorKkyydy3iCy7LRTZl7SXGyr0WL0fKzQ8lS3FyHAHMNFioCQ79m9lGcwpMoApOSEpnDVW7KCnstZL0AmJiYBgzbpFCI4g4GjAJMtqq0Bd8OUnbcnxkw5ETNeCiWSroVSKlE2YBvRz7K/p/xOTtQDkzhx2a6A2AUB+YnZsmkggKZeSE65MDkWedHdOWFzQpOEiMwca4qvFSA2SfAnByYK7U7CxPsgySROX0+wsh0FWDEJoUjwo82YDAZniFLW2QU8ycZCp4fHJgYkSvAgLDzlTuFLFaBuV5leqk6iBsVHHwlDkp55Mh0AnMlJZSECtBFAWeA2YuXw4CBXmCyVdQpDJg8u6tIL2XOttKAoXmUgkwvMCHAgfx6pbtk4YYkkQOzGy8HAXMlPpsFJtUd2VZX4na2spAdSbqYeQ2YlAdLk//sAIanwQ6k5BAZLzNgdsPlPMDwv1dq+QJQAhh1E/JtLTA8lK0BphBGtZT5IYhSyBT30SmAiVE+/mXjuHE3tlVyCtBtSWopO5p0OXP+g9cFPGuI+7PaQykbP3K2ufq1YDFcJ7YSKe7hzOOBCUGkARjFKdFUzKYsO5p0IXPg3wvAlD1MNuoA5kqyyL5WgLnyjZ4KmCuPqAowyeppKXUK3RjYB82O58syv2Yuy4DJCBa1R6G4s8DQEpa/ZhbjVMsUHxuYxxEF5mn0RIc6WmDAmHqUNZOeQk90qINFWxJPZMUnOlTTCBkwpi4ZMKYuGTCmLhkwpi4ZMKYuGTCmLhkwpi4ZMKYuGTCmLhkwpi41AAOmZ9VCYC6Xy23nS6vehd621eu8KrvdDuxljSq5v65MrnbwaGNn+MnF3OSvsKo0K4Dp0V0B02vDmocPA2ai5UJN7kLEutIYMIXdOm1Y8/ARwPjqg5re45LbprM0Bkxht04b1jx8EDDC9BMwJdt0lsaAKezWacOahw8CJlfRNp2lMWAKu3XasObh3YFJ9dHFN2Smhq9mm87SLAXmg+skoEhVTL3So4P40pLVVDlmwI5ROkjWzl1VtuXdagPmpMDEbnQERnSM1hQNwCLMowHzJoBZ242mmoanDJgHAgZogBkPjBvONGAeBhjsCDFbZ7wsL60f/jZgHgeY8LlRhAmXS5YC88mF4GiAyOWNGsxPTZprxO/aZgv5Ww0MEdkcf7UmXyx9urxmwBDVSGjcrGjy7YGZ1s0gsxQYlxoJNEcBE4cL7hMY6hVsPGgm3xGYUJrXAjLLgMku3B8DDEATLycDxo+ti+H2sPj2p3Al+AhgpnG6vCgQA0UHLWG/EwDTqk3xmDG5cE3GSHDA9HFzD3ZQYo1wMDCEEKleYGAqPSPGgFFNTiMMsXkYbI/c+M3IxIEMmkOAyRSTLzE9Q8wgYL68aqDsrM5i4GY4CIBHA3BBPLD6fHtLVQ7tNEQ7uoUiDDW6sBOYlUoRsrFUYMDIzTkwhUjuN0cTa6EhQ6UCzjHApAhYLt08LwaMAIZQcomtchwSm3f0S/JGW7A5CBivchuH9KbIWWDAiM0dLRSV6Vdp/vSsowuenmdmJTDNVZ+egJYoHXcRSwyYdz/VaDLKh/s/TD0CeRlvATDUB3nMWQUMHQTqoYQnUlhWCisvqeX73MB4972T+MKujI0BJm8rBCevA0ZNHXNQQSJrCtvw0EJDzarpDYpH2g62OpquAVADorZ90IXWQd/uz00pomhEjBTxhvBU+/7epdzT+XK6OkAQsnbfNReR1P7xgtt//zwvMJQX/+17T2Ciw2aA4fWYlkryMNkuAgOlRAASsbPA3DSR4plxf58UmKmdkjct9gbmhXXFtfV009ImhIoXDCAhVVotZbmm3WvAeGYCNc8HTALE1UP47Xv/CBNdNhdB6PJ8ozJwYVnTeHMbMFHPB8xkywtpxUzQfB8MjJPCTFoosMI6RiNCAaCymQFT0IUA8010LDDlSie2OoCHmrTgPoDpBKRRnY5Xu81iM+z8h7GAr79eIZx/fbXivg6IpuQkMZAvnXZdcW2zVkq53IAJwEDkZTNgRJ3RlJy8dON/0wDzOvLOtCQtOQPmBsxk/xsz+HuzCOM7Ln3JZUOsIFZgI3dxqcrSkjNgviDwsj0wL3QspSU5SCMlpDvNkxpRqoK05BgtsPhW2aKJi2bp0S7AeFj2AuYlhoTMOqXt+Bf/S/HsylJJacltCkzt+uzxwEAIMLtFmBec45ZmdkbRjchv9wU3yftNBwKzslvtD4nOeI3Xf3GkQ3pSI6SiVoBQ4nY6nEj680Nauh2gCFu2bs6Vn0QMHrIo5ZZhtULSphKI2v7rgQkPHZk4kXfdASJzSmB+eiMLuXdjefQszz+ReRANAuU8wGCdgDMYqWfDhZpzAXND5fb/Tb3AhDYIunAxM3N7bdaYPR8wJc+GgdRzAfP5M+ECncDwSmJSzffNSLC12RID5mhgfNTrjTD5BV93Xa+ZE8EE4pdVbhZhTgQMRFZ+eqsk6tQIzMI6CWKClJqU03yv+76BCab/I4QjHG5q7MzUTQUYuZn2WwEj3liECqElTGP4xsU1x5JSFmYIqLBUDi629jgcCM2K1jRXBZjKZjVtA0zA5STAOFgmLQAmq5LyuY/l3fKDC8QAJguvenRZo/sCJgT/2uRwxaabAJOmMAyIMHN3J9eBwZv2/fphMYXrnoABHHY/DzAAU5Xkg0w/MNyhMD8LtgWYkGxqw/TB0KI7ACaOaKU2zOHAuDA31UZTGyZUSp3ACHeCnLGk7NYAzOuA29BUnRaYqdcRcMkbvQcDA0KdVZLfifSevHNfBgKznU4LTLwyU+olHQoMtqPAN2E++4AJtLzF7kxsnRoww941oIGxkTAbHML9L+j3TRhUpoGWULqap2jSCEvYHjwxs1p7NMNQ4VLwrhHxj6IHBebm3xs0bg7DAmCA4oIPs6t6Zu3RrMJClwGTpABDGi1+KLcfGOnJlmbp2qNZQ8WMjgCGeGBLYKC+CVcJGF9MVyn9xrH/LmB4dAnbt3RkeksvtQoLXUdGmO2AAYDcUVVJYKYksA3z21VJSyJMVoxpnVVJ/cBkuIwGptvEAhgP3QQMrAAmL8e0zoDpBaaAS7parUkDqQRU6c2Viitk8mH4EODff1ONdJPYv4ax21YbRtOJqYHQeRZ10bBcvaB0AlPE5WzATANC/0767Zswy4BRymDA9DV6S7iMBWbGWI3AIC9TmHEda7H/KmD0FQZMCRill3Q2YIiWVklKGfQ2jAFTqJIU7QkMaRUrwPyEAPPv7xVtGI0MA+a+gGHdKBWYUCmFgd6FwECp3QvlxVg6+iICA4bUSY3AXCqqcJabmHtCZhMmRk3b/Pr1y5d0uvaJ60O3G3/WXPSSbmSeUgpPak7M0N2iZW5f3dL24QEC3BZSQJGrNWA0oJqAiaC0tmE2ASbZYgYYBw3eNb0cGH6jaiAD6XA7AVknHN84CPnIwGTf0Fx7AaPcJ8eBicT8HQAMfa5GWkWoyeonn5heNWnZrmdjNvnnjDBcFWB+KcC03ukdMKGP7inZPBAUeXrrqY/eHhqYA9sw0APMLwgtmCIwzY8GkHe/l2xO2i78LUr9Hl1CQ0fyhwBz7bw0MAqYUO9JW2jAhACjRBj3nol2YJJxMpt7NDRX9Hq0n4Wu5I8CpigJjAYITorUlov1jJeZCCOzxQuQ4j1xn36y5odPMZ8gKiUas2IFvObTZWbV6MnR4NSKFVQDRVlerZJCtbQ/MHNVUgmYz5wXvD/KJfmuAzPzuqm0iWvvQo9nnhAYwF+1Ru9KYNIbZ6Lee4HJeLkt+GgFZpYWWiwDpg0YWU0NBMZVGv6dVvENaAuACbUSmVL1+cmAma+SKo9u8UiJkZaaS54RGNg+wjgX+PhyQV4w2T5gcCZVAofe7DILjLzDURIDxLPQ6pknBKa5W702wvgAA4KXbmCyRi8B5h1mPJ0IiX1mBgzxLDR75hmBKUUXt6zcaO2Wr49u+oq3hQDTvG0kOB+MEBwpTm+FFRwm26WH4uaP88CixN9LAVgJSu/uFVAkGI1a2q0eBMyHu0HxxswXvY8oDZhUiKkD4984HdKZAwYf0Z4BQ561YMCcA5jQjikAUxtAnQMmhajYH34vvyX2NfISRno5MBwdmKvZDJitgUFevtitrQhMdcBdB+ZW/WBdRKfTgAIMf6gy44U9h47OcjBgjogwqaM0McOBqV+gUYGhLSA2nQZK3WsA/vhkisgMEAbMQcAAPp2DAFNv8E7SgaFkxLSwDyZMKnkxYDYARnhIeqwVpHfs8brBGIhj+WGwt2YTrVfPgxOFD+jVw9j/EVjQfQum1zxTK22nNB47uZSLe0ERfJ0DGPLizg/yNKAVwBBi4C00ZWI1FXHxn3OuMGDOCAyGlwvWdBGjik1VYN5YSCGjOu6vx6XJFQbMGYF5x9dIfwAD5r02k20mwvAJuPRn7cY1DkyKSAbM8cCEporn5VIAptJV0iPMW0TE/cVkyG0hMxMaUgZgwJwGmHTyB2RwVOZDDO3P2LQKTAowWDUR24FGTEwfPGkGzHBgNElPkuUeEXT5O/imTGrxBsczj0nbaMCE8Zb3SAybiquKbdCywzKPthKxMPnKbgtBORqYwMR7AsaNzfo6KT59xhmAPP+0CxhIESrURCGVAgWJjdh3Wv8MXQNmZITxMeSdEjO9nBEYMW+BGDa/oAkYT+AbrZQmU5YDjRz+XxdYqh41YHqASS0X9Cx2rG8f/vndaVJVtEHw4AJgkLmAziureNZXO0s8asB0AOP8k5aT+ujdA4O7sftCMAh0AhP75OF7stq2pAQZMCMizEcZGP9JaywKDDq3BRhPArv8WDDl9rgYMGOA8ZWOAOY9AuNDTAgw9GmGFWBSTeeaRqGKEwN/Kz3UKwOGbBKAUCbRZsB8xO2DV8X62C8ijr85nB0pCQgispBoEgk5EBTUQkBqnK3ksBOQw4EJc/slMJB8TwIPPVDa6uDA5HXPMk+NlgEzDJhPDZhQpyjAxI8CMHPELPH2ABkwQ4BhdVJWJfnvJWCiJDD+SvccMl1uHicDZgAwk2PJdqJCwh99wFRjTJebx8mAWQ8MCGBIzwYrF9p5Kh2wqJLCAJ9VSScHpgKKJnCXFwkrFxFbvBAIaQO83pzWs8vPrS5aCRTarnO3mgaDoZV6pfYHBvy9a3w8hrZewz3WQIb28aCx3onjfWDA9Jb6voD5SKw4XXJhEzZ/Pkcabkm4AMxNf2h0zULTd+5WkwHToBIwEZfSO0UjMFC6wciAqZf6wYDhjd7JLiSChHiSiDJg+kv9WMCEdi/OdwAhBxDkz4LXbN7omoWm79ytpqcCprVbXaiCeG1EuInt45QcXqdEI7wLVQDqdVmj6Ts9p2bXWdpaMQYRggq97xMBQyKJ3I0BAwZMUzEeHRg5KlMGxrdd0CYGzBMDUxJPLPWe0CYGjAHDgSFjNuCf0GzAtBbj6YCB+EQzlAHTU4xTA9MKhPTw/GrXsy4BIXfXOJXZCdU8iMtF9ksBqWWnJN/oydarh48JTHr0qgFjwMwBgxcGSB/bgDFgVGAIHll9ZMAYMAVg1LcDGjAGTBGYOQ8bMHcLjOKhpUpOZFcHKg6Pd0rim9nkG9kqu0v+pMsaPToImKWgLASmNE2zIbnTARMiR5p5Z8AYMA3AXOLzzB4dmPhgewNmJTDkjTj3CUztbn8x0WcVMC6VpwfmUgkw5wYme150RkuIMOHLYmCmFCYPR/yeF5hsIOZegCHBQ1n1GmYo6y9HafJ4gIV5+JTAzDu8+v5qrR+crSaXq2/6CpK7ISgyWcHRf0G/g3CzVmCER/XV5DXoOS5kf6D339WAKXiyHEzKwNTAaATn7MBMzNwbMBAfGyDCjAAoVEhLgVErnycH5u4iTKGtW34yJ+elFxi9rfLkwFBihgDjTvmtgCnXQumBr2z/+ddgq8BUWrbKmmcCJhKzGpjJ0rcIsyEwOi1IjFs0fXlTn8BXA6YMxbRcZ+mJgPkYBsxEy1QlTbwQDodGmAIxIH/S4ZcFwBSB8LjoTZtzAaMBoS3Hi5ZfXHLGp1sIt//Lm3/Ja5/4GwnJNotPjogPHqHJdnavpdzDgAvL89diAxvFDqVAG2kAxSQyUuCFdpg0z3cKk5O53wUwyubdwMSoElw2GhgZNGIy4oHSgZ0lwOThQ/BiwAAMBIZWdZGYUcAoywMvBd97ZnqAgcKAnhjgNWAWRZhgRFklsSYOPkBtDDDqM7BelVczveNkjh5gCg0U0Wp5dmDgawkwAC7CeGQIMIwYdNb2wBSF2YVSNAHzWqqUeFfagOkGBjwurkoCUqMFSHiEgUHA6E/ZqwHjHkTbDkzxggA8ATBYacReQxEYmAcGJDAOAdaGiW3bzxRXKF8wCBh1TR0Yh8wqYO6tl/ShSAKDrvnz5w/A7c/U2MDLyyDlF9FIgrbEZNK2ASixfdgKL2ZjqdC7vkwhhZ+fn19BmLx0lQCBDjzBzMwdjQBczqPiXyx8BEQIY5kWY1YCIkHBUmI1fggwzkN/PDB0PgIWDj0pqx4ODEQSQlDHRq6MSDALzOXyE5BZDkzT1PVZYHxsbALmrQwMxpiHBOZP0CwwKSAVgbnBkYBx9v6U2weAkCwCDDBgAjGwFJj5aTuNwPiu3eIIE2ulhwQGxgND2zjplHXR7DsQk4B5E8BMSsj0AlOZSNoOjGemGmF86TNg/IDMQwITiVkFDMwC4yKOjzC3LUAA405TDszUhvHMdAJTm6reBcwNmQZgoAiMg+ZQYEgLdCwwfwIxWwIz/U7ATIGGAvMG6YFXCZhfjpkjI0wTMI6YMwJDwBELNEIUYPA3GuVXaC6gqwQwmmmZH25ukjxSTTh8Rd87wpCvGOaA84mlwQpTelw/zll74CUASZYoMFKPr3aRwHCTQDSKqJXClYKMgFZgpM3FydsCTIbLKYCBGjBTt/yLCRu/+Du+o1gCE/pwA4CBQIvPhxOzCpjXOFAoI4yfFA6HAVPA5QTAeMvPAePeo8SB+Q6t3whMqJtwDyxNGCTqAaZkEAhDhALzCI0CDLQBE+dfCWDCXQTZ6N5OwBRxORiYZPNZYC6kNYLA+MYMB+YtizA3YDqrpAIycTyZAUOpKQMT8a0CE/rXAgy87UQSswswCi4DgAnE9AJDT9BZYPDJ0BkwHhm/Itok1EvLgYGC4soMmPf4xKSE9gSMWxQvEdSBKXev431KHJm9gFF6SccAI3sjs9EFpkYv5MC4Ksmt4DYBd3mgDkxGhP/OIaHKgYmlj20o/+nbMB3AlLrXtxADPsTsD4wq+ZJPCYgUrkeX/QTniBFf3BxNKgofo0vepuEA4dhreJkk5o6tBIwyosb6CpMi4txfXI77x4tXJFQRJhEjWao3IQV3bXMJCjXKLb+4PgKDM6okSW2S4RSNhmfHUcD89AOTKqMGYEKj2EX9HBj0OO1BwVcYmy8CM5EQIhP4fb8RkXQNtBxRNgTGzwtlwCzkZBAwSo10CDC3k6kdmHcEphxhYoiIvHjv+4vn090oGTCxKsqaQpiMVgVtCYwvxWmAiaCQL6z+3hGY7LU3E0AAxZGNRmA8JIGXqUq64eKA+c/HGAKMO+KwdazRRJ12CDBvskpaURsNAKYUdUZEmNS8bAUGqKnJS7ZUYKAFmMBKcPzfMLXT3x4p2jAQb4tywEy7izbQAcDQ9xeix7X73I6JMGOAQV7agWEvB3339yTnl3C6I0wkxgUL7MOFG2oFMJCAkZXSqYCZu+16a2D0NoxGhmIEbqM0aRJtjaPiQSzqOhNzNt7Cc3ikjckm/im/nikNZ7SBv+b3NypeHwhYB2BILMJOkdsLAZKYz9Ylb1mHVV5JlSDI3UPYy17AIG7P1fjTgMH1Ehg86nlgrtqlgXXAXOQdQe3AAH056BwwkBo4i4AhzCAwPKCEBQcC45uSOTDsjt3dgSlqFTCTmXsjDLZVgL2eeBaYVGNVgLkR4z0vgflJwBBcIjSujXwgMKHrUQKGEHMEMIX5DnsDE/3fGmGo5oHBmqUUYX5ShEndahZhDqySxLAPBybLbRdgIGkgMASZVmAga8MMBObjLxSBmeJLMkBERlRJcDpgEJoDgAm9o8ER5qbPvjZM7SUV7cBMcx7Su2uj/mrAuL+kQiLInDbCHAmMR6YOjOKpTPHcDgf7xY2FhRQAxKu6MplyyMjeNUC2gPCiNxczPsMF4m9FOH2cVEi46yTfVg6XEcg4H44VoKmx1F8KGWXPxM2w6PKsCGMG5WftQNpeObk0jLWTD9t7NWDK3aR7BQbEuIyvGTVgvgNOaKvADU51wfBkwFQX7AiMc4nMZjEwvh6KwISWlAqMp4ZEmI+P+BrK6a8PMYcBcyHhTgBzI+ZAYAqbrASGvCrWtQk0YIBPxewEJkSAbPN4b3UbMBCLGr5MuEOc3BOJ2R8Yf9CCmMcEhnZR0/0iOTB8twowsb4I3/0lAsBZDoQr7/1qlRQiTKiBEuS+UgoBJtZLRwHDnkjxoMDgwWHTO93LCkxiN5IM3y4AQq4qp+1xC6zzyfhLU4T5pu0WNr+OADNd3sYO95+wTAATThDfLBoKDJ/uhyY5JTAyVS1XJSTEwXlvquhZjbe3eGOIeAEI+JFNmX1Ye4FirnHm9mdVN+8jAb6IHkCIgQ0cV+GB0f5zWkqurEJ4dCf8RtdKlwnPITjYRMKy4HppSzQMpiO6y9I2GhiaqzCXUwDjickbt1yREwmEepYgTkquqDownwkYP1pE6zic7vA7IIPg4N0qf8O0CcQJsx0MDJrpKYARE+bLuNSv/JfXQwkYWu03AIPNHQSG6jvUMhhWMND8cU/BgVh7GTADgfmcBQbbM8uAyYj5EMQ0AZMkTYgPh/gtJJ9pgsCAATMgwriwXwQG8snfncCITtKSKilGGZDApIHieWBi5LEIMwAYH+9pG4ZMgNGTbwUm61YvBib1y9JNaBVgYq301FVSJVctd81VkDkkNHDnX4eomFza6l3O2GuzTT5wHMoV4h7kc0Tz5ENbefoTr2kGo8lbyBQPS2rl2aMctJRmK82FCl/nAAYblKKwsVO0GpiyZ7uB8UpEz/LiR4su7qZphw0Cg0YzYJYDo9hC2mQpMCAn1KwCplUhwMQxPANmFDByTHQwMGok2AEYOuPdqqS7AGam5tgFmPTgl8DLDx6VAbMIGHLRZRtgXKPXgHkQYCguG1VJ8KI9p/sIYODnOYFRTN4KjP+VLrGG1U0AdCteklNskEkjoHN3edCu9oU0WbcCjPQoJoP3NODwT6eRtJNOc51YfCAw4OYj7ADMZJPwKvrjgfk0YJYBw2fXbg7Ma36p+whgXP1rwPh40QUM5BFnW2Cc6SdmGsgRJopDdKuBAQOGADMh0woMiN87AYODxxVoOCzpy3pgPg0YrkZgQPzeDxginZpECzNVb42WAQMGTKs+mEB7tXgrAdoTILX1YrP02z9IpUwpvPK9HWAzDq52XPF2xObS8WRbwVGMUsFTfXqmAOcIYOA8wLzowEDRs+HakAGzIzD0yaR3B4zfrUxMDRgwYJYAwx6/fzgwjphuYOK7xVmwiXtGMRfE+fwGTB8wH6cC5oW6lgEj2zBKbgkZSgt+jS4gT2A2YO4aGGerEjWNwKRwEzBj0NHpg08NjOhzvVWE213CLWC4vM3Rewm7QeHHP/8zr8Le8M961TyJEtNstG62hmmNT+WcPgAYOC0wk+LbY27/+oAZJQOGA3M5NzAeFY/NyYEJU0MMmKMVq5aTA+OJiU8TNmAO1wBgFrRqWoCJU8vdUwIeGhg4caNXaj0wS5rBjcCQNgzcATDl1KqSY6Td1lylCgCjNWUZ3o7mNU9PrQoSASZ2r/Ep5ggM9oOl6RVAatkLfLcFJhsPk+/ZGA/FnA4A5h/RU59RBzDuhtDHAyYfCut+N+5YHQJMwqRSP/UA8yaAoU+wPz8wxZF1Oejpf4vcnwGYVClV2jNdwLyxKskRcz/ApMtqjBEBDNBSPw8wKa7UGsB9wLwBBWaqle4IGF8liasx8hcr9RMBEysl1v4t6LGBEaWfgJj+i28DCx/BZEOusTRoZyIqwlKBR6Z2rQldUgElERM+Ax8RIOwPv5Ylz1lNuL0o5RBgpiv34P53b01mEWTQFbk2HY0IF7FybMrM2KIXGCQGIwreFnh6YOiVezkZbUdYJh2NCBex8j8RFd0g/cAAA8bPToPzAzNJK82+vJwWGDZ6pxW+G5gQYygwdIL9PQKzMy/nBaaFmAXAuCDDgfmIN8ckRlh3xIAhOhoRLmZn8lWxyhJgJmQEMB94PxWhhb429FhgJCgi8VHAaK44AoNlAvp9HhhZh2io4Ekph88REniJs0fddhUwtAi0HzADu0fS/PcHDCVGqZQWApOREH3Cb2vQXn5+FmCG9o+k9e8QGEKM0oxZCoyMMbnnQ7Q5NTBjWy/S+PcITCLmn/LptBQYF0VA3O3CgXk5PTCDx1+k7e8TGCRmODCeCBD7J17Y4PtJgRnKy2MA8z8MmNxCS4HB8KEBk1YV7tacB2bachAwpmfVMmAaNxqpvTN89PwGZmjAPEN+Bozld1SGBswz5GfAWNaZdhcAAANKSURBVH5HZWjAPEN+Bozld1SGuxfddN8yYExdMmBMXTJgTF3SgQmXEtyH++r/7FGm4kWM7TKCcHjK1ZOhOe6b3wYHqCYQMLn9cx/X/YAJWe6QUXaIm+cY7LhTfiGboRnOAXMF/rEXMPtkUzrEzXPEY9sJmOv4A2wHBvCM3FqPCwxc9wdmdIazqUA8JSIwQzKdL9FuwLjc6CHukNl11/xIA3QPYEAAE86QjbUrMPQQN2+ExhbFXvn5nMZmOJMApRPjy4MBM/4EnM3tum+EkcCMSXQ2t9Sg8MFtn5bhXLGGZsQOcfMs8Qx/4EbvlQJzfTxgWH57trMfEBis7GIlD2ThttprHEYc4n7A7DkOM3ygSQcG4vhgyHtm67HaaaRXHKI+UX5kntdd8yuM9K7NcLf+q+kxZMCYumTAmLpkwJi6ZMCYumTAmLpkwJi6ZMCYumTAmLpkwJi6ZMCYumTAmLpkwJi6ZMCYumTAmLpkwJi6ZMCYumTAmLpkwJi6ZMCYujRoKrnp/nQoMMUXNJRfPlF6y0b21oS5VzW8F3Up6qOkz6K+ivou6m9RPyX9Keq/on4X9auo/yvpf4v6tygDxoAxYAwYA8aAMWAMGAPGgDFgDBgDxoAxYAwYA8aAMWAMGAPGgDFgDBgDxoAxYAwYA8aAMWAMGAPGgDFgDBgDxoAxYAwYA8aAMWAMGAPGgDFgDBgDxoA5HBjT/elQYIakYpndQWYGjGW2x26bpGKZ3UFmBoxltsdupmeVAWPq0nJggL5DNL3bevgrPvMcxKs2B2Yl0g29T4ANji5PVPs7Jrsrt17uscbMFpfI5cFea82XjFKeQ3zV++jciukCWzIsvzxR7e8QSevlHmvNbAww8Q3omwFDcqD/xubG08VFG/lwT2AgHQfG0aVHtrJK2gUYSDmkoLohMNOLwa+pItwWGCB/HxYYyI8vunM0MMF9MdGtI0zCpZTT4FqC4rIhMEDAJyf5vhGGZQYx3IwHhuZwLbtxXD4xPyWnkSc9+7ItMJBO8fAPCif9fsBcI6/jgZE5bA0MS5ecAuNP+mLSW9V/skraP8Lk3WrWCR2nA7vV6NYNerpqj/1hu9Wm55QBY+qSAWPqkgFj6pIBY+rS/wMbhppOLzPo9wAAAABJRU5ErkJggg==" alt="Multivariate RMSE"/></p>
 
 </body>
 

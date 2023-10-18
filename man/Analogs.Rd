@@ -13,6 +13,7 @@ Analogs(
   latL = NULL,
   expVar = NULL,
   obsVar = NULL,
+  sdate_dim = "sdate",
   criteria = "Large_dist",
   excludeTime = NULL,
   lonVar = NULL,
@@ -40,11 +41,13 @@ the same latitudinal and longitudinal dimensions as parameter 'expL' and a
 single temporal dimension with the maximum number of available observations.}
 
 \item{time_obsL}{A character string indicating the date of the observations 
-in the format "dd-mm-yyyy". Reference time to search for analogs.}
+in the format "dd-mm-yyyy". Reference time to search for analogs. It must 
+have time dimensions.}
 
 \item{time_expL}{An array of N named dimensions (coinciding with time 
 dimensions in expL) of character string(s) indicating the date(s) of the 
-experiment in the format "dd-mm-yyyy". Time(s) to find the analogs.}
+experiment in the format "dd-mm-yyyy". Time(s) to find the analogs. If it 
+is not an scalar it must have named dimensions.}
 
 \item{lonL}{A vector containing the longitude of parameter 'expL'.}
 
@@ -57,6 +60,9 @@ function will be the analog of parameter 'expVar'.}
 
 \item{obsVar}{An array of N named dimensions containing the field of the 
 same variable as the passed in parameter 'expVar' for the same region.}
+
+\item{sdate_dim}{A character string indicating the name of the start date 
+dimension. By default, it is set to 'sdate'.}
 
 \item{criteria}{A character string indicating the criteria to be used for the
 selection of analogs:
@@ -137,7 +143,7 @@ the selection of the best analogs in a short number of posibilities, the best
 ones. This function has not constrains of specific regions, variables to 
 downscale, or data to be used (seasonal forecast data, climate projections 
 data, reanalyses data). The regrid into a finner scale is done interpolating 
-with CST_Load. Then, this interpolation is corrected selecting the analogs in
+with CST_Start. Then, this interpolation is corrected selecting the analogs in
 the large and local scale in based of the observations. The function is an 
 adapted version of the method of Yiou et al 2013.
 }
@@ -148,6 +154,7 @@ dim(expSLP) <- c(lat = 4, lon = 5)
 obsSLP <- c(rnorm(1:180), expSLP * 1.2)
 dim(obsSLP) <- c(time = 10, lat = 4, lon = 5)
 time_obsSLP <- paste(rep("01", 10), rep("01", 10), 1994 : 2003, sep = "-")
+dim(time_obsSLP) <- c(time = 10)
 downscale_field <- Analogs(expL = expSLP, obsL = obsSLP, 
                           time_obsL = time_obsSLP,time_expL = "01-01-1994")
 

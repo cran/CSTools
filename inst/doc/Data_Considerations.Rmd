@@ -1,6 +1,8 @@
 ---
 author: "Nuria Perez"
 date: "`r Sys.Date()`"
+revisor: "Eva Rifà"
+revision date: "October 2023"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteEngine{knitr::knitr}
@@ -49,6 +51,7 @@ All CSTools functions have been developed following the same guidelines. The mai
 A reasonable important doubt that a new user may have at this point is: what 's2dv_cube' object is? 
 's2dv_cube' is a class of an object storing the data and metadata in several elements: 
   + $data element is an N-dimensional array with named dimensions containing the data (e.g.: temperature values), 
+  + $dims vector with the dimensions of $data
   + $coords is a named list with elements of the coordinates vectors corresponding to the dimensions of the $data, 
   + $attrs is a named list with elements corresponding to attributes of the object. It has the following elements:
     + $Variable is a list with the variable name in element $varName and with the metadata of all the variables in the $metadata element, 
@@ -59,9 +62,9 @@ It is possible to visualize an example of the structure of 's2dv_cube' object by
 
 ```
 library(CSTools)
-class(lonlat_temp$exp) # check the class of the object lonlat_temp$exp
-names(lonlat_temp$exp) # shows the names of the elements in the object lonlat_temp$exp
-str(lonlat_temp$exp) # shows the full structure of the object lonlat_temp$exp
+class(lonlat_temp_st$exp) # check the class of the object lonlat_temp$exp
+names(lonlat_temp_st$exp) # shows the names of the elements in the object lonlat_temp$exp
+str(lonlat_temp_st$exp) # shows the full structure of the object lonlat_temp$exp
 ```
 
 ### 3. Data storage recommendations
@@ -75,9 +78,11 @@ CSTools main objective is to share state-of-the-arts post-processing methods wit
 - CST_Load can perform spatial averages over a defined region or return the lat-lon grid and
 - CST_Load can read from files using multiple parallel processes among other possibilites.
 
-If you plan to use CST_Load, we have developed guidelines to download and formatting the data. See [CDS_Seasonal_Downloader](https://earth.bsc.es/gitlab/es/cds-seasonal-downloader).
+CSTools also has the function `CST_Start` from [startR](https://CRAN.R-project.org/package=startR) that is more flexible than `CST_Load`. We recommend to use `CST_Start` since it's more efficient and flexible.
 
-There are alternatives to CST_Load function, for instance, the user can:
+If you plan to use `CST_Load` or `CST_Start`, we have developed guidelines to download and formatting the data. See [CDS_Seasonal_Downloader](https://earth.bsc.es/gitlab/es/cds-seasonal-downloader).
+
+There are alternatives to these functions, for instance, the user can:
 1) use another tool to read the data from files (e.g.: ncdf4, easyNDCF, startR packages) and then convert it to the class 's2dv_cube' with `s2dv.cube()` function or
 2) If they keep facing problems to convert the data to that class, they can just skip it and work with the functions without the prefix 'CST_'. In this case, they will be able to work with the basic class 'array'. 
 
@@ -108,6 +113,55 @@ c(exp, obs) %<-%  CST_Load(var = 'sfcWind',
                            grid = "r360x180")
 ```
 
+### 5. CST_Start example
+```
+path_exp <- paste0('/esarchive/exp/meteofrance/system6c3s/monthly_mean/',
+                   '$var$_f6h/$var$_$sdate$.nc')
+
+sdates <- sapply(1993:2012, function(x) paste0(x, '0501'))
+
+lonmax <- 60.5
+lonmin <- -19
+latmax <- 79.5
+latmin <- 0
+exp <- CST_Start(dataset = path_exp,
+                 var = 'sfcWind',
+                 ensemble = indices(1:9),
+                 sdate = sdates,
+                 time = indices(1:3),
+                 latitude = values(list(latmin, latmax)),
+                 latitude_reorder = Sort(decreasing = TRUE), 
+                 longitude = values(list(lonmin, lonmax)),
+                 longitude_reorder = CircularSort(0, 360),
+                 synonims = list(longitude = c('lon', 'longitude'),
+                                 latitude = c('lat', 'latitude')),
+                 return_vars = list(latitude = NULL, 
+                 longitude = NULL, time = 'sdate'),
+                 retrieve = TRUE)
+
+path_obs <- paste0('/esarchive/recon/ecmwf/erainterim/daily_mean/',
+                   '$var$_f6h/$var$_$sdate$.nc')
+dates <- as.POSIXct(sdates, format = '%Y%m%d', 'UTC')
+obs <- CST_Start(dataset = path_obs,
+                 var = 'sfcWind',
+                 sdate = unique(format(dates, '%Y%m')),
+                 time = indices(2:4), 
+                 latitude = values(list(latmin, latmax)),
+                 latitude_reorder = Sort(decreasing = TRUE),
+                 longitude = values(list(lonmin, lonmax)),
+                 longitude_reorder = CircularSort(0, 360),
+                 synonims = list(longitude = c('lon', 'longitude'),
+                                 latitude = c('lat', 'latitude')),
+                 transform = CDORemapper,
+                 transform_extra_cells = 2,
+                 transform_params = list(grid = 'r360x181',
+                                         method = 'conservative'),
+                 transform_vars = c('latitude', 'longitude'),
+                 return_vars = list(longitude = NULL,
+                                    latitude = NULL,
+                                    time = 'sdate'),
+                 retrieve = TRUE)
+```
 
 Extra lines to see the size of the objects and visualize the data:
 
@@ -118,10 +172,9 @@ object_size(exp)
 object_size(obs)
 # 3.09 MB
 library(s2dv)
-PlotEquiMap(exp$data[1,1,1,1,,], lon = exp$coords$lon, lat= exp$coords$lat,
+PlotEquiMap(exp$data[1,1,1,1,1,,], lon = exp$coords$longitude, lat= exp$coords$latitude,
             filled.continents = FALSE, fileout = "Meteofrance_r360x180.png")
 ```
-
 
 ![Meteofrance](../vignettes/Figures/Meteofrance_r360x180.png)
 

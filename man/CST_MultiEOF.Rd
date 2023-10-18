@@ -6,11 +6,17 @@
 \usage{
 CST_MultiEOF(
   datalist,
+  lon_dim = "lon",
+  lat_dim = "lat",
+  time_dim = "ftime",
+  sdate_dim = "sdate",
+  var_dim = "var",
   neof_max = 40,
   neof_composed = 5,
   minvar = 0.6,
   lon_lim = NULL,
-  lat_lim = NULL
+  lat_lim = NULL,
+  ncores = NULL
 )
 }
 \arguments{
@@ -20,7 +26,24 @@ an element named \code{$data} with at least two spatial dimensions named
 "lon" and "lat", a dimension "ftime" and a dimension "sdate". Latitudinal 
 dimension accepted names: 'lat', 'lats', 'latitude', 'y', 'j', 'nav_lat'. 
 Longitudinal dimension accepted names: 'lon', 'lons','longitude', 'x', 'i', 
-'nav_lon'.}
+'nav_lon'. NAs can exist but it should be consistent along 'time_dim'. That 
+is, if one grid point has NAs for each variable, all the time steps at this 
+point should be NAs.}
+
+\item{lon_dim}{A character string indicating the name of the longitudinal 
+dimension. By default, it is set to 'lon'.}
+
+\item{lat_dim}{A character string indicating the name of the latitudinal 
+dimension. By default, it is set to 'lat'.}
+
+\item{time_dim}{A character string indicating the name of the temporal 
+dimension. By default, it is set to 'time'.}
+
+\item{sdate_dim}{A character string indicating the name of the start date 
+dimension. By default, it is set to 'sdate'.}
+
+\item{var_dim}{A character string indicating the name of the variable 
+dimension. By default, it is set to 'var'.}
 
 \item{neof_max}{Maximum number of single eofs considered in the first 
 decomposition.}
@@ -34,12 +57,38 @@ for all input variables.}
 
 \item{lat_lim}{Vector with latitudinal range limits for the EOF calculation 
 for all input variables.}
+
+\item{ncores}{An integer indicating the number of cores to use for parallel 
+computation. The default value is NULL.}
 }
 \value{
-A list with elements \code{$coeff} (an array of time-varying principal 
-component coefficients), \code{$variance} (a matrix of explained variances),
-\code{eof_pattern} (a matrix of EOF patterns obtained by regression for each 
-variable).
+A list containing:
+\item{coeff}{
+ An 's2dv_cube' with the data element being an array of principal components 
+ with dimensions 'time_dim', 'sdate_dim', number of eof, rest of the 
+ dimensions of 'data' except 'lon_dim' and 'lat_dim'. 
+}
+\item{variance}{
+ An 's2dv_cube' with the data element being an array of explained variances 
+ with dimensions 'eof' and the rest of the dimensions of 'data' except 
+ 'time_dim', 'sdate_dim', 'lon_dim' and 'lat_dim'.
+}
+\item{eof_pattern}{
+ An 's2dv_cube' with the data element being an array of EOF patterns obtained 
+ by regression with dimensions: 'eof' and the rest of the dimensions of 
+ 'data' except 'time_dim' and 'sdate_dim'.
+}
+\item{mask}{
+ An 's2dv_cube' with the data element being an array of the mask with 
+ dimensions ('lon_dim', 'lat_dim', rest of the dimensions of 'data' except 
+ 'time_dim'). It is made from 'data', 1 for the positions that 'data' has 
+ value and NA for the positions that 'data' has NA. It is used to replace NAs 
+ with 0s for EOF calculation and mask the result with NAs again after the 
+ calculation.
+}
+\item{coordinates}{
+ Longitudinal and latitudinal coordinates vectors.
+}
 }
 \description{
 This function performs EOF analysis over multiple variables,

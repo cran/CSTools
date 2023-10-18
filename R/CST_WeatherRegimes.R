@@ -72,8 +72,7 @@ CST_WeatherRegimes <- function(data, ncenters = NULL,
                                ncores = NULL)  {
   # Check 's2dv_cube'
   if (!inherits(data, 's2dv_cube')) {
-    stop("Parameter 'data' must be of the class 's2dv_cube', ",
-         "as output by CSTools::CST_Load.")
+    stop("Parameter 'data' must be of the class 's2dv_cube'.")
   }
   # Check 'exp' object structure
   if (!all(c('data', 'coords') %in% names(data))) {

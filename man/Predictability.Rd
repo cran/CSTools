@@ -20,20 +20,21 @@ ProxiesAttractor.}
 \value{
 A list of length 2:
 \itemize{
-\item\code{pred.dim} {a list of two lists 'qdim' and 'pos.d'. The 'qdim' list
-contains values of local dimension 'dim' divided by terciles: 
-d1: lower tercile (high predictability), 
-d2: middle tercile, 
-d3: higher tercile (low predictability)
-The 'pos.d' list contains the position of each tercile in parameter 'dim'}
-
-\item\code{pred.theta} {a list of two lists 'qtheta' and 'pos.t'. 
-The 'qtheta' list contains values of the inverse of persistence 'theta' 
-divided by terciles: 
-th1: lower tercile (high predictability), 
-th2: middle tercile, 
-th3: higher tercile (low predictability)
-The 'pos.t' list contains the position of each tercile in parameter 'theta'}
+ \item{'pred.dim', a list of two lists 'qdim' and 'pos.d'. The 'qdim' list
+       contains values of local dimension 'dim' divided by terciles: 
+       d1: lower tercile (high predictability), 
+       d2: middle tercile, 
+       d3: higher tercile (low predictability)
+       The 'pos.d' list contains the position of each tercile in parameter 
+       'dim'.}
+\item{'pred.theta', a list of two lists 'qtheta' and 'pos.t'. 
+     The 'qtheta' list contains values of the inverse of persistence 'theta' 
+     divided by terciles: 
+     th1: lower tercile (high predictability), 
+     th2: middle tercile, 
+     th3: higher tercile (low predictability)
+     The 'pos.t' list contains the position of each tercile in parameter 
+     'theta'.}
 }
 
 dyn_scores values from 0 to 1. A dyn_score of 1 indicates the highest

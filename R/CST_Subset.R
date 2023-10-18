@@ -137,7 +137,7 @@ CST_Subset <- function(x, along, indices, drop = FALSE, var_dim = NULL,
   for (variable in 1:length(names(x$attrs$Variable$metadata))) {
     if (any(along %in% names(dim(x$attrs$Variable$metadata[[variable]])))) {
       dim_along <- along[along %in% names(dim(x$attrs$Variable$metadata[[variable]]))]
-      index_along <- indices[[which(along == dim_along)]]
+      index_along <- indices[match(dim_along, along)]
       x$attrs$Variable$metadata[[variable]] <- .subset_with_attrs(x$attrs$Variable$metadata[[variable]],
                                                                   along = dim_along,
                                                                   indices = index_along,
@@ -151,7 +151,7 @@ CST_Subset <- function(x, along, indices, drop = FALSE, var_dim = NULL,
 .subset_with_attrs <- function(x, ...) {
   args_subset <- list(...)
   if (is.null(dim(x)) | length(dim(x)) == 1) {
-    l <- x[args_subset[['indices']]]
+    l <- x[args_subset[['indices']][[1]]]
   } else {
     l <- ClimProjDiags::Subset(x, along = args_subset[['along']], 
                                indices = args_subset[['indices']],

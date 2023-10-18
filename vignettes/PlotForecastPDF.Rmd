@@ -75,12 +75,12 @@ plot <- PlotForecastPDF(fcst, tercile.limits = c(23, 27))
 ggsave("outfile.pdf", plot, width = 7, height = 5)
 ```
 
-### 5.- A reproducible example using lonlat_temp
+### 5.- A reproducible example using lonlat_temp_st
 This final example uses the sample lonlat data from CSTools. It is suitable for checking reproducibility of results.
 
 ```{r,fig.show = 'hide',warning=F}
-fcst <- data.frame(fcst1 = lonlat_temp$exp$data[1,,1,1,1,1] - 273.15,
-                   fcst2 = lonlat_temp$exp$data[1,,1,2,1,1] - 273.15)
+fcst <- data.frame(fcst1 = lonlat_temp_st$exp$data[1,1,,1,1,1,1] - 273.15,
+                   fcst2 = lonlat_temp_st$exp$data[1,1,,1,2,1,1] - 273.15)
 PlotForecastPDF(fcst, tercile.limits = c(5, 7), extreme.limits = c(4, 8), 
 								var.name = "Temperature (ºC)",
 								title = "Forecasts initialized on Nov 2000 at sample Mediterranean region", 

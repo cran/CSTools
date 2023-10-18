@@ -18,6 +18,7 @@ SaveExp(
   ftime_dim = "time",
   var_dim = "var",
   memb_dim = "member",
+  drop_dims = NULL,
   single_file = FALSE,
   extra_string = NULL
 )
@@ -74,14 +75,18 @@ dimension.}
 By default, it is set to 'member'. It can be NULL if there is no member 
 dimension.}
 
+\item{drop_dims}{A vector of character strings indicating the dimension names 
+of length 1 that need to be dropped in order that they don't appear in the 
+netCDF file. It is NULL by default (optional).}
+
 \item{single_file}{A logical value indicating if all object is saved in a 
 unique file (TRUE) or in separated directories (FALSE). When it is FALSE, 
 the array is separated for Datasets, variable and start date. It is FALSE  
-by default.}
+by default (optional).}
 
 \item{extra_string}{A character string to be include as part of the file name, 
 for instance, to identify member or realization. It would be added to the 
-file name between underscore characters.}
+file name between underscore characters (optional).}
 }
 \value{
 Multiple or single NetCDF files containing the data array.\cr
@@ -112,19 +117,19 @@ from StartR package. If the original 's2dv_cube' object has been created from
 }
 \examples{
 \dontrun{
-data <- lonlat_temp$exp$data
-lon <- lonlat_temp$exp$coords$lon
-lat <- lonlat_temp$exp$coords$lat
+data <- lonlat_temp_st$exp$data
+lon <- lonlat_temp_st$exp$coords$lon
+lat <- lonlat_temp_st$exp$coords$lat
 coords <- list(lon = lon, lat = lat)
-Datasets <- lonlat_temp$exp$attrs$Datasets
+Datasets <- lonlat_temp_st$exp$attrs$Datasets
 varname <- 'tas'
-Dates <- lonlat_temp$exp$attrs$Dates
+Dates <- lonlat_temp_st$exp$attrs$Dates
 destination = './'
-metadata <- lonlat_temp$exp$attrs$Variable$metadata
+metadata <- lonlat_temp_st$exp$attrs$Variable$metadata
 SaveExp(data = data, destination = destination, coords = coords, 
        Datasets = Datasets, varname = varname, Dates = Dates, 
        metadata = metadata, single_file = TRUE, ftime_dim = 'ftime', 
-       var_dim = NULL)
+       var_dim = 'var', dat_dim = 'dataset')
 }
 
 }

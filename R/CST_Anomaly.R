@@ -9,10 +9,10 @@
 #'computation is carried out independently for experimental and observational 
 #'data products.
 #'
-#'@param exp An object of class \code{s2dv_cube} as returned by \code{CST_Load} 
+#'@param exp An object of class \code{s2dv_cube} as returned by \code{CST_Start} 
 #'  function, containing the seasonal forecast experiment data in the element 
 #'  named \code{$data}.
-#'@param obs An object of class \code{s2dv_cube} as returned by \code{CST_Load} 
+#'@param obs An object of class \code{s2dv_cube} as returned by \code{CST_Start} 
 #'  function, containing the observed data in the element named \code{$data}.
 #'@param dim_anom A character string indicating the name of the dimension 
 #'  along which the climatology will be computed. The default value is 'sdate'.
@@ -57,7 +57,7 @@
 #'anom <- CST_Anomaly(exp = exp, obs = obs, cross = FALSE, memb = TRUE)
 #'
 #'@seealso \code{\link[s2dv]{Ano_CrossValid}}, \code{\link[s2dv]{Clim}} and 
-#'\code{\link{CST_Load}}
+#'\code{\link{CST_Start}}
 #'
 #'@import multiApply
 #'@importFrom s2dv InsertDim Clim Ano_CrossValid Reorder
@@ -69,8 +69,7 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, dim_anom = 'sdate',
   # Check 's2dv_cube'
   if (!inherits(exp, 's2dv_cube') & !is.null(exp) || 
       !inherits(obs, 's2dv_cube') & !is.null(obs)) {
-    stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube', ",
-         "as output by CSTools::CST_Load.")
+    stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube'.")
   }
   # exp and obs
   if (is.null(exp$data) & is.null(obs$data)) {
@@ -91,13 +90,10 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, dim_anom = 'sdate',
       any(is.null(names(dim(obs$data))))| any(nchar(names(dim(obs$data))) == 0)) {
     stop("Parameter 'exp' and 'obs' must have dimension names in element 'data'.")
   }
-  if (!all(names(dim(exp$data)) %in% names(dim(obs$data))) |
-      !all(names(dim(obs$data)) %in% names(dim(exp$data)))) {
-    stop("Parameter 'exp' and 'obs' must have same dimension names in element 'data'.")
-  }
   dim_exp <- dim(exp$data)
   dim_obs <- dim(obs$data)
-  dimnames_data <- names(dim_exp)
+  dimnames_exp <- names(dim_exp)
+  dimnames_obs <- names(dim_obs)
   # dim_anom
   if (!is.character(dim_anom)) {
     stop("Parameter 'dim_anom' must be a character string.")
@@ -129,18 +125,11 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, dim_anom = 'sdate',
     if (!is.character(memb_dim) | length(memb_dim) > 1) {
       stop("Parameter 'memb_dim' must be a character string.")
     }
-    if (!memb_dim %in% names(dim_exp) | !memb_dim %in% names(dim_obs)) {
-      stop("Parameter 'memb_dim' is not found in 'exp' or in 'obs' dimension.")
-    }
   }
   # dat_dim
   if (!is.null(dat_dim)) {
     if (!is.character(dat_dim)) {
       stop("Parameter 'dat_dim' must be a character vector.")
-    }
-    if (!all(dat_dim %in% names(dim_exp)) | !all(dat_dim %in% names(dim_obs))) {
-      stop("Parameter 'dat_dim' is not found in 'exp' or 'obs' dimension in element 'data'. ",
-           "Set it as NULL if there is no dataset dimension.")
     }
   }
   # filter_span
@@ -161,7 +150,7 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, dim_anom = 'sdate',
     if (!is.character(ftime_dim)) {
       stop("Parameter 'ftime_dim' must be a character string.")
     }
-    if (!ftime_dim %in% names(dim_exp) | !memb_dim %in% names(dim_obs)) {
+    if (!ftime_dim %in% names(dim_exp) | !ftime_dim %in% names(dim_obs)) {
       stop("Parameter 'ftime_dim' is not found in 'exp' or in 'obs' dimension in element 'data'.")
     }
   }
@@ -206,15 +195,17 @@ CST_Anomaly <- function(exp = NULL, obs = NULL, dim_anom = 'sdate',
     ano <- NULL
 
     # Permuting back dimensions to original order
-    clim_exp <- Reorder(clim_exp, dimnames_data)
-    clim_obs <- Reorder(clim_obs, dimnames_data)
+    clim_exp <- Reorder(clim_exp, dimnames_exp)
+    clim_obs <- Reorder(clim_obs, dimnames_obs)
 
     ano$exp <- exp$data - clim_exp
     ano$obs <- obs$data - clim_obs 
   }
 
   exp$data <- ano$exp
+  exp$dims <- dim(ano$exp)
   obs$data <- ano$obs
+  obs$dims <- dim(ano$obs)
   
   #  Outputs
   # ~~~~~~~~~

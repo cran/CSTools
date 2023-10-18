@@ -5,14 +5,14 @@
 #'described in Torralba et al. (2017). The adjusted forecasts have an equivalent 
 #'standard deviation and mean to that of the reference dataset.
 #'
-#'@param exp An object of class \code{s2dv_cube} as returned by \code{CST_Load} 
+#'@param exp An object of class \code{s2dv_cube} as returned by \code{CST_Start} 
 #'  function, containing the seasonal forecast experiment data in the element 
 #'  named \code{$data} with at least time and member dimensions.
-#'@param obs An object of class \code{s2dv_cube} as returned by \code{CST_Load} 
+#'@param obs An object of class \code{s2dv_cube} as returned by \code{CST_Start} 
 #'  function, containing the observed data in the element named \code{$data} 
 #'  with at least time dimension.
 #'@param exp_cor An object of class \code{s2dv_cube} as returned by 
-#'  \code{CST_Load} function, containing the seasonal forecast experiment to be 
+#'  \code{CST_Start} function, containing the seasonal forecast experiment to be 
 #'  corrected with at least time dimension. If it is NULL, the 'exp' forecast 
 #'  will be corrected. If there is only one corrected dataset, it should not  
 #'  have dataset dimension. If there is a corresponding corrected dataset for  
@@ -44,9 +44,9 @@
 #'
 #'@examples
 #'mod1 <- 1 : (1 * 3 * 4 * 5 * 6 * 7)
-#'dim(mod1) <- c(dataset = 1, member = 3, sdate = 4, ftime = 5, lat = 6, lon = 7)
+#'dim(mod1) <- c(dataset = 1, member = 3, sdate = 4, time = 5, lat = 6, lon = 7)
 #'obs1 <- 1 : (1 * 1 * 4 * 5 * 6 * 7)
-#'dim(obs1) <- c(dataset = 1, member = 1, sdate = 4, ftime = 5, lat = 6, lon = 7)
+#'dim(obs1) <- c(dataset = 1, member = 1, sdate = 4, time = 5, lat = 6, lon = 7)
 #'lon <- seq(0, 30, 5)
 #'lat <- seq(0, 25, 5)
 #'coords <- list(lat = lat, lon = lon)
@@ -134,9 +134,9 @@ CST_BiasCorrection <- function(exp, obs, exp_cor = NULL, na.rm = FALSE,
 #'
 #'@examples
 #'mod1 <- 1 : (1 * 3 * 4 * 5 * 6 * 7)
-#'dim(mod1) <- c(dataset = 1, member = 3, sdate = 4, ftime = 5, lat = 6, lon = 7)
+#'dim(mod1) <- c(dataset = 1, member = 3, sdate = 4, time = 5, lat = 6, lon = 7)
 #'obs1 <- 1 : (1 * 1 * 4 * 5 * 6 * 7)
-#'dim(obs1) <- c(dataset = 1, member = 1, sdate = 4, ftime = 5, lat = 6, lon = 7)
+#'dim(obs1) <- c(dataset = 1, member = 1, sdate = 4, time = 5, lat = 6, lon = 7)
 #'a <- BiasCorrection(exp = mod1, obs = obs1)
 #'@import multiApply
 #'@export

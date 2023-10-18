@@ -2,7 +2,7 @@
 #'
 #'@description This function allows to create an 's2dv_cube' object by passing 
 #'information through its parameters. This function will be needed if the data 
-#'hasn't been loaded using CST_Load or has been transformed with other methods. 
+#'hasn't been loaded using CST_Start or has been transformed with other methods. 
 #'An 's2dv_cube' object has many different components including metadata. This 
 #'function will allow to create 's2dv_cube' objects even if not all elements 
 #'are defined and for each expected missed parameter a warning message will be 
@@ -11,7 +11,7 @@
 #'@author Perez-Zanon Nuria, \email{nuria.perez@bsc.es}
 #'
 #'@param data A multidimensional array with named dimensions, typically with 
-#'  dimensions: dataset, member, sdate, ftime, lat and lon.
+#'  dimensions: dataset, member, sdate, time, lat and lon.
 #'@param coords A list of named vectors with the coordinates corresponding to 
 #'  the dimensions of the data parameter. If any coordinate has dimensions, they 
 #'  will be set as NULL. If any coordinate is not provided, it is set as an 
@@ -65,7 +65,7 @@
 #'  }
 #'}
 #'
-#'@seealso \code{\link[s2dv]{Load}} and \code{\link{CST_Load}}
+#'@seealso \code{\link[s2dv]{Load}} and \code{\link{CST_Start}}
 #'@examples
 #'exp_original <- 1:100
 #'dim(exp_original) <- c(lat = 2, time = 10, lon = 5)

@@ -83,26 +83,46 @@
 #categories, and each category has different color set.
 GradientCatsColorBar <- function(nmap, brks = NULL, cols = NULL, vertical = TRUE, subsampleg = NULL,
                                  bar_limits, var_limits = NULL,
-                                 triangle_ends = NULL, plot = TRUE,
+                                 triangle_ends = NULL, col_inf = NULL, col_sup = NULL, plot = TRUE,
                                  draw_separators = FALSE,
                                  bar_titles = NULL, title_scale = 1, label_scale = 1, extra_margin = rep(0, 4),
                                  ...) {
-  # bar_limits
-  if (!is.numeric(bar_limits) || length(bar_limits) != 2) {
-    stop("Parameter 'bar_limits' must be a numeric vector of length 2.")
+
+  # bar_limits: a vector of 2 or a list 
+  if (!is.list(bar_limits)) {
+    if (!is.numeric(bar_limits) || length(bar_limits) != 2) {
+      stop("Parameter 'bar_limits' must be a numeric vector of length 2 or a list containing that.")
+    }
+    # turn into list
+    bar_limits <- rep(list(bar_limits), nmap)
+  } else {
+    if (any(!sapply(bar_limits, is.numeric)) || any(sapply(bar_limits, length) != 2)) {
+      stop("Parameter 'bar_limits' must be a numeric vector of length 2 or a list containing that.")
+    }
+    if (length(bar_limits) != nmap) {
+      stop("Parameter 'bar_limits' must have the length of 'nmap'.")
+    }
+  }
+  # Check brks
+  if (!is.list(brks)) {
+    if (is.null(brks)) {
+      brks <- 5
+    } else if (!is.numeric(brks)) {
+      stop("Parameter 'brks' must be a numeric vector.")
+    }
+    # Turn it into list
+    brks <- rep(list(brks), nmap)
+  } else {
+    if (length(brks) != nmap) {
+      stop("Parameter 'brks' must have the length of 'nmap'.")
+    }
+  }
+  for (i_map in 1:nmap) {
+    if (length(brks[[i_map]]) == 1) {
+      brks[[i_map]] <- seq(from = bar_limits[[i_map]][1], to = bar_limits[[i_map]][2], length.out = brks[[i_map]])
+    }
   }
 
-  # Check brks
-  if (is.null(brks) || (is.numeric(brks) && length(brks) == 1)) {
-    num_brks <- 5
-    if (is.numeric(brks)) {
-      num_brks <- brks
-    }
-    brks <- seq(from = bar_limits[1], to = bar_limits[2], length.out = num_brks)
-  }
-  if (!is.numeric(brks)) {
-    stop("Parameter 'brks' must be a numeric vector.")
-  }
   # Check cols
   col_sets <- list(c("#A1D99B", "#74C476", "#41AB5D", "#238B45"),
                    c("#6BAED6FF", "#4292C6FF", "#2171B5FF", "#08519CFF"),
@@ -117,6 +137,44 @@ GradientCatsColorBar <- function(nmap, brks = NULL, cols = NULL, vertical = TRUE
       chosen_sets <- array(1:length(col_sets), nmap)
     }
     cols <- col_sets[chosen_sets]
+
+    # Set triangle_ends, col_sup, col_inf
+    #NOTE: The "col" input of ColorBar() later is not NULL (since we determine it here)
+    #      so ColorBar() cannot decide these parameters for us.
+    #NOTE: Here, col_inf and col_sup are prior to triangle_ends, which is consistent with ColorBar().
+    #TODO: Make triangle_ends a list
+    if (is.null(triangle_ends)) {
+      if (!is.null(var_limits)) {
+        triangle_ends <- c(FALSE, FALSE)
+        #TODO: bar_limits is a list
+        if (bar_limits[1] >= var_limits[1] | !is.null(col_inf)) {
+          triangle_ends[1] <- TRUE
+          if (is.null(col_inf)) {
+            col_inf <-  lapply(cols, head, 1)
+            cols <-  lapply(cols, '[', -1)
+          }
+        }
+        if (bar_limits[2] < var_limits[2] | !is.null(col_sup)) {
+          triangle_ends[2] <- TRUE
+          if (is.null(col_sup)) {
+            col_sup <- lapply(cols, tail, 1)
+            cols <- lapply(cols, '[', -length(cols[[1]]))
+          }
+        }
+      } else {
+        triangle_ends <- c(!is.null(col_inf), !is.null(col_sup))
+      }
+    } else {  # triangle_ends has values
+      if (triangle_ends[1] & is.null(col_inf)) {
+        col_inf <-  lapply(cols, head, 1)
+        cols <-  lapply(cols, '[', -1)
+      }
+      if (triangle_ends[2] & is.null(col_sup)) {
+        col_sup <- lapply(cols, tail, 1)
+        cols <- lapply(cols, '[', -length(cols[[1]]))
+      }
+    }
+
   } else {
     if (!is.list(cols)) {
       stop("Parameter 'cols' must be a list of character vectors.")
@@ -125,13 +183,12 @@ GradientCatsColorBar <- function(nmap, brks = NULL, cols = NULL, vertical = TRUE
       stop("Parameter 'cols' must be a list of character vectors.")
     }
     if (length(cols) != nmap) {
-      stop("Parameter 'cols' must be a list of the same length as the number of ",
-           "maps in 'maps'.")
+     stop("Parameter 'cols' must be a list of the same length as 'nmap'.")
     }
   }
-  for (i in 1:length(cols)) {
-    if (length(cols[[i]]) != (length(brks) - 1)) {
-      cols[[i]] <- grDevices::colorRampPalette(cols[[i]])(length(brks) - 1)
+  for (i_map in 1:length(cols)) {
+    if (length(cols[[i_map]]) != (length(brks[[i_map]]) - 1)) {
+      cols[[i_map]] <- grDevices::colorRampPalette(cols[[i_map]])(length(brks[[i_map]]) - 1)
     }
   }
 
@@ -149,16 +206,16 @@ GradientCatsColorBar <- function(nmap, brks = NULL, cols = NULL, vertical = TRUE
 
   if (plot) {
     for (k in 1:nmap) {
-      s2dv::ColorBar(brks = brks, cols = cols[[k]], vertical = FALSE, subsampleg = subsampleg,
-#                     bar_limits = bar_limits, var_limits = var_limits,
-                     triangle_ends = triangle_ends, plot = TRUE,
+#TODO: Add s2dv:: 
+      ColorBar(brks = brks[[k]], cols = cols[[k]], vertical = FALSE, subsampleg = subsampleg,
+                     bar_limits = bar_limits[[k]], #var_limits = var_limits,
+                     triangle_ends = triangle_ends, col_inf = col_inf[[k]], col_sup = col_sup[[k]], plot = TRUE,
                      draw_separators = draw_separators,
                      title = bar_titles[[k]], title_scale = title_scale,
                      label_scale = label_scale, extra_margin = extra_margin)
     }
   } else {
-    #TODO: col_inf and col_sup
-    return(list(brks = brks, cols = cols))
+    return(list(brks = brks, cols = cols, col_inf = col_inf, col_sup = col_sup))
   }
 
 }

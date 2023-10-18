@@ -18,16 +18,16 @@
 #'(2014). It is equivalent to function \code{Calibration} but for objects 
 #'of class \code{s2dv_cube}.
 #'
-#'@param exp An object of class \code{s2dv_cube} as returned by \code{CST_Load} 
+#'@param exp An object of class \code{s2dv_cube} as returned by \code{CST_Start} 
 #'  function with at least 'sdate' and 'member' dimensions, containing the  
 #'  seasonal hindcast experiment data in the element named \code{data}. The 
 #'  hindcast is used to calibrate the forecast in case the forecast is provided; 
 #'  if not, the same hindcast will be calibrated instead.
-#'@param obs An object of class \code{s2dv_cube} as returned by \code{CST_Load} 
+#'@param obs An object of class \code{s2dv_cube} as returned by \code{CST_Start} 
 #'  function with at least 'sdate' dimension, containing the observed data in 
 #'  the element named \code{$data}.
 #'@param exp_cor An optional object of class \code{s2dv_cube} as returned by 
-#'  \code{CST_Load} function with at least 'sdate' and 'member' dimensions, 
+#'  \code{CST_Start} function with at least 'sdate' and 'member' dimensions, 
 #'  containing the seasonal forecast experiment data in the element named 
 #'  \code{data}. If the forecast is provided, it will be calibrated using the 
 #'  hindcast and observations; if not, the hindcast will be calibrated instead. 
@@ -106,7 +106,7 @@
 #'Quarterly Journal of the Royal Meteorological Society, 141(688), 807-818.  
 #'\doi{10.1002/qj.2397}
 #' 
-#'@seealso \code{\link{CST_Load}}
+#'@seealso \code{\link{CST_Start}}
 #' 
 #'@examples
 #'# Example 1:
@@ -287,7 +287,7 @@ CST_Calibration <- function(exp, obs, exp_cor = NULL, cal.method = "mse_min",
 #'Quarterly Journal of the Royal Meteorological Society, 141(688), 807-818.  
 #'\doi{10.1002/qj.2397}
 #' 
-#'@seealso \code{\link{CST_Load}}
+#'@seealso \code{\link{CST_Start}}
 #' 
 #'@examples
 #'mod1 <- 1 : (1 * 3 * 4 * 5 * 6 * 7)
@@ -450,9 +450,9 @@ Calibration <- function(exp, obs, exp_cor = NULL,
   if (!inherits(na.rm, "logical")) {
     stop("Parameter 'na.rm' must be a logical value.")
   }
-  if (length(na.rm) > 1) {
-    na.rm <- na.rm[1]
-    warning("Paramter 'na.rm' has length greater than 1, and only the fist element is used.")
+  ## na.fill
+  if (!inherits(na.fill, "logical")) {
+    stop("Parameter 'na.fill' must be a logical value.")
   }
   ## cal.method, apply_to, alpha
   if (!any(cal.method %in% c('bias', 'evmos', 'mse_min', 'crps_min', 'rpc-based'))) {
@@ -491,8 +491,22 @@ Calibration <- function(exp, obs, exp_cor = NULL,
 	  warning(paste0("The 'multi.model' parameter is ignored when using the ", 
                    "calibration method '", cal.method, "'."))
   }
+  ## data sufficiently large
+  data.set.sufficiently.large.out <- 
+    Apply(data = list(exp = exp, obs = obs),
+      target_dims = list(exp = target_dims_exp, obs = target_dims_obs),
+      fun = .data.set.sufficiently.large, dat_dim = dat_dim, 
+      ncores = ncores)$output1
 
-  warning_shown <- FALSE
+  if (!all(data.set.sufficiently.large.out)) {		
+  	if (na.fill) {
+      warning("Some forecast data could not be corrected due to data lack",
+              " and is replaced with NA values.")
+  	} else {
+      warning("Some forecast data could not be corrected due to data lack",
+              " and is replaced with uncorrected values.")
+  	 }
+  }
 
   if (is.null(exp_cor)) {
     calibrated <- Apply(data = list(exp = exp, obs = obs), dat_dim = dat_dim, 
@@ -509,6 +523,7 @@ Calibration <- function(exp, obs, exp_cor = NULL,
                                            exp_cor = target_dims_cor),
                         ncores = ncores, fun = .cal)$output1
   }
+
   if (!is.null(dat_dim)) {
     pos <- match(c(names(dim(exp))[-which(names(dim(exp)) == dat_dim)], 'nexp', 'nobs'), 
                  names(dim(calibrated)))
@@ -521,14 +536,35 @@ Calibration <- function(exp, obs, exp_cor = NULL,
   if (exp_cor_remove_memb) {
     dim(calibrated) <- dim(calibrated)[-which(names(dim(calibrated)) == memb_dim)]
   }
+
+  dims <- dim(calibrated)
+  if (is.logical(calibrated)) {
+    calibrated <- array(as.numeric(calibrated), dim = dims)
+  }
+
   return(calibrated)
 }
 
 
-.data.set.sufficiently.large <- function(exp, obs) {
+.data.set.sufficiently.large <- function(exp, obs, dat_dim = NULL) {
   amt.min.samples <- 3
-  amt.good.pts <- sum(!is.na(obs) & !apply(exp, c(2), function(x) all(is.na(x))))
-  return(amt.good.pts > amt.min.samples)
+  if (is.null(dat_dim)) {
+    amt.good.pts <- sum(!is.na(obs) & !apply(exp, c(2), function(x) all(is.na(x))))
+    return(amt.good.pts > amt.min.samples)
+  } else {
+    nexp <- as.numeric(dim(exp)[dat_dim])
+    nobs <- as.numeric(dim(obs)[dat_dim])
+    amt.good.pts <- NULL
+    for (i in 1:nexp) {
+      for (j in 1:nobs) {
+        agp <- sum(!is.na(obs[, j, drop = FALSE]) & 
+                            !apply(exp[, , i, drop = FALSE], c(2), 
+                                   function(x) all(is.na(x))))
+        amt.good.pts <- c(amt.good.pts, agp)
+      }
+    }
+    return(amt.good.pts > amt.min.samples)
+  }
 }
 
 .make.eval.train.dexes <- function(eval.method, amt.points, amt.points_cor) { 
@@ -587,26 +623,16 @@ Calibration <- function(exp, obs, exp_cor = NULL,
   
   for (i in 1:nexp) {
     for (j in 1:nobs) {
-      if (!.data.set.sufficiently.large(exp = exp[, , i, drop = FALSE], 
-                                        obs = obs[, j, drop = FALSE])) {
+      exp_data <- exp[, , i]
+      dim(exp_data) <- dim(exp)[1:2]
+      obs_data <- as.vector(obs[, j])
+      if (!.data.set.sufficiently.large(exp = exp_data, obs = obs_data)) {
         if (!na.fill) {
           exp_subset <- exp[, , i]
           var.cor.fc[, , i, j] <- exp_subset
-          if (!warning_shown) {
-            warning("Some forecast data could not be corrected due to data lack",
-                    " and is replaced with uncorrected values.")
-            warning_shown <<- TRUE
-          }
-        } else if (!warning_shown) {
-          warning("Some forecast data could not be corrected due to data lack",
-                  " and is replaced with NA values.")
-          warning_shown <<- TRUE
         }
       } else {
         # Subset data for dataset dimension
-        obs_data <- as.vector(obs[, j])
-        exp_data <- exp[, , i]
-        dim(exp_data) <- dim(exp)[1:2]
         if (cor_dat_dim) {
           expcor_data <- exp_cor[, , i]
           dim(expcor_data) <- dim(exp_cor)[1:2]
@@ -680,8 +706,6 @@ Calibration <- function(exp, obs, exp_cor = NULL,
               # no significant -> replacing with observed climatology
               var.cor.fc[, eval.dexes, i, j] <- array(data = mean(obs.tr, na.rm = na.rm), dim = dim(fc.ev))
             }
-          } else {
-            stop("unknown calibration method: ", cal.method)
           }
         }
       }
@@ -691,7 +715,6 @@ Calibration <- function(exp, obs, exp_cor = NULL,
   if (is.null(dat_dim)) {
     dim(var.cor.fc) <- dim(exp_cor)[1:2]
   }
-
   return(var.cor.fc)
 }
 

@@ -58,13 +58,11 @@ CST_QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
                                 ncores = NULL, ...) {
   # Check 's2dv_cube'
   if (!inherits(exp, 's2dv_cube') || !inherits(obs, 's2dv_cube')) {
-    stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube', ",
-         "as output by CSTools::CST_Load.")
+    stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube'.")
   }
   if (!is.null(exp_cor)) {
     if (!inherits(exp_cor, 's2dv_cube')) {
-      stop("Parameter 'exp_cor' must be of the class 's2dv_cube', ",
-           "as output by CSTools::CST_Load.")
+      stop("Parameter 'exp_cor' must be of the class 's2dv_cube'.")
     }
   }
 

@@ -85,7 +85,7 @@ data <- as.s2dv_cube(data)
 }
 }
 \seealso{
-\code{\link{s2dv_cube}}, \code{\link[s2dv]{Load}}, 
+\code{\link{s2dv_cube}}, \code{\link{CST_Start}}, 
 \code{\link[startR]{Start}} and \code{\link{CST_Load}}
 }
 \author{

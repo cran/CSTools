@@ -60,9 +60,9 @@ standard deviation and mean to that of the reference dataset.
 }
 \examples{
 mod1 <- 1 : (1 * 3 * 4 * 5 * 6 * 7)
-dim(mod1) <- c(dataset = 1, member = 3, sdate = 4, ftime = 5, lat = 6, lon = 7)
+dim(mod1) <- c(dataset = 1, member = 3, sdate = 4, time = 5, lat = 6, lon = 7)
 obs1 <- 1 : (1 * 1 * 4 * 5 * 6 * 7)
-dim(obs1) <- c(dataset = 1, member = 1, sdate = 4, ftime = 5, lat = 6, lon = 7)
+dim(obs1) <- c(dataset = 1, member = 1, sdate = 4, time = 5, lat = 6, lon = 7)
 a <- BiasCorrection(exp = mod1, obs = obs1)
 }
 \references{
