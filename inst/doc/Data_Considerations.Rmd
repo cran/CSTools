@@ -114,7 +114,7 @@ c(exp, obs) %<-%  CST_Load(var = 'sfcWind',
 ```
 
 ### 5. CST_Start example
-```
+```r
 path_exp <- paste0('/esarchive/exp/meteofrance/system6c3s/monthly_mean/',
                    '$var$_f6h/$var$_$sdate$.nc')
 
@@ -126,13 +126,13 @@ latmax <- 79.5
 latmin <- 0
 exp <- CST_Start(dataset = path_exp,
                  var = 'sfcWind',
-                 ensemble = indices(1:9),
+                 ensemble = startR::indices(1:9),
                  sdate = sdates,
-                 time = indices(1:3),
-                 latitude = values(list(latmin, latmax)),
-                 latitude_reorder = Sort(decreasing = TRUE), 
-                 longitude = values(list(lonmin, lonmax)),
-                 longitude_reorder = CircularSort(0, 360),
+                 time = startR::indices(1:3),
+                 latitude = startR::values(list(latmin, latmax)),
+                 latitude_reorder = startR::Sort(decreasing = TRUE), 
+                 longitude = startR::values(list(lonmin, lonmax)),
+                 longitude_reorder = startR::CircularSort(0, 360),
                  synonims = list(longitude = c('lon', 'longitude'),
                                  latitude = c('lat', 'latitude')),
                  return_vars = list(latitude = NULL, 
@@ -145,14 +145,14 @@ dates <- as.POSIXct(sdates, format = '%Y%m%d', 'UTC')
 obs <- CST_Start(dataset = path_obs,
                  var = 'sfcWind',
                  sdate = unique(format(dates, '%Y%m')),
-                 time = indices(2:4), 
-                 latitude = values(list(latmin, latmax)),
-                 latitude_reorder = Sort(decreasing = TRUE),
-                 longitude = values(list(lonmin, lonmax)),
-                 longitude_reorder = CircularSort(0, 360),
+                 time = startR::indices(2:4), 
+                 latitude = startR::values(list(latmin, latmax)),
+                 latitude_reorder = startR::Sort(decreasing = TRUE),
+                 longitude = startR::values(list(lonmin, lonmax)),
+                 longitude_reorder = startR::CircularSort(0, 360),
                  synonims = list(longitude = c('lon', 'longitude'),
                                  latitude = c('lat', 'latitude')),
-                 transform = CDORemapper,
+                 transform = startR::CDORemapper,
                  transform_extra_cells = 2,
                  transform_params = list(grid = 'r360x181',
                                          method = 'conservative'),

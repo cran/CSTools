@@ -1,3 +1,8 @@
+# CSTools 5.1.1 (Release date: 19-10-2023) 
+
+### Fixes
+- Added startR namespace in all CST_Start calls of the vignettes and sample data.
+
 # CSTools 5.1.0 (Release date: 17-10-2023) 
 
 ### Fixes

@@ -21,7 +21,10 @@ multidimensional distributed data sets. Then, the output is transformed into
 }
 \details{
 It receives any number of parameters (`...`) that are automatically forwarded 
-to the `startR::Start` function. See details in `?startR::Start`.
+to the `startR::Start` function. See details in `?startR::Start`. The 
+auxiliary functions used to define dimensions need to be called within the 
+startR namespace (e.g. startR::indices(), startR::values(), startR::Sort(), 
+startR::CircularSort(), startR::CDORemapper(), ...).
 }
 \examples{
 \dontrun{
