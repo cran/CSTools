@@ -79,15 +79,15 @@ CST_Subset <- function(x, along, indices, drop = FALSE, var_dim = NULL,
   }
 
   # Subset data
-  x$data <- ClimProjDiags::Subset(x$data, along = along,
-                                  indices = indices,
-                                  drop = drop)
+  x$data <- Subset(x$data, along = along,
+                   indices = indices,
+                   drop = drop)
   # Adjust dimensions
   x$dims <- dim(x$data)
   # Adjust coordinates
   for (dimension in 1:length(along)) {
     dim_name <- along[dimension]
-    index <- indices[[dimension]]
+    index <- indices[dimension]
     # Only rename coordinates that have not been dropped
     if (dim_name %in% names(x$dims)) {
       # Subset coordinate by indices
@@ -113,10 +113,10 @@ CST_Subset <- function(x, along, indices, drop = FALSE, var_dim = NULL,
     }
     if ((!is.null(x$attrs$source_files)) &&
 	      (dim_name %in% names(dim(x$attrs$source_files)))) {
-      x$attrs$source_files <- ClimProjDiags::Subset(x$attrs$source_files,
-                                                    along = dim_name,
-                                                    indices = index,
-                                                    drop = drop)
+      x$attrs$source_files <- Subset(x$attrs$source_files,
+                                     along = dim_name,
+                                     indices = index,
+                                     drop = drop)
     }
   }
   # Remove metadata from variables that were dropped
@@ -128,10 +128,10 @@ CST_Subset <- function(x, along, indices, drop = FALSE, var_dim = NULL,
   if (!(length(time_along) == 0)) {
     time_indices <- indices[match(time_along, along)]
     original_dates <- x$attrs$Dates
-    x$attrs$Dates <- ClimProjDiags::Subset(x$attrs$Dates,
-                                           along = time_along,
-                                           indices = time_indices,
-                                           drop = drop)
+    x$attrs$Dates <- Subset(x$attrs$Dates,
+                            along = time_along,
+                            indices = time_indices,
+                            drop = drop)
   }
   # Subset metadata
   for (variable in 1:length(names(x$attrs$Variable$metadata))) {
@@ -150,12 +150,12 @@ CST_Subset <- function(x, along, indices, drop = FALSE, var_dim = NULL,
 # Function to subset with attributes
 .subset_with_attrs <- function(x, ...) {
   args_subset <- list(...)
-  if (is.null(dim(x)) | length(dim(x)) == 1) {
+  if (any(is.null(dim(x)), length(dim(x)) == 1)) {
     l <- x[args_subset[['indices']][[1]]]
   } else {
-    l <- ClimProjDiags::Subset(x, along = args_subset[['along']], 
-                               indices = args_subset[['indices']],
-                               drop = args_subset[['drop']])
+    l <- Subset(x, along = args_subset[['along']], 
+                indices = args_subset[['indices']],
+                drop = args_subset[['drop']])
   }
   attr.names <- names(attributes(x))
   attr.names <- attr.names[attr.names != 'names']

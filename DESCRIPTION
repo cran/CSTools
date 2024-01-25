@@ -1,7 +1,7 @@
 Package: CSTools
 Title: Assessing Skill of Climate Forecasts on Seasonal-to-Decadal
         Timescales
-Version: 5.1.1
+Version: 5.2.0
 Authors@R: c(
     person("Nuria", "Perez-Zanon", , "nuria.perez@bsc.es", role = "aut", comment = c(ORCID = "0000-0001-8568-3071")),
     person("Louis-Philippe", "Caron", , "louis-philippe.caron@bsc.es", role = "aut", comment = c(ORCID = "0000-0001-5221-0147")),
@@ -16,7 +16,7 @@ Authors@R: c(
     person("Bert", "van Schaeybroeck", , "bertvs@meteo.be", role = "aut"),
     person("Veronica", "Torralba", , "veronica.torralba@bsc.es", role = "aut"),
     person("Deborah", "Verfaillie", , "deborah.verfaillie@bsc.es", role = "aut"),
-    person("Eva", "Rifà", , "eva.rifarovira@bsc.es", role = c("cre", "ctb")),
+    person("Eva", "Rifà", , "eva.rifarovira@bsc.es", role = c("ctb")),
     person("Filippo", "Cali Quaglia", , "filippo.caliquaglia@gmail.com", role = "ctb"),
     person("Maria M.", "Chaves-Montero", , "mariadm.chaves@cmcc.it", role = "ctb"),
     person("Chihchung", "Chou", , "chihchung.chou@bsc.es", role = "ctb"),
@@ -35,7 +35,7 @@ Authors@R: c(
     person("Silvia", "Terzago", , "s.terzago@isac.cnr.it", role = "ctb"),
     person("Danila", "Volpi", , "d.volpi@isac.cnr.it", role = "ctb"),
     person("An-Chi", "Ho", , "an.ho@bsc.es", role = "ctb"),
-    person("Victoria", "Agudetse", , "victoria.agudetse@bsc.es", role = "ctb"),
+    person("Victoria", "Agudetse", , "victoria.agudetse@bsc.es", role = "cre"),
     person("BSC-CNS", role = c("cph")))
 Description: Exploits dynamical seasonal forecasts in order to provide
     information relevant to stakeholders at the seasonal timescale. The package
@@ -60,16 +60,16 @@ Depends: R (>= 3.5.0), maps, qmap, easyVerification
 Imports: s2dv, startR, rainfarmr, multiApply (>= 2.1.1), ClimProjDiags,
         ncdf4, plyr, abind, data.table, reshape2, ggplot2,
         RColorBrewer, graphics, grDevices, stats, utils, verification,
-        lubridate, scales
+        lubridate, scales, easyNCDF
 Suggests: zeallot, testthat, knitr, markdown, rmarkdown
 VignetteBuilder: knitr
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.0
+RoxygenNote: 7.3.1
 Config/testthat/edition: 3
 NeedsCompilation: yes
-Packaged: 2023-10-20 08:23:36 UTC; erifarov
+Packaged: 2024-01-25 15:15:30 UTC; vagudets
 Author: Nuria Perez-Zanon [aut] (<https://orcid.org/0000-0001-8568-3071>),
   Louis-Philippe Caron [aut] (<https://orcid.org/0000-0001-5221-0147>),
   Carmen Alvarez-Castro [aut] (<https://orcid.org/0000-0002-9958-010X>),
@@ -83,7 +83,7 @@ Author: Nuria Perez-Zanon [aut] (<https://orcid.org/0000-0001-8568-3071>),
   Bert van Schaeybroeck [aut],
   Veronica Torralba [aut],
   Deborah Verfaillie [aut],
-  Eva Rifà [cre, ctb],
+  Eva Rifà [ctb],
   Filippo Cali Quaglia [ctb],
   Maria M. Chaves-Montero [ctb],
   Chihchung Chou [ctb],
@@ -102,8 +102,8 @@ Author: Nuria Perez-Zanon [aut] (<https://orcid.org/0000-0001-8568-3071>),
   Silvia Terzago [ctb],
   Danila Volpi [ctb],
   An-Chi Ho [ctb],
-  Victoria Agudetse [ctb],
+  Victoria Agudetse [cre],
   BSC-CNS [cph]
-Maintainer: Eva Rifà <eva.rifarovira@bsc.es>
+Maintainer: Victoria Agudetse <victoria.agudetse@bsc.es>
 Repository: CRAN
-Date/Publication: 2023-10-20 09:10:09 UTC
+Date/Publication: 2024-01-25 16:40:02 UTC

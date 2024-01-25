@@ -10,14 +10,17 @@ CST_SplitDim(
   indices = NULL,
   freq = "monthly",
   new_dim_name = NULL,
-  insert_ftime = NULL
+  insert_ftime = NULL,
+  ftime_dim = "time",
+  sdate_dim = "sdate",
+  return_indices = FALSE
 )
 }
 \arguments{
 \item{data}{A 's2dv_cube' object}
 
 \item{split_dim}{A character string indicating the name of the dimension to 
-split.}
+split. It is set as 'time' by default.}
 
 \item{indices}{A vector of numeric indices or dates. If left at NULL, the 
 dates provided in the s2dv_cube object (element Dates) will be used.}
@@ -32,6 +35,15 @@ dimension.}
 
 \item{insert_ftime}{An integer indicating the number of time steps to add at 
 the begining of the time series.}
+
+\item{ftime_dim}{A character string indicating the name of the forecast time
+dimension. It is set as 'time' by default.}
+
+\item{sdate_dim}{A character string indicating the name of the start date 
+dimension. It is set as 'sdate' by default.}
+
+\item{return_indices}{A logical value that if it is TRUE, the indices 
+used in splitting the dimension will be returned. It is FALSE by default.}
 }
 \description{
 This function split a dimension in two. The user can select the 

@@ -9,7 +9,9 @@ SplitDim(
   split_dim = "time",
   indices,
   freq = "monthly",
-  new_dim_name = NULL
+  new_dim_name = NULL,
+  dates = NULL,
+  return_indices = FALSE
 )
 }
 \arguments{
@@ -28,6 +30,13 @@ the length in which to subset the dimension.}
 
 \item{new_dim_name}{A character string indicating the name of the new 
 dimension.}
+
+\item{dates}{An optional parameter containing an array of dates of class 
+'POSIXct' with the corresponding time dimensions of 'data'. It is NULL 
+by default.}
+
+\item{return_indices}{A logical value that if it is TRUE, the indices 
+used in splitting the dimension will be returned. It is FALSE by default.}
 }
 \description{
 This function split a dimension in two. The user can select the 

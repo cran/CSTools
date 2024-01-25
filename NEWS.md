@@ -1,3 +1,14 @@
+# CSTools 5.2.0 (Release date: 25-01-2024) 
+
+### Development
+- New function CST_ChangeDimNames
+- CST_SplitDim: added dimension names and split also Dates
+- CST_SaveExp: save time bounds and global attributes; improved code
+
+### Other
+- Updated README
+- Added citation file
+
 # CSTools 5.1.1 (Release date: 19-10-2023) 
 
 ### Fixes

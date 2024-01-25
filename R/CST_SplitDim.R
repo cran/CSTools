@@ -10,7 +10,7 @@
 #'
 #'@param data A 's2dv_cube' object
 #'@param split_dim A character string indicating the name of the dimension to 
-#'  split.
+#'  split. It is set as 'time' by default.
 #'@param indices A vector of numeric indices or dates. If left at NULL, the 
 #'  dates provided in the s2dv_cube object (element Dates) will be used.
 #'@param freq A character string indicating the frequency: by 'day', 'month' and 
@@ -21,6 +21,12 @@
 #'  dimension.
 #'@param insert_ftime An integer indicating the number of time steps to add at 
 #'  the begining of the time series.
+#'@param ftime_dim A character string indicating the name of the forecast time
+#'  dimension. It is set as 'time' by default. 
+#'@param sdate_dim A character string indicating the name of the start date 
+#'  dimension. It is set as 'sdate' by default. 
+#'@param return_indices A logical value that if it is TRUE, the indices 
+#'  used in splitting the dimension will be returned. It is FALSE by default.
 #'
 #'@details Parameter 'insert_ftime' has been included for the case of using 
 #'daily data, requiring split the temporal dimensions by months (or similar) and 
@@ -51,10 +57,12 @@
 #'new_data <- CST_SplitDim(data, indices = time, freq = 'year')
 #'@import abind
 #'@importFrom ClimProjDiags Subset
+#'@importFrom s2dv Reorder
 #'@export
 CST_SplitDim <- function(data, split_dim = 'time', indices = NULL,
                          freq = 'monthly', new_dim_name = NULL, 
-                         insert_ftime = NULL) {
+                         insert_ftime = NULL, ftime_dim = 'time',
+                         sdate_dim = 'sdate', return_indices = FALSE) {
   # Check 's2dv_cube'
   if (!inherits(data, 's2dv_cube')) {
     stop("Parameter 'data' must be of the class 's2dv_cube'.")
@@ -62,51 +70,84 @@ CST_SplitDim <- function(data, split_dim = 'time', indices = NULL,
   if (!is.null(insert_ftime)) {
     if (!is.numeric(insert_ftime)) {
       stop("Parameter 'insert_ftime' should be an integer.")
-    } else {
-      if (length(insert_ftime) > 1) {
-        warning("Parameter 'insert_ftime' must be of length 1, and only the",
-                " first element will be used.")
-        insert_ftime <- insert_ftime[1]
-      }
-      # adding NAs at the begining of the data in ftime dim
-      ftimedim <- which(names(dim(data$data)) == 'ftime')
-      dims <- dim(data$data)
-      dims[ftimedim] <- insert_ftime
-      empty_array <- array(NA, dims)
-      data$data <- abind(empty_array, data$data, along = ftimedim)
-      names(dim(data$data)) <- names(dims)
-      # adding dates to Dates for the new NAs introduced
-      if ((data$attrs$Dates[2] - data$attrs$Dates[1]) == 1) {
-        timefreq <- 'days'
-      } else {
-        timefreq <- 'months'
-        warning("Time frequency of forecast time is considered monthly.")
-      }
-      start <- data$attrs$Dates
-      dim(start) <- c(ftime = length(start)/dims['sdate'], sdate = dims['sdate'])
-      # new <- array(NA, prod(dim(data$data)[c('ftime', 'sdate')]))
-      # Pending fix transform to UTC when concatenaiting
-      data$attrs$Dates <- do.call(c, lapply(1:dim(start)[2], function(x) {
-                                  seq(start[1,x] - as.difftime(insert_ftime, 
-                                  units = timefreq),
-                                  start[dim(start)[1],x], by = timefreq, tz = "UTC")}))
+    }
+    if (length(insert_ftime) > 1) {
+      warning("Parameter 'insert_ftime' must be of length 1, and only the",
+              " first element will be used.")
+      insert_ftime <- insert_ftime[1]
+    }
+    # Check Dates
+    if (is.null(dim(data$attrs$Dates))) {
+      warning("Parameter 'Dates' must have dimensions, 'insert_ftime' won't ",
+              "be used.")
+      insert_ftime <- NULL
     }
   }
+  if (!is.null(insert_ftime)) {
+    # adding NAs at the begining of the data in ftime dim
+    ftimedim <- which(names(dim(data$data)) == ftime_dim)
+    dims <- dim(data$data)
+    dims[ftimedim] <- insert_ftime
+    empty_array <- array(NA, dims)
+    data$data <- abind(empty_array, data$data, along = ftimedim)
+    names(dim(data$data)) <- names(dims)
+    # Reorder dates
+    data$attrs$Dates <- Reorder(data$attrs$Dates, c(ftime_dim, sdate_dim))
+    dates <- data$attrs$Dates
+    dates_subset <- Subset(dates, sdate_dim, 1)
+    # adding dates to Dates for the new NAs introduced
+    if ((dates_subset[2] - dates_subset[1]) == 1) {
+      timefreq <- 'days'
+    } else {
+      timefreq <- 'months'
+      warning("Time frequency of forecast time is considered monthly.")
+    }
+    
+    dim(dates) <- c(length(dates)/dims[sdate_dim], dims[sdate_dim])
+    names(dim(dates)) <- c(ftime_dim, sdate_dim)
+    # new <- array(NA, prod(dim(data$data)[c('ftime', 'sdate')]))
+    # Pending fix transform to UTC when concatenaiting
+    data$attrs$Dates <- do.call(c, lapply(1:dim(dates)[2], function(x) {
+                                seq(dates[1,x] - as.difftime(insert_ftime, 
+                                units = timefreq),
+                                dates[dim(dates)[1],x], by = timefreq, tz = "UTC")}))
+  }
   if (is.null(indices)) {
-    if (any(split_dim %in% c('ftime', 'time', 'sdate'))) {
+    if (any(split_dim %in% c(ftime_dim, sdate_dim))) {
       indices <- data$attrs$Dates
-      if (any(names(dim(data$data)) %in% 'sdate')) {
+      if (any(names(dim(data$data)) %in% sdate_dim)) {
         if (!any(names(dim(data$data)) %in% split_dim)) {
           stop("Parameter 'split_dims' must be one of the dimension ",
                "names in parameter 'data'.")
         }
-        indices <- indices[1 : dim(data$data)[which(names(dim(data$data)) == split_dim)]]     
+        indices <- indices[1:dim(data$data)[which(names(dim(data$data)) == split_dim)]]     
       }
     }
   }
-  data$data <- SplitDim(data$data, split_dim = split_dim, indices = indices,
-                        freq = freq, new_dim_name = new_dim_name)
-  return(data)
+  # Call the function
+  res <- SplitDim(data = data$data, split_dim = split_dim, 
+                  indices = indices, freq = freq, 
+                  new_dim_name = new_dim_name, 
+                  dates = data$attrs$Dates, 
+                  return_indices = return_indices)
+  if (inherits(res, 'list')) {
+    data$data <- res$data
+    # Split dim on Dates
+    if (!is.null(res$dates)) {
+      data$attrs$Dates <- res$dates
+    }
+  } else {
+    data$data <- res
+  }
+  data$dims <- dim(data$data)
+
+  # Coordinates
+  # TO DO: Subset splitted coordinate and add the new dimension coordinate.
+  if (return_indices) {
+    return(list(data = data, indices = res$indices))
+  } else {
+    return(data)
+  }
 }
 #'Function to Split Dimension
 #'
@@ -128,6 +169,11 @@ CST_SplitDim <- function(data, split_dim = 'time', indices = NULL,
 #'  the length in which to subset the dimension.
 #'@param new_dim_name A character string indicating the name of the new 
 #'  dimension.
+#'@param dates An optional parameter containing an array of dates of class 
+#'  'POSIXct' with the corresponding time dimensions of 'data'. It is NULL 
+#'  by default.
+#'@param return_indices A logical value that if it is TRUE, the indices 
+#'  used in splitting the dimension will be returned. It is FALSE by default.
 #'@examples
 #'data <- 1 : 20
 #'dim(data) <- c(time = 10, lat = 2)
@@ -144,7 +190,8 @@ CST_SplitDim <- function(data, split_dim = 'time', indices = NULL,
 #'@importFrom ClimProjDiags Subset
 #'@export
 SplitDim <- function(data, split_dim = 'time', indices, freq = 'monthly',
-                     new_dim_name = NULL) {
+                     new_dim_name = NULL, dates = NULL, 
+                     return_indices = FALSE) {
   # check data
   if (is.null(data)) {
     stop("Parameter 'data' cannot be NULL.")
@@ -166,7 +213,7 @@ SplitDim <- function(data, split_dim = 'time', indices, freq = 'monthly',
             "one and only the first element will be used.")
   }
   if (!any(names(dims) %in% split_dim)) {
-    stop("Parameter 'split_dims' must be one of the dimension ",
+    stop("Parameter 'split_dim' must be one of the dimension ",
          "names in parameter 'data'.")
   }
   pos_split <- which(names(dims) == split_dim)
@@ -209,8 +256,8 @@ SplitDim <- function(data, split_dim = 'time', indices, freq = 'monthly',
       })
       if ('try-error' %in% class(indices) | 
         sum(is.na(indices)) == length(indices)) {
-        stop("Dates provided in parameter 'indices' must be of class",
-             " 'POSIXct' or convertable to 'POSIXct'.")
+        stop("Dates provided in parameter 'indices' must be of class ",
+             "'POSIXct' or convertable to 'POSIXct'.")
         }
     }
   }
@@ -229,7 +276,7 @@ SplitDim <- function(data, split_dim = 'time', indices, freq = 'monthly',
     } else if (freq == 'year') {
       indices <- as.numeric(strftime(indices, format = "%Y"))
       repited <- unique(indices)
-    } else if (freq == 'monthly' ) {
+    } else if (freq == 'monthly') {
       indices <- as.numeric(strftime(indices, format = "%m%Y"))
       repited <- unique(indices)
     } else {
@@ -254,15 +301,41 @@ SplitDim <- function(data, split_dim = 'time', indices, freq = 'monthly',
   data <- lapply(repited, function(x) {rebuild(x, data, along = split_dim,
                                        indices = indices, max_times)})
   data <- abind(data, along = length(dims) + 1)
-  if (is.character(freq)) {
-    names(dim(data)) <- c(names(dims), freq)
+
+  # Add new dim name
+  if (is.null(new_dim_name)) {
+    if (is.character(freq)) {
+      new_dim_name <- freq
+    } else {
+      new_dim_name <- 'index'
+    }   
+  }
+  names(dim(data)) <- c(names(dims), new_dim_name)
+
+  # Split also Dates
+  dates_exist <- FALSE
+  if (!is.null(dates)) {
+    if (any(split_dim %in% names(dim(dates)))) {
+      datesdims <- dim(dates)
+      dates <- lapply(repited, function(x) {rebuild(x, dates, along = split_dim,
+                      indices = indices, max_times)})
+      dates <- abind(dates, along = length(datesdims) + 1)
+      dates <- as.POSIXct(dates, origin = '1970-01-01', tz = "UTC")
+      names(dim(dates)) <- c(names(datesdims), new_dim_name)
+    }
+    dates_exist <- TRUE
+  }
+
+  # Return objects
+  if (all(dates_exist, return_indices)) {
+    return(list(data = data, dates = dates, indices = indices))
+  } else if (all(dates_exist, !return_indices)) {
+    return(list(data = data, dates = dates))
+  } else if (all(!dates_exist, return_indices)) {
+    return(list(data = data, indices = indices))
   } else {
-    names(dim(data)) <- c(names(dims), 'index')
+    return(data)
   }
-  if (!is.null(new_dim_name)) {
-    names(dim(data)) <- c(names(dims), new_dim_name)
-  }
-  return(data)
 }
 
 rebuild <- function(x, data, along, indices, max_times) {

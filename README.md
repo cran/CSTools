@@ -19,6 +19,7 @@ A part from this GitLab project, that allows you to monitor CSTools progress, to
 - The CRAN repository [https://CRAN.R-project.org/package=CSTools](https://CRAN.R-project.org/package=CSTools) which includes the user manual and vignettes.
 - Video tutorials [https://www.medscope-project.eu/products/tool-box/cstools-video-tutorials/](https://www.medscope-project.eu/products/tool-box/cstools-video-tutorials/).
 - Other resources are under-development such [training material](https://earth.bsc.es/gitlab/external/cstools/-/tree/MEDCOF2022/inst/doc/MEDCOF2022) and a [full reproducible use case for forecast calibration](https://earth.bsc.es/gitlab/external/cstools/-/tree/develop-CalibrationVignette/FOCUS_7_2).
+- See and run package [**use cases**](inst/doc/usecase.md)
 
 Installation
 ------------
@@ -46,43 +47,53 @@ Overview
 
 The CSTools package functions can be distributed in the following methods:
 
-- **Data retrieval and formatting:** CST_Load, CST_Anomaly, CST_MergeDims, CST_SplitDims, CST_Subset, as.s2dv_cube, s2dv_cube, CST_SaveExp.
+- **Data retrieval and formatting:** CST_Start, CST_SaveExp, CST_MergeDims, CST_SplitDim, CST_Subset, CST_InsertDim, CST_ChangeDimNames, as.s2dv_cube and s2dv_cube.
 - **Classification:** CST_MultiEOF, CST_WeatherRegimes, CST_RegimsAssign, CST_CategoricalEnsCombination, CST_EnsClustering.
 - **Downscaling:** CST_Analogs, CST_RainFARM, CST_RFTemp, CST_AdamontAnalog, CST_AnalogsPredictors.
-- **Correction:** CST_BEI_Weighting, CST_BiasCorrection, CST_Calibration, CST_QuantileMapping, CST_DynBiasCorrection.
+- **Correction and transformation:** CST_BiasCorrection, CST_Calibration, CST_QuantileMapping, CST_Anomaly, CST_BEI_Weighting, CST_DynBiasCorrection.
 - **Assessment:** CST_MultiMetric, CST_MultivarRMSE
 - **Visualization:** PlotCombinedMap, PlotForecastPDF, PlotMostLikelyQuantileMap, PlotPDFsOLE, PlotTriangles4Categories, PlotWeeklyClim.
 
-This package is designed to be compatible with other R packages such as [s2dv](https://CRAN.R-project.org/package=s2dv), [startR](https://CRAN.R-project.org/package=startR), [CSIndicators](https://CRAN.R-project.org/package=CSIndicators), [CSDownscale](https://earth.bsc.es/gitlab/es/csdownscale). Functions with the prefix **CST_** deal with a common object called `s2dv_cube` as inputs. Also, this object can be created from Load (s2dv) and from Start (startR) directly. Multiple functions from different packages can operate on this common data structure to easily define a complete post-processing workflow.
+An `s2dv_cube` is an object to store ordered multidimensional array with named dimensions, specific coordinates and stored metadata (in-memory representation of a NetCDF file). Its “methods” are the **CST** prefix functions. The basic structure of the class `s2dv_cube` is a list of lists. The first level elements are: `data`, `dims`, `coords` and `attrs`. To access any specific element it will be done using the `$` operator.  
 
-The class `s2dv_cube` is mainly a list of named elements to keep data and metadata in a single object. Basic structure of the object:
-
+As an example, this is how an `s2dv_cube` looks like (see `lonlat_temp_st$exp`):
 ```r
-$ data: [data array]
-$ dims: [dimensions vector]
-$ coords: [List of coordinates vectors]
-  $ sdate
-  $ time
-  $ lon
-  [...]
-$ attrs: [List of the attributes]
-  $ Variable:
-    $ varName
-    $ metadata 
-  $ Datasets
-  $ Dates
-  $ source_files
-  $ when
-  $ load_parameters
+'s2dv_cube'
+Data          [ 279.99, 280.34, 279.45, 281.99, 280.92,  ... ] 
+Dimensions    ( dataset = 1, var = 1, member = 15, sdate = 6, ftime = 3, lat = 22, lon = 53 ) 
+Coordinates  
+ * dataset : dat1 
+ * var : tas 
+   member : 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 
+ * sdate : 20001101, 20011101, 20021101, 20031101, 20041101, 20051101 
+   ftime : 1, 2, 3 
+ * lat : 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, ...
+ * lon : 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, ...
+Attributes   
+   Dates  : 2000-11-01 2001-11-01 2002-11-01 2003-11-01 2004-11-01 ... 
+   varName  : tas 
+   metadata :  
+      lat 
+        units : degrees_north 
+        long name : latitude 
+      lon 
+        units : degrees_east 
+        long name : longitude 
+      ftime 
+        units : hours since 2000-11-01 00:00:00 
+      tas 
+        units : K 
+        long name : 2 metre temperature 
+   Datasets  : dat1 
+   when  : 2023-10-02 10:11:06 
+   source_files  : "/ecmwf/system5c3s/monthly_mean/tas_f6h/tas_20001101.nc" ... 
+   load_parameters  : 
+       ( dat1 )  : dataset = dat1, var = tas, sdate = 20001101 ... 
 ```
 
-More information about the `s2dv_cube` object class can be found here: [description of the s2dv_cube object structure document](https://docs.google.com/document/d/1ko37JFl_h6mOjDKM5QSQGikfLBKZq1naL11RkJIwtMM/edit?usp=sharing).
+This package is designed to be compatible with other R packages such as [s2dv](https://CRAN.R-project.org/package=s2dv), [startR](https://CRAN.R-project.org/package=startR), [CSIndicators](https://CRAN.R-project.org/package=CSIndicators), [CSDownscale](https://earth.bsc.es/gitlab/es/csdownscale). 
 
-The current `s2dv_cube` object (CSTools 5.0.0) differs from the original object used in the previous versions of the packages. If you have **questions** on this change you can follow some of the points below:
-
-- [New s2dv_cube object discussion](https://earth.bsc.es/gitlab/external/cstools/-/issues/94)
-- [How to deal with the compatibility break](https://earth.bsc.es/gitlab/external/cstools/-/issues/112)
-- [Testing issue and specifications](https://earth.bsc.es/gitlab/external/cstools/-/issues/110)
+> **Note:** The current `s2dv_cube` object (CSTools version > 5.0.0) differs from the original object used in the previous versions of the packages. If you have doubts on this change you can follow some of the issues: [New s2dv_cube object discussion](https://earth.bsc.es/gitlab/external/cstools/-/issues/94), [How to deal with the compatibility break](https://earth.bsc.es/gitlab/external/cstools/-/issues/112) and [Testing issue and specifications](https://earth.bsc.es/gitlab/external/cstools/-/issues/110). More information can be found in this document: [About the new ‘s2dv_cube’](https://docs.google.com/document/d/1ko37JFl_h6mOjDKM5QSQGikfLBKZq1naL11RkJIwtMM/edit?usp=sharing).
 
 Contribute
 ----------

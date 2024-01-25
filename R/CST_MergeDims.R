@@ -15,8 +15,6 @@
 #'  \code{merge_dims} will be used.
 #'@param na.rm A logical indicating if the NA values should be removed or not.
 #'
-#'@import abind
-#'@importFrom ClimProjDiags Subset
 #'@examples
 #'data <- 1 : c(2 * 3 * 4 * 5 * 6 * 7)
 #'dim(data) <- c(time = 7, lat = 2, lon = 3, monthly = 4, member = 6,
@@ -35,8 +33,32 @@ CST_MergeDims <- function(data, merge_dims = c('ftime', 'monthly'),
   if (!inherits(data, 's2dv_cube')) {
     stop("Parameter 'data' must be of the class 's2dv_cube'.")
   }
+  if (is.null(rename_dim)) {
+    rename_dim <- merge_dims[1]
+  }
+  # data
   data$data <- MergeDims(data$data, merge_dims = merge_dims,
                          rename_dim = rename_dim, na.rm = na.rm)
+  # dims
+  data$dims <- dim(data$data)
+
+  # rename_dim               
+  if (length(rename_dim) > 1) {
+    rename_dim <- as.character(rename_dim[1])
+  }
+  # coords
+  data$coords[merge_dims] <- NULL
+  data$coords[[rename_dim]] <- 1:dim(data$data)[rename_dim]
+  attr(data$coords[[rename_dim]], 'indices') <- TRUE
+
+  # attrs
+  if (all(merge_dims %in% names(dim(data$attrs$Dates)))) {
+    dim(data$attrs$Dates) <- dim(data$data)[rename_dim]
+  } else if (any(merge_dims %in% names(dim(data$attrs$Dates)))) {
+    warning("The dimensions of 'Dates' array will be different from ",
+            "the temporal dimensions in 'data'. Parameter 'merge_dims' ",
+            "only includes one temporal dimension of 'Dates'.")
+  }
   return(data)
 }
 #'Function to Split Dimension
@@ -55,12 +77,12 @@ CST_MergeDims <- function(data, merge_dims = c('ftime', 'monthly'),
 #'  \code{merge_dims} will be used.
 #'@param na.rm A logical indicating if the NA values should be removed or not.
 #'
-#'@import abind
-#'@importFrom ClimProjDiags Subset
 #'@examples
 #'data <- 1 : 20
 #'dim(data) <- c(time = 10, lat = 2)
 #'new_data <- MergeDims(data, merge_dims = c('time', 'lat'))
+#'@import abind
+#'@importFrom ClimProjDiags Subset
 #'@export
 MergeDims <- function(data, merge_dims = c('time', 'monthly'), 
                       rename_dim = NULL, na.rm = FALSE) {

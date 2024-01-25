@@ -4,67 +4,88 @@
 #'
 #'@description This function allows to divide and save a object of class 
 #''s2dv_cube' into a NetCDF file, allowing to reload the saved data using 
-#'\code{Start} function from StartR package. If the original 's2dv_cube' object 
-#'has been created from \code{CST_Load()}, then it can be reloaded with 
-#'\code{Load()}.
+#'\code{CST_Start} or \code{CST_Load} functions. It also allows to save any 
+#''s2dv_cube' object that follows the NetCDF attributes conventions.
 #'
 #'@param data An object of class \code{s2dv_cube}.
 #'@param destination A character string containing the directory name in which 
 #'  to save the data. NetCDF file for each starting date are saved into the 
-#'  folder tree: \cr
-#'  destination/Dataset/variable/. By default the function 
-#'  creates and saves the data into the working directory.
+#'  folder tree: 'destination/Dataset/variable/'. By default the function 
+#'  saves the data into the working directory.
 #'@param sdate_dim A character string indicating the name of the start date 
 #'  dimension. By default, it is set to 'sdate'. It can be NULL if there is no
 #'  start date dimension.
 #'@param ftime_dim A character string indicating the name of the forecast time  
-#'  dimension. By default, it is set to 'time'. It can be NULL if there is no 
-#'  forecast time dimension.
+#'  dimension. If 'Dates' are used, it can't be NULL. If there is no forecast 
+#'  time dimension, 'Dates' will be set to NULL and will not be used. By 
+#'  default, it is set to 'time'. 
 #'@param dat_dim A character string indicating the name of dataset dimension. 
-#'  By default, it is set to 'dataset'. It can be NULL if there is no dataset  
-#'  dimension.
+#'  It can be NULL if there is no dataset dimension. By default, it is set to 
+#'  'dataset'. 
 #'@param var_dim A character string indicating the name of variable dimension. 
-#'  By default, it is set to 'var'. It can be NULL if there is no variable  
-#'  dimension.
-#'@param memb_dim A character string indicating the name of the member dimension.
-#'  By default, it is set to 'member'. It can be NULL if there is no member 
-#'  dimension. 
+#'  It can be NULL if there is no variable dimension. By default, it is set to 
+#'  'var'. 
+#'@param memb_dim A character string indicating the name of the member 
+#'  dimension. It can be NULL if there is no member dimension. By default, it is
+#'   set to 'member'. 
 #'@param startdates A vector of dates that will be used for the filenames 
-#'  when saving the data in multiple files. It must be a vector of the same 
-#'  length as the start date dimension of data. It must be a vector of class 
-#'  \code{Dates}, \code{'POSIXct'} or character with lenghts between 1 and 10. 
-#'  If it is NULL, the coordinate corresponding the the start date dimension or 
-#'  the first Date of each time step will be used as the name of the files.
-#'  It is NULL by default.
-#'@param drop_dims A vector of character strings indicating the dimension names 
-#'  of length 1 that need to be dropped in order that they don't appear in the 
-#'  netCDF file. It is NULL by default (optional).
+#'  when saving the data in multiple files (single_file = FALSE). It must be a 
+#'  vector of the same length as the start date dimension of data. It must be a 
+#'  vector of class \code{Dates}, \code{'POSIXct'} or character with lenghts 
+#'  between 1 and 10. If it is NULL, the coordinate corresponding the the start 
+#'  date dimension or the first Date of each time step will be used as the name 
+#'  of the files. It is NULL by default.
 #'@param single_file A logical value indicating if all object is saved in a 
 #'  single file (TRUE) or in multiple files (FALSE). When it is FALSE, 
-#'  the array is separated for Datasets, variable and start date. It is FALSE  
-#'  by default.
-#'@param extra_string A character string to be include as part of the file name, 
-#'  for instance, to identify member or realization. It would be added to the 
-#'  file name between underscore characters.
+#'  the array is separated for datasets, variable and start date. When there are 
+#'  no specified time dimensions, the data will be saved in a single file by 
+#'  default. The output file name when 'single_file' is TRUE is a character 
+#'  string containing: '<var>_<first_sdate>_<last_sdate>.nc'; when it is FALSE, 
+#'  it is '<var>_<sdate>.nc'. It is FALSE by default. 
+#'@param drop_dims (optional) A vector of character strings indicating the 
+#'  dimension names of length 1 that need to be dropped in order that they don't 
+#'  appear in the netCDF file. Only is allowed to drop dimensions that are not 
+#'  used in the computation. The dimensions used in the computation are the ones 
+#'  specified in: sdate_dim, ftime_dim, dat_dim, var_dim and memb_dim. It is 
+#'  NULL by default.
+#'@param extra_string (Optional) A character string to be included as part of 
+#'  the file name, for instance, to identify member or realization. When 
+#'  single_file is TRUE, the 'extra_string' will substitute all the default 
+#'  file name; when single_file is FALSE, the 'extra_string' will be added 
+#'  in the file name as: '<var>_<extra_string>_<sdate>.nc'. It is NULL by 
+#'  default.
+#'@param units_hours_since (Optional) A logical value only available for the 
+#'  case: 'Dates' have forecast time and start date dimension, 'single_file' is 
+#'  TRUE and 'time_bounds' are not used. When it is TRUE, it saves the forecast 
+#'  time with units of 'hours since'; if it is FALSE, the time units will be a 
+#'  number of time steps with its corresponding frequency (e.g. n days, n months 
+#'  or n hours). It is FALSE by default. 
+#'@param global_attrs (Optional) A list with elements containing the global 
+#'  attributes to be saved in the NetCDF.
 #'
 #'@return Multiple or single NetCDF files containing the data array.\cr
-#'\item{\code{single_file = TRUE}}{
+#'\item{\code{single_file is TRUE}}{
 #'  All data is saved in a single file located in the specified destination  
-#'  path with the following name: 
-#'  <variable_name>_<extra_string>_<first_sdate>_<last_sdate>.nc. Multiple 
-#'  variables are saved separately in the same file. The forecast time units 
-#'  is extracted from the frequency of the time steps (hours, days, months). 
-#'  The first value of forecast time is 1. If no frequency is found, the units 
-#'  will be 'hours since' each start date and the time steps are assumed to be 
-#'  equally spaced.
+#'  path with the following name (by default): 
+#'  '<variable_name>_<first_sdate>_<last_sdate>.nc'. Multiple variables
+#'  are saved separately in the same file. The forecast time units 
+#'  are calculated from each start date (if sdate_dim is not NULL) or from 
+#'  the time step. If 'units_hours_since' is TRUE, the forecast time units 
+#'  will be 'hours since <each start date>'. If 'units_hours_since' is FALSE, 
+#'  the forecast time units are extracted from the frequency of the time steps 
+#'  (hours, days, months); if no frequency is found, the units will be ’hours 
+#'  since’. When the time units are 'hours since' the time ateps are assumed to 
+#'  be equally spaced.
 #'}
-#'\item{\code{single_file = FALSE}}{
+#'\item{\code{single_file is FALSE}}{
 #'  The data array is subset and stored into multiple files. Each file 
 #'  contains the data subset for each start date, variable and dataset. Files 
-#'  with different variables and Datasets are stored in separated directories 
-#'  within the following directory tree: destination/Dataset/variable/. 
-#'  The name of each file will be: 
-#'  <variable_name>_<extra_string>_<sdate>.nc.
+#'  with different variables and datasets are stored in separated directories 
+#'  within the following directory tree: 'destination/Dataset/variable/'. 
+#'  The name of each file will be by default: '<variable_name>_<sdate>.nc'. 
+#'  The forecast time units are calculated from each start date (if sdate_dim 
+#'  is not NULL) or from the time step. The forecast time units will be 'hours 
+#'  since <each start date>'.
 #'}
 #' 
 #'@seealso \code{\link[startR]{Start}}, \code{\link{as.s2dv_cube}} and 
@@ -73,21 +94,17 @@
 #'@examples
 #'\dontrun{
 #'data <- lonlat_temp_st$exp
-#'destination <- "./"
-#'CST_SaveExp(data = data, destination = destination, ftime_dim = 'ftime', 
-#'            var_dim = 'var', dat_dim = 'dataset')
+#'CST_SaveExp(data = data, ftime_dim = 'ftime', var_dim = 'var', 
+#'            dat_dim = 'dataset', sdate_dim = 'sdate')
 #'}
 #'
-#'@import ncdf4
-#'@importFrom s2dv Reorder
-#'@importFrom ClimProjDiags Subset
-#'@import multiApply
 #'@export
-CST_SaveExp <- function(data, destination = "./", sdate_dim = 'sdate',  
-                        ftime_dim = 'time', dat_dim = 'dataset',
-                        var_dim = 'var', memb_dim = 'member', 
-                        startdates = NULL, drop_dims = NULL, 
-                        single_file = FALSE, extra_string = NULL) {
+CST_SaveExp <- function(data, destination = "./", startdates = NULL, 
+                        sdate_dim = 'sdate', ftime_dim = 'time', 
+                        memb_dim = 'member', dat_dim = 'dataset', 
+                        var_dim = 'var', drop_dims = NULL, 
+                        single_file = FALSE, extra_string = NULL, 
+                        global_attrs = NULL, units_hours_since = FALSE) {
   # Check 's2dv_cube'
   if (!inherits(data, 's2dv_cube')) {
     stop("Parameter 'data' must be of the class 's2dv_cube'.")
@@ -100,21 +117,10 @@ CST_SaveExp <- function(data, destination = "./", sdate_dim = 'sdate',
   if (!inherits(data$attrs, 'list')) {
     stop("Level 'attrs' must be a list with at least 'Dates' element.")
   }
-  if (!all(c('coords') %in% names(data))) {
-    warning("Element 'coords' not found. No coordinates will be used.")
-  }
   # metadata
-  if (is.null(data$attrs$Variable$metadata)) {
-    warning("No metadata found in element Variable from attrs.")
-  } else {
+  if (!is.null(data$attrs$Variable$metadata)) {
     if (!inherits(data$attrs$Variable$metadata, 'list')) {
       stop("Element metadata from Variable element in attrs must be a list.")
-    }
-    if (!any(names(data$attrs$Variable$metadata) %in% names(data$coords))) {
-      warning("Metadata is not found for any coordinate.")
-    } else if (!any(names(data$attrs$Variable$metadata) %in% 
-                    data$attrs$Variable$varName)) {
-      warning("Metadata is not found for any variable.")
     }
   }
   # Dates
@@ -129,50 +135,31 @@ CST_SaveExp <- function(data, destination = "./", sdate_dim = 'sdate',
     if (!is.character(sdate_dim)) {
       stop("Parameter 'sdate_dim' must be a character string.")
     }
-    if (length(sdate_dim) > 1) {
-      warning("Parameter 'sdate_dim' has length greater than 1 and ",
-              "only the first element will be used.")
-      sdate_dim <- sdate_dim[1]
-    }
-  } else if (length(dim(data$attrs$Dates)) == 1) {
-    sdate_dim <- 'sdate'
-    dim(data$data) <- c(sdate = 1, dim(data$data))
-    data$dims <- dim(data$data)
-    dim(data$attrs$Dates) <- c(sdate = 1, dim(data$attrs$Dates))
-    data$coords[[sdate_dim]] <- data$attrs$Dates[1]
   }
   # startdates
   if (is.null(startdates)) {
-    startdates <- data$coords[[sdate_dim]]
-  } else {
-    if (!is.character(startdates)) {
-      warning(paste0("Parameter 'startdates' is not a character string, ",
-                     "it will not be used."))
+    if (is.character(data$coords[[sdate_dim]])) {
       startdates <- data$coords[[sdate_dim]]
-    }
-    if (!is.null(sdate_dim)) {
-      if (dim(data$data)[sdate_dim] != length(startdates)) {
-        warning(paste0("Parameter 'startdates' doesn't have the same length ",
-                       "as dimension '", sdate_dim,"', it will not be used."))
-        startdates <- data$coords[[sdate_dim]]
-      }
     }
   }
 
   SaveExp(data = data$data,
           destination = destination, 
-          Dates = data$attrs$Dates, 
           coords = data$coords,
+          Dates = data$attrs$Dates, 
+          time_bounds = data$attrs$time_bounds,
+          startdates = startdates,
           varname = data$attrs$Variable$varName,
           metadata = data$attrs$Variable$metadata,
           Datasets = data$attrs$Datasets, 
-          startdates = startdates,
-          dat_dim = dat_dim, sdate_dim = sdate_dim, 
-          ftime_dim = ftime_dim, var_dim = var_dim, 
+          sdate_dim = sdate_dim, ftime_dim = ftime_dim, 
           memb_dim = memb_dim, 
+          dat_dim = dat_dim, var_dim = var_dim, 
           drop_dims = drop_dims, 
+          single_file = single_file,
           extra_string = extra_string, 
-          single_file = single_file)
+          global_attrs = global_attrs,
+          units_hours_since = units_hours_since)
 }
 #'Save a multidimensional array with metadata to data in NetCDF format
 #'@description This function allows to save a data array with metadata into a 
@@ -185,13 +172,26 @@ CST_SaveExp <- function(data, destination = "./", sdate_dim = 'sdate',
 #'@param data A multi-dimensional array with named dimensions.
 #'@param destination A character string indicating the path where to store the 
 #'  NetCDF files.
-#'@param Dates A named array of dates with the corresponding sdate and forecast 
-#'  time dimension.
 #'@param coords A named list with elements of the coordinates corresponding to 
 #'  the dimensions of the data parameter. The names and length of each element 
 #'  must correspond to the names of the dimensions. If any coordinate is not 
 #'  provided, it is set as an index vector with the values from 1 to the length 
 #'  of the corresponding dimension.
+#'@param Dates A named array of dates with the corresponding sdate and forecast 
+#'  time dimension. If there is no sdate_dim, you can set it to NULL. 
+#'  It must have ftime_dim dimension.
+#'@param time_bounds (Optional) A list of two arrays of dates containing 
+#'  the lower (first array) and the upper (second array) time bounds 
+#'  corresponding to Dates. Each array must have the same dimensions as Dates.
+#'  If 'Dates' parameter is NULL, 'time_bounds' are not used. It is NULL by 
+#'  default.
+#'@param startdates A vector of dates that will be used for the filenames 
+#'  when saving the data in multiple files (single_file = FALSE). It must be a 
+#'  vector of the same length as the start date dimension of data. It must be a 
+#'  vector of class \code{Dates}, \code{'POSIXct'} or character with lenghts 
+#'  between 1 and 10. If it is NULL, the coordinate corresponding the the start 
+#'  date dimension or the first Date of each time step will be used as the name 
+#'  of the files. It is NULL by default.
 #'@param varname A character string indicating the name of the variable to be 
 #'  saved.
 #'@param metadata A named list where each element is a variable containing the
@@ -199,12 +199,6 @@ CST_SaveExp <- function(data, destination = "./", sdate_dim = 'sdate',
 #'  lists for each variable.
 #'@param Datasets A vector of character string indicating the names of the 
 #'  datasets.
-#'@param startdates A vector of dates that will be used for the filenames 
-#'  when saving the data in multiple files. It must be a vector of the same 
-#'  length as the start date dimension of data. It must be a vector of class 
-#'  \code{Dates}, \code{'POSIXct'} or character with lenghts between 1 and 10. 
-#'  If it is NULL, the first Date of each time step will be used as the name of 
-#'  the files. It is NULL by default.
 #'@param sdate_dim A character string indicating the name of the start date 
 #'  dimension. By default, it is set to 'sdate'. It can be NULL if there is no
 #'  start date dimension.
@@ -217,38 +211,60 @@ CST_SaveExp <- function(data, destination = "./", sdate_dim = 'sdate',
 #'@param var_dim A character string indicating the name of variable dimension. 
 #'  By default, it is set to 'var'. It can be NULL if there is no variable  
 #'  dimension.
-#'@param memb_dim A character string indicating the name of the member dimension.
-#'  By default, it is set to 'member'. It can be NULL if there is no member 
-#'  dimension.  
-#'@param drop_dims A vector of character strings indicating the dimension names 
-#'  of length 1 that need to be dropped in order that they don't appear in the 
-#'  netCDF file. It is NULL by default (optional).
+#'@param memb_dim A character string indicating the name of the member 
+#'  dimension. By default, it is set to 'member'. It can be NULL if there is no 
+#'  member dimension.  
+#'@param drop_dims (optional) A vector of character strings indicating the 
+#'  dimension names of length 1 that need to be dropped in order that they don't 
+#'  appear in the netCDF file. Only is allowed to drop dimensions that are not 
+#'  used in the computation. The dimensions used in the computation are the ones 
+#'  specified in: sdate_dim, ftime_dim, dat_dim, var_dim and memb_dim. It is 
+#'  NULL by default.
 #'@param single_file A logical value indicating if all object is saved in a 
-#'  unique file (TRUE) or in separated directories (FALSE). When it is FALSE, 
-#'  the array is separated for Datasets, variable and start date. It is FALSE  
-#'  by default (optional).
-#'@param extra_string A character string to be include as part of the file name, 
-#'  for instance, to identify member or realization. It would be added to the 
-#'  file name between underscore characters (optional).
+#'  single file (TRUE) or in multiple files (FALSE). When it is FALSE, 
+#'  the array is separated for datasets, variable and start date. When there are 
+#'  no specified time dimensions, the data will be saved in a single file by 
+#'  default. The output file name when 'single_file' is TRUE is a character 
+#'  string containing: '<var>_<first_sdate>_<last_sdate>.nc'; when it is FALSE, 
+#'  it is '<var>_<sdate>.nc'. It is FALSE by default. 
+#'@param extra_string (Optional) A character string to be included as part of 
+#'  the file name, for instance, to identify member or realization. When 
+#'  single_file is TRUE, the 'extra_string' will substitute all the default 
+#'  file name; when single_file is FALSE, the 'extra_string' will be added 
+#'  in the file name as: '<var>_<extra_string>_<sdate>.nc'. It is NULL by 
+#'  default.
+#'@param global_attrs (Optional) A list with elements containing the global 
+#'  attributes to be saved in the NetCDF.
+#'@param units_hours_since (Optional) A logical value only available for the 
+#'  case: Dates have forecast time and start date dimension, single_file is 
+#'  TRUE and 'time_bounds' is NULL. When it is TRUE, it saves the forecast time 
+#'  with units of 'hours since'; if it is FALSE, the time units will be a number 
+#'  of time steps with its corresponding frequency (e.g. n days, n months or n 
+#'  hours). It is FALSE by default. 
 #'
 #'@return Multiple or single NetCDF files containing the data array.\cr
-#'\item{\code{single_file = TRUE}}{
+#'\item{\code{single_file is TRUE}}{
 #'  All data is saved in a single file located in the specified destination  
-#'  path with the following name: 
-#'  <variable_name>_<extra_string>_<first_sdate>_<last_sdate>.nc. Multiple 
-#'  variables are saved separately in the same file. The forecast time units 
-#'  is extracted from the frequency of the time steps (hours, days, months). 
-#'  The first value of forecast time is 1. If no frequency is found, the units 
-#'  will be 'hours since' each start date and the time steps are assumed to be 
-#'  equally spaced.
+#'  path with the following name (by default): 
+#'  '<variable_name>_<first_sdate>_<last_sdate>.nc'. Multiple variables
+#'  are saved separately in the same file. The forecast time units 
+#'  are calculated from each start date (if sdate_dim is not NULL) or from 
+#'  the time step. If 'units_hours_since' is TRUE, the forecast time units 
+#'  will be 'hours since <each start date>'. If 'units_hours_since' is FALSE, 
+#'  the forecast time units are extracted from the frequency of the time steps 
+#'  (hours, days, months); if no frequency is found, the units will be ’hours 
+#'  since’. When the time units are 'hours since' the time ateps are assumed to 
+#'  be equally spaced.
 #'}
-#'\item{\code{single_file = FALSE}}{
+#'\item{\code{single_file is FALSE}}{
 #'  The data array is subset and stored into multiple files. Each file 
 #'  contains the data subset for each start date, variable and dataset. Files 
-#'  with different variables and Datasets are stored in separated directories 
-#'  within the following directory tree: destination/Dataset/variable/. 
-#'  The name of each file will be: 
-#'  <variable_name>_<extra_string>_<sdate>.nc.
+#'  with different variables and datasets are stored in separated directories 
+#'  within the following directory tree: 'destination/Dataset/variable/'. 
+#'  The name of each file will be by default: '<variable_name>_<sdate>.nc'. 
+#'  The forecast time units are calculated from each start date (if sdate_dim 
+#'  is not NULL) or from the time step. The forecast time units will be 'hours 
+#'  since <each start date>'.
 #'}
 #' 
 #'@examples
@@ -260,24 +276,24 @@ CST_SaveExp <- function(data, destination = "./", sdate_dim = 'sdate',
 #'Datasets <- lonlat_temp_st$exp$attrs$Datasets
 #'varname <- 'tas'
 #'Dates <- lonlat_temp_st$exp$attrs$Dates
-#'destination = './'
 #'metadata <- lonlat_temp_st$exp$attrs$Variable$metadata
-#'SaveExp(data = data, destination = destination, coords = coords, 
-#'        Datasets = Datasets, varname = varname, Dates = Dates, 
-#'        metadata = metadata, single_file = TRUE, ftime_dim = 'ftime', 
-#'        var_dim = 'var', dat_dim = 'dataset')
+#'SaveExp(data = data, coords = coords, Datasets = Datasets, varname = varname, 
+#'        Dates = Dates, metadata = metadata, single_file = TRUE, 
+#'        ftime_dim = 'ftime', var_dim = 'var', dat_dim = 'dataset')
 #'}
 #' 
-#'@import ncdf4
+#'@import easyNCDF
 #'@importFrom s2dv Reorder
 #'@import multiApply
 #'@importFrom ClimProjDiags Subset
 #'@export
-SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL, 
+SaveExp <- function(data, destination = "./", coords = NULL, 
+                    Dates = NULL, time_bounds = NULL, startdates = NULL, 
                     varname = NULL, metadata = NULL, Datasets = NULL, 
-                    startdates = NULL, dat_dim = 'dataset', sdate_dim = 'sdate', 
-                    ftime_dim = 'time', var_dim = 'var', memb_dim = 'member',
-                    drop_dims = NULL, single_file = FALSE, extra_string = NULL) {
+                    sdate_dim = 'sdate', ftime_dim = 'time', 
+                    memb_dim = 'member', dat_dim = 'dataset', var_dim = 'var', 
+                    drop_dims = NULL, single_file = FALSE, extra_string = NULL,
+                    global_attrs = NULL, units_hours_since = FALSE) {
   ## Initial checks
   # data
   if (is.null(data)) {
@@ -287,20 +303,14 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
   if (is.null(dimnames)) {
     stop("Parameter 'data' must be an array with named dimensions.")
   }
+  if (!is.null(attributes(data)$dimensions)) {
+    attributes(data)$dimensions <- NULL
+  }
   # destination
   if (!is.character(destination) | length(destination) > 1) {
     stop("Parameter 'destination' must be a character string of one element ",
          "indicating the name of the file (including the folder if needed) ",
          "where the data will be saved.")
-  }
-  # Dates
-  if (!is.null(Dates)) {
-    if (!inherits(Dates, "POSIXct") & !inherits(Dates, "Date")) {
-      stop("Parameter 'Dates' must be of 'POSIXct' or 'Dates' class.")
-    }
-    if (is.null(dim(Dates))) {
-      stop("Parameter 'Dates' must have dimension names.")
-    }
   }
   # drop_dims
   if (!is.null(drop_dims)) {
@@ -310,6 +320,10 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
     } else if (!all(dim(data)[drop_dims] %in% 1)) {
       warning("Parameter 'drop_dims' can only contain dimension names ", 
               "that are of length 1. It will not be used.")
+    } else if (any(drop_dims %in% c(ftime_dim, sdate_dim, dat_dim, memb_dim, var_dim))) {
+      warning("Parameter 'drop_dims' contains dimensions used in the computation. ",
+              "It will not be used.")
+      drop_dims <- NULL
     } else {
       data <- Subset(x = data, along = drop_dims, 
                      indices = lapply(1:length(drop_dims), function(x) 1), 
@@ -319,28 +333,17 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
   }
   # coords
   if (!is.null(coords)) {
-    if (!all(names(coords) %in% dimnames)) {
-      coords <- coords[-which(!names(coords) %in% dimnames)]
+    if (!inherits(coords, 'list')) {
+      stop("Parameter 'coords' must be a named list of coordinates.")
     }
-    for (i_coord in dimnames) {
-      if (i_coord %in% names(coords)) {
-        if (length(coords[[i_coord]]) != dim(data)[i_coord]) {
-          warning(paste0("Coordinate '", i_coord, "' has different lenght as ",
-                         "its dimension and it will not be used."))
-          coords[[i_coord]] <- 1:dim(data)[i_coord]
-        }
-      } else {
-        warning(paste0("Coordinate '", i_coord, "' is not provided ",
-                       "and it will be set as index in element coords."))
-        coords[[i_coord]] <- 1:dim(data)[i_coord]
-      }
+    if (is.null(names(coords))) {
+      stop("Parameter 'coords' must have names corresponding to coordinates.")
     }
   } else {
     coords <- sapply(dimnames, function(x) 1:dim(data)[x])
   }
   # varname
   if (is.null(varname)) {
-    warning("Parameter 'varname' is NULL. It will be assigned to 'X'.")
     varname <- 'X'
   } else if (length(varname) > 1) {
     multiple_vars <- TRUE
@@ -350,11 +353,6 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
   if (!all(sapply(varname, is.character))) {
     stop("Parameter 'varname' must be a character string with the ",
          "variable names.")
-  }
-  # metadata
-  if (is.null(metadata)) {
-    warning("Parameter 'metadata' is not provided so the metadata saved ",
-            "will be incomplete.")
   }
   # single_file
   if (!inherits(single_file, 'logical')) {
@@ -368,6 +366,12 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
       stop("Parameter 'extra_string' must be a character string.")
     }
   }
+  # global_attrs
+  if (!is.null(global_attrs)) {
+    if (!inherits(global_attrs, 'list')) {
+      stop("Parameter 'global_attrs' must be a list.")
+    }
+  }
 
   ## Dimensions checks
   # Spatial coordinates
@@ -378,16 +382,6 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
   } else {
     lon_dim <- dimnames[which(dimnames %in% .KnownLonNames())]
     lat_dim <- dimnames[which(dimnames %in% .KnownLatNames())]
-    if (length(lon_dim) > 1) {
-      warning("Found more than one longitudinal dimension. Only the first one ", 
-              "will be used.")
-      lon_dim <- lon_dim[1]
-    }
-    if (length(lat_dim) > 1) {
-      warning("Found more than one latitudinal dimension. Only the first one ", 
-              "will be used.")
-      lat_dim <- lat_dim[1]
-    }
   }
   # ftime_dim
   if (!is.null(ftime_dim)) {
@@ -395,23 +389,14 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
       stop("Parameter 'ftime_dim' must be a character string.")
     }
     if (!all(ftime_dim %in% dimnames)) {
-      stop("Parameter 'ftime_dim' is not found in 'data' dimension.")
-    }
-    if (length(ftime_dim) > 1) {
-      warning("Parameter 'ftime_dim' has length greater than 1 and ",
-              "only the first element will be used.")
-      ftime_dim <- ftime_dim[1]
+      stop("Parameter 'ftime_dim' is not found in 'data' dimension. Set it ", 
+           "as NULL if there is no forecast time dimension.")
     }
   }
   # sdate_dim
   if (!is.null(sdate_dim)) {
     if (!is.character(sdate_dim)) {
       stop("Parameter 'sdate_dim' must be a character string.")
-    }
-    if (length(sdate_dim) > 1) {
-      warning("Parameter 'sdate_dim' has length greater than 1 and ",
-              "only the first element will be used.")
-      sdate_dim <- sdate_dim[1]
     }
     if (!all(sdate_dim %in% dimnames)) {
       stop("Parameter 'sdate_dim' is not found in 'data' dimension.")
@@ -436,11 +421,6 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
       stop("Parameter 'dat_dim' is not found in 'data' dimension. Set it ", 
            "as NULL if there is no Datasets dimension.")
     }
-    if (length(dat_dim) > 1) {
-      warning("Parameter 'dat_dim' has length greater than 1 and ",
-              "only the first element will be used.")
-      dat_dim <- dat_dim[1]
-    }
     n_datasets <- dim(data)[dat_dim]
   } else {
     n_datasets <- 1
@@ -453,11 +433,6 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
     if (!all(var_dim %in% dimnames)) {
       stop("Parameter 'var_dim' is not found in 'data' dimension. Set it ", 
            "as NULL if there is no variable dimension.")
-    }
-    if (length(var_dim) > 1) {
-      warning("Parameter 'var_dim' has length greater than 1 and ",
-              "only the first element will be used.")
-      var_dim <- var_dim[1]
     }
     n_vars <- dim(data)[var_dim]
   } else {
@@ -473,28 +448,119 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
       single_file <- TRUE
     }
   }
-  # Dates dimension check
+  # Dates (1): initial checks
   if (!is.null(Dates)) {
-    if (all(names(dim(Dates)) == c(ftime_dim, sdate_dim)) | 
-        all(names(dim(Dates)) == c(sdate_dim, ftime_dim))) {
-      if (is.null(startdates)) {
-        startdates <- Subset(Dates, along = ftime_dim, 1, drop = 'selected')
-      } else if ((!inherits(startdates, "POSIXct") & !inherits(startdates, "Date")) && 
-                 (!is.character(startdates) | (any(nchar(startdates) > 10) | any(nchar(startdates) < 1)))) {
-        warning("Parameter 'startdates' should be a character string containing ", 
-                "the start dates in the format 'yyyy-mm-dd', 'yyyymmdd', 'yyyymm', ", 
-                "'POSIXct' or 'Dates' class. Files will be named with Dates instead.")
-        startdates <- Subset(Dates, along = ftime_dim, 1, drop = 'selected')
-        if (!is.null(format(startdates, "%Y%m%d"))) {
-          startdates <- format(startdates, "%Y%m%d")
+    if (!any(inherits(Dates, "POSIXct"), inherits(Dates, "Date"))) {
+      stop("Parameter 'Dates' must be of 'POSIXct' or 'Dates' class.")
+    }
+    if (is.null(dim(Dates))) {
+      stop("Parameter 'Dates' must have dimension names.")
+    }
+    if (all(is.null(ftime_dim), is.null(sdate_dim))) {
+      warning("Parameters 'ftime_dim' and 'sdate_dim' can't both be NULL ",
+              "if 'Dates' are used. 'Dates' will not be used.")
+      Dates <- NULL
+    }
+    # sdate_dim in Dates
+    if (!is.null(sdate_dim)) {
+      if (!sdate_dim %in% names(dim(Dates))) {
+        warning("Parameter 'sdate_dim' is not found in 'Dates' dimension. ",
+                "Dates will not be used.")
+        Dates <- NULL
+      }
+    }
+    # ftime_dim in Dates
+    if (!is.null(ftime_dim)) {
+      if (!ftime_dim %in% names(dim(Dates))) {
+        warning("Parameter 'ftime_dim' is not found in 'Dates' dimension. ",
+                "Dates will not be used.")
+        Dates <- NULL
+      }
+    }
+  }
+  # time_bounds 
+  if (!is.null(time_bounds)) {
+    if (!inherits(time_bounds, 'list')) {
+      stop("Parameter 'time_bounds' must be a list with two dates arrays.")
+    }
+    time_bounds_dims <- lapply(time_bounds, function(x) dim(x))
+    if (!identical(time_bounds_dims[[1]], time_bounds_dims[[2]])) {
+      stop("Parameter 'time_bounds' must have 2 arrays with same dimensions.")
+    }
+    if (is.null(Dates)) {
+      time_bounds <- NULL
+    } else {
+      name_tb <- sort(names(time_bounds_dims[[1]]))
+      name_dt <- sort(names(dim(Dates)))
+      if (!identical(dim(Dates)[name_dt], time_bounds_dims[[1]][name_tb])) {
+        stop(paste0("Parameter 'Dates' and 'time_bounds' must have same length ",
+                    "of all dimensions."))
+      }
+    }
+  }
+  # Dates (2): Check dimensions
+  if (!is.null(Dates)) {
+    if (any(dim(Dates)[!names(dim(Dates)) %in% c(ftime_dim, sdate_dim)] != 1)) {
+      stop("Parameter 'Dates' can have only 'sdate_dim' and 'ftime_dim' ",
+           "dimensions of length greater than 1.")
+    }
+    # drop dimensions of length 1 different from sdate_dim and ftime_dim
+    dim(Dates) <- dim(Dates)[names(dim(Dates)) %in% c(ftime_dim, sdate_dim)]
+
+    # add ftime if needed
+    if (is.null(ftime_dim)) {
+      warning("A 'time' dimension of length 1 will be added to 'Dates'.") 
+      dim(Dates) <- c(time = 1, dim(Dates))
+      dim(data) <- c(time = 1, dim(data))
+      dimnames <- names(dim(data))
+      ftime_dim <- 'time'
+      if (!is.null(time_bounds)) {
+        time_bounds <- lapply(time_bounds, function(x) {
+          dim(x) <- c(time = 1, dim(x))
+          return(x)
+        })
+      }
+      units_hours_since <- TRUE
+    }
+    # add sdate if needed
+    if (is.null(sdate_dim)) {
+      if (!single_file) {
+        dim(Dates) <- c(dim(Dates), sdate = 1)
+        dim(data) <- c(dim(data), sdate = 1)
+        dimnames <- names(dim(data))
+        sdate_dim <- 'sdate'
+        if (!is.null(time_bounds)) {
+          time_bounds <- lapply(time_bounds, function(x) {
+            dim(x) <- c(dim(x), sdate = 1)
+            return(x)
+          })
+        }
+        if (!is.null(startdates)) {
+          if (length(startdates) != 1) {
+            warning("Parameter 'startdates' must be of length 1 if 'sdate_dim' is NULL.",
+                    "They won't be used.")
+            startdates <- NULL
+          }
         }
       }
-    } else if (all(dim(Dates)[!names(dim(Dates)) %in% c(ftime_dim, sdate_dim)] == 1)) {
-      dim(Dates) <- dim(Dates)[names(dim(Dates)) %in% c(ftime_dim, sdate_dim)]
-    } else {
-      stop("Parameter 'Dates' must have start date dimension and ", 
-           "forecast time dimension.")
+      units_hours_since <- TRUE
     }
+  }
+  # startdates
+  if (!is.null(Dates)) {
+    # check startdates
+    if (is.null(startdates)) {
+      startdates <- Subset(Dates, along = ftime_dim, 1, drop = 'selected')
+    } else if (any(nchar(startdates) > 10, nchar(startdates) < 1)) {
+      warning("Parameter 'startdates' should be a character string containing ", 
+              "the start dates in the format 'yyyy-mm-dd', 'yyyymmdd', 'yyyymm', ", 
+              "'POSIXct' or 'Dates' class. Files will be named with Dates instead.")
+      startdates <- Subset(Dates, along = ftime_dim, 1, drop = 'selected')
+    }
+  } else if (!single_file) {
+    warning("Dates must be provided if 'data' must be saved in separated files. ",
+            "All data will be saved in a single file.")
+    single_file <- TRUE
   }
   # startdates
   if (is.null(startdates)) {
@@ -504,20 +570,21 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
       startdates <- rep('XXX', dim(data)[sdate_dim])
     }
   } else {
-    if (is.null(sdate_dim)) {
-      if (length(startdates) != 1) {
-        warning("Parameter 'startdates' has length more than 1. Only first ", 
-                "value will be used.")
-        startdates <- startdates[[1]]
+    if (any(inherits(startdates, "POSIXct"), inherits(startdates, "Date"))) {
+      startdates <- format(startdates, "%Y%m%d")
+    }
+    if (!is.null(sdate_dim)) {
+      if (dim(data)[sdate_dim] != length(startdates)) {
+        warning(paste0("Parameter 'startdates' doesn't have the same length ",
+                       "as dimension '", sdate_dim,"', it will not be used."))
+        startdates <- Subset(Dates, along = ftime_dim, 1, drop = 'selected')
+        startdates <- format(startdates, "%Y%m%d")
       }
     }
   }
+
   # Datasets
   if (is.null(Datasets)) {
-    if (!single_file) {
-      warning("Parameter 'Datasets' is NULL. Files will be saved with a ", 
-              "directory name of 'XXX'.")
-    }
     Datasets <- rep('XXX', n_datasets )
   }
   if (inherits(Datasets, 'list')) {
@@ -533,127 +600,74 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
     Datasets <- Datasets[1:n_datasets]
   }
 
+  ## NetCDF dimensions definition
+  excluded_dims <- var_dim
+  if (!is.null(Dates)) {
+    excluded_dims <- c(excluded_dims, sdate_dim, ftime_dim)
+  }
+  if (!single_file) {
+    excluded_dims <- c(excluded_dims, dat_dim)
+  }
+
   ## Unknown dimensions check
-  alldims <- c(dat_dim, var_dim, sdate_dim, lon_dim, lat_dim, memb_dim, ftime_dim)
+  alldims <- c(dat_dim, var_dim, sdate_dim, lon_dim, lat_dim, ftime_dim, memb_dim)
   if (!all(dimnames %in% alldims)) {
     unknown_dims <- dimnames[which(!dimnames %in% alldims)]
     memb_dim <- c(memb_dim, unknown_dims)
-    alldims <- c(dat_dim, var_dim, sdate_dim, lon_dim, lat_dim, memb_dim, ftime_dim)
-  }
-  # Reorder
-  if (any(dimnames != alldims)) {
-    data <- Reorder(data, alldims)
-    dimnames <- names(dim(data))
-    if (!is.null(attr(data, 'dimensions'))) {
-      attr(data, 'dimensions') <- dimnames
-    }
   }
 
-  ## NetCDF dimensions definition
-  defined_dims <- NULL
-  extra_info_dim <- NULL
-  if (is.null(Dates)) {
-    filedims <- dimnames[which(!dimnames %in% c(dat_dim, var_dim))]
-  } else {
-    filedims <- dimnames[which(!dimnames %in% c(dat_dim, var_dim, sdate_dim, ftime_dim))]
-  }
+  filedims <- c(dat_dim, var_dim, sdate_dim, lon_dim, lat_dim, ftime_dim, memb_dim)
+  filedims <- filedims[which(!filedims %in% excluded_dims)]
+
+  # Delete unneded coords
+  coords[c(names(coords)[!names(coords) %in% filedims])] <- NULL
+  out_coords <- NULL
   for (i_coord in filedims) {
-    dim_info <- list()
     # vals
     if (i_coord %in% names(coords)) {
-      if (is.numeric(coords[[i_coord]])) {
-        dim_info[['vals']] <- as.vector(coords[[i_coord]])
+      if (length(coords[[i_coord]]) != dim(data)[i_coord]) {
+        warning(paste0("Coordinate '", i_coord, "' has different lenght as ",
+                       "its dimension and it will not be used."))
+        out_coords[[i_coord]] <- 1:dim(data)[i_coord]
+      } else if (is.numeric(coords[[i_coord]])) {
+        out_coords[[i_coord]] <- as.vector(coords[[i_coord]])
       } else {
-        dim_info[['vals']] <- 1:dim(data)[i_coord]
+        out_coords[[i_coord]] <- 1:dim(data)[i_coord]
       }
     } else {
-      dim_info[['vals']] <- 1:dim(data)[i_coord]
+      out_coords[[i_coord]] <- 1:dim(data)[i_coord]
     }
-    # name
-    dim_info[['name']] <- i_coord
-    # len
-    dim_info[['len']] <- as.numeric(dim(data)[i_coord])
-    # unlim
-    dim_info[['unlim']] <- FALSE
-    # create_dimvar
-    dim_info[['create_dimvar']] <- TRUE
+    dim(out_coords[[i_coord]]) <- dim(data)[i_coord]
+    
     ## metadata
     if (i_coord %in% names(metadata)) {
       if ('variables' %in% names(attributes(metadata[[i_coord]]))) {
         # from Start: 'lon' or 'lat'
-        attrs <- attributes(metadata[[i_coord]])[['variables']][[i_coord]]
-        i_coord_info <- attrs[!sapply(attrs, inherits, 'list')]
+        attrs <- attributes(metadata[[i_coord]])[['variables']]
+        attrs[[i_coord]]$dim <- NULL
+        attr(out_coords[[i_coord]], 'variables') <- attrs
       } else if (inherits(metadata[[i_coord]], 'list')) {
         # from Start and Load: main var
-        i_coord_info <- metadata[[i_coord]]
+        attr(out_coords[[i_coord]], 'variables') <- list(metadata[[i_coord]])
+        names(attributes(out_coords[[i_coord]])$variables) <- i_coord
       } else if (!is.null(attributes(metadata[[i_coord]]))) {
         # from Load
-        i_coord_info <- attributes(metadata[[i_coord]])
-      } else {
-        stop("Metadata is not correct.")
+        attrs <- attributes(metadata[[i_coord]])
+        # We remove because some attributes can't be saved
+        attrs <- NULL 
+        attr(out_coords[[i_coord]], 'variables') <- list(attrs)
+        names(attributes(out_coords[[i_coord]])$variables) <- i_coord
       }
-      # len
-      if ('size' %in% names(i_coord_info)) {
-        if (i_coord_info[['size']] != dim(data)[i_coord]) {
-          dim_info[['original_len']] <- i_coord_info[['size']]
-          i_coord_info[['size']] <- NULL
-        }
-      }
-      # units
-      if (!('units' %in% names(i_coord_info))) {
-        dim_info[['units']] <- ''
-      } else {
-        dim_info[['units']] <- i_coord_info[['units']]
-        i_coord_info[['units']] <- NULL
-      }
-      # calendar
-      if (!('calendar' %in% names(i_coord_info))) {
-        dim_info[['calendar']] <- NA
-      } else {
-        dim_info[['calendar']] <- i_coord_info[['calendar']]
-        i_coord_info[['calendar']] <- NULL
-      }
-      # longname
-      if ('long_name' %in% names(i_coord_info)) {
-        dim_info[['longname']] <- i_coord_info[['long_name']]
-        i_coord_info[['long_name']] <- NULL
-      } else if ('longname' %in% names(i_coord_info)) {
-        dim_info[['longname']] <- i_coord_info[['longname']]
-        i_coord_info[['longname']] <- NULL
-      } else {
-        if (i_coord %in% .KnownLonNames()) {
-          dim_info[['longname']] <- 'longitude'
-        } else if (i_coord %in% .KnownLatNames()) {
-          dim_info[['longname']] <- 'latitude'
-        }
-      }
-      # extra information
-      if (!is.null(names(i_coord_info))) {
-        extra_info_dim[[i_coord]] <- i_coord_info
-      }
-    } else {
-      # units
-      dim_info[['units']] <- "adim"
-      # longname
-      dim_info[['longname']] <- i_coord
-      # calendar
-      dim_info[['calendar']] <- NA
     }
-    new_dim <- list(ncdim_def(name = dim_info[['name']], units = dim_info[['units']], 
-                              vals = dim_info[['vals']], unlim = dim_info[['unlim']], 
-                              create_dimvar = dim_info[['create_dimvar']], 
-                              calendar = dim_info[['calendar']], 
-                              longname = dim_info[['longname']]))
-    names(new_dim) <- i_coord
-    defined_dims <- c(defined_dims, new_dim)
   }
 
-  defined_vars <- list()
   if (!single_file) {
     for (i in 1:n_datasets) {
       path <- file.path(destination, Datasets[i], varname)
       for (j in 1:n_vars) {
-        dir.create(path[j], recursive = TRUE)
+        if (!dir.exists(path[j])) {
+          dir.create(path[j], recursive = TRUE)
+        }
         startdates <- gsub("-", "", startdates)
         dim(startdates) <- c(length(startdates))
         names(dim(startdates)) <- sdate_dim
@@ -666,271 +680,234 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
         } else {
           data_subset <- Subset(data, c(dat_dim, var_dim), list(i, j), drop = 'selected')
         }
+        target <- names(dim(data_subset))[which(!names(dim(data_subset)) %in% c(sdate_dim, ftime_dim))]
+        target_dims_data <- c(target, ftime_dim)
         if (is.null(Dates)) {
           input_data <- list(data_subset, startdates)
-          target_dims <- list(c(lon_dim, lat_dim, memb_dim, ftime_dim), NULL)
+          target_dims <- list(target_dims_data, NULL)
+        } else if (!is.null(time_bounds)) {
+          input_data <- list(data_subset, startdates, Dates, 
+                             time_bounds[[1]], time_bounds[[2]])
+          target_dims = list(target_dims_data, NULL, 
+                             ftime_dim, ftime_dim, ftime_dim)
         } else {
           input_data <- list(data_subset, startdates, Dates)
-          target_dims = list(c(lon_dim, lat_dim, memb_dim, ftime_dim), NULL, ftime_dim)
+          target_dims = list(target_dims_data, NULL, ftime_dim)
         }
         Apply(data = input_data,
               target_dims = target_dims,
-              fun = .saveExp, 
+              fun = .saveexp, 
               destination = path[j],
-              defined_dims = defined_dims, 
+              coords = out_coords, 
               ftime_dim = ftime_dim, 
               varname = varname[j], 
               metadata_var = metadata[[varname[j]]], 
-              extra_info_dim = extra_info_dim, 
-              extra_string = extra_string)
+              extra_string = extra_string,
+              global_attrs = global_attrs)
       }
     }
   } else {
-    # Datasets definition
-    # From here
-    if (!is.null(dat_dim)) {
-      new_dim <- list(ncdim_def(name = dat_dim, units = "adim",
-                                vals = 1 : dim(data)[dat_dim],
-                                longname = 'Datasets', create_dimvar = TRUE))
-      names(new_dim) <- dat_dim
-      defined_dims <- c(new_dim, defined_dims)
-      extra_info_dim[[dat_dim]] <- list(Datasets = paste(Datasets, collapse = ', '))
+    # time_bnds
+    if (!is.null(time_bounds)) {
+      time_bnds <- c(time_bounds[[1]], time_bounds[[2]])
     }
-    first_sdate <- last_sdate <- NULL
+    # Dates
+    remove_metadata_dim <- TRUE
     if (!is.null(Dates)) {
-      # sdate definition
-      sdates <- Subset(Dates, along = ftime_dim, 1, drop = 'selected')
-      differ <- as.numeric((sdates - sdates[1])/3600)
-      new_dim <- list(ncdim_def(name = sdate_dim, units = paste('hours since', sdates[1]),
-                                vals = differ,
-                                longname = sdate_dim, create_dimvar = TRUE))
-      names(new_dim) <- sdate_dim
-      defined_dims <- c(defined_dims, new_dim)
-      first_sdate <- sdates[1]
-      last_sdate <- sdates[length(sdates)]
-      # ftime definition
-      Dates <- Reorder(Dates, c(ftime_dim, sdate_dim))
-      differ_ftime <- apply(Dates, 2, function(x){as.numeric((x - x[1])/3600)})
-      dim(differ_ftime) <- dim(Dates)
-      differ_ftime_subset <- Subset(differ_ftime, along = sdate_dim, 1, drop = 'selected')
-      if (all(apply(differ_ftime, 1, function(x){length(unique(x)) == 1}))) {
-        if (all(diff(differ_ftime_subset/24) == 1)) {
+      if (is.null(sdate_dim)) {
+        sdates <- Dates[1]
+        # ftime definition
+        leadtimes <- as.numeric(difftime(Dates, sdates, units = "hours"))
+      } else {
+        # sdate definition
+        sdates <- Subset(Dates, along = ftime_dim, 1, drop = 'selected')
+        differ <- as.numeric(difftime(sdates, sdates[1], units = "hours"))
+        dim(differ) <- dim(data)[sdate_dim]
+        differ <- list(differ)
+        names(differ) <- sdate_dim
+        out_coords <- c(differ, out_coords)
+        attrs <- list(units = paste('hours since', sdates[1]),
+                      calendar = 'proleptic_gregorian', longname = sdate_dim)
+        attr(out_coords[[sdate_dim]], 'variables')[[sdate_dim]] <- attrs
+        # ftime definition
+        Dates <- Reorder(Dates, c(ftime_dim, sdate_dim)) 
+        differ_ftime <- array(dim = dim(Dates))
+        for (i in 1:length(sdates)) {
+          differ_ftime[, i] <- as.numeric(difftime(Dates[, i], Dates[1, i], 
+                                          units = "hours"))
+        }
+        dim(differ_ftime) <- dim(Dates)
+        leadtimes <- Subset(differ_ftime, along = sdate_dim, 1, drop = 'selected')
+        if (!all(apply(differ_ftime, 1, function(x){length(unique(x)) == 1}))) {
+          warning("Time steps are not equal for all start dates. Only ", 
+                  "forecast time values for the first start date will be saved ", 
+                  "correctly.")
+        }
+      }
+      if (all(!units_hours_since, is.null(time_bounds))) {
+        if (all(diff(leadtimes/24) == 1)) {
           # daily values
-          dim_time <- list(ncdim_def(name = ftime_dim, units = 'days',
-                                     vals = round(differ_ftime_subset/24) + 1, 
-                                     calendar = 'proleptic_gregorian',
-                                     longname = ftime_dim, unlim = TRUE))
-          names(dim_time) <- ftime_dim
-          defined_dims <- c(defined_dims, dim_time)     
-        } else if (all(diff(differ_ftime_subset/24) %in% c(28, 29, 30, 31))) {
+          units <- 'days'
+          leadtimes_vals <- round(leadtimes/24) + 1
+        } else if (all(diff(leadtimes/24) %in% c(28, 29, 30, 31))) {
           # monthly values
-          dim_time <- list(ncdim_def(name = ftime_dim, units = 'months',
-                                     vals = round(differ_ftime_subset/730) + 1, 
-                                     calendar = 'proleptic_gregorian',
-                                     longname = ftime_dim, unlim = TRUE))
-          names(dim_time) <- ftime_dim
-          defined_dims <- c(defined_dims, dim_time)   
+          units <- 'months'
+          leadtimes_vals <- round(leadtimes/(30.437*24)) + 1   
         } else {
           # other frequency
-          dim_time <- list(ncdim_def(name = ftime_dim, units = 'hours',
-                                     vals = differ_ftime_subset + 1, 
-                                     calendar = 'proleptic_gregorian',
-                                     longname = ftime_dim, unlim = TRUE))
-          names(dim_time) <- ftime_dim
-          defined_dims <- c(defined_dims, dim_time)  
+          units <- 'hours'
+          leadtimes_vals <- leadtimes + 1
         }
       } else {
-        warning("Time steps are not equal for all start dates. Only ", 
-                "forecast time values for the first start date will be saved ", 
-                "correctly.")
-        dim_time <- list(ncdim_def(name = ftime_dim, 
-                                   units = paste('hours since', 
-                                           paste(sdates, collapse = ', ')),
-                                   vals = differ_ftime_subset, 
-                                   calendar = 'proleptic_gregorian',
-                                   longname = ftime_dim, unlim = TRUE))
-        names(dim_time) <- ftime_dim
-        defined_dims <- c(defined_dims, dim_time)
+        units <- paste('hours since', paste(sdates, collapse = ', '))
+        leadtimes_vals <- leadtimes
+      }
+
+      # Add time_bnds
+      if (!is.null(time_bounds)) {
+        if (is.null(sdate_dim)) {
+          sdates <- Dates[1]
+          time_bnds <- c(time_bounds[[1]], time_bounds[[2]])
+          leadtimes_bnds <- as.numeric(difftime(time_bnds, sdates, units = "hours"))
+          dim(leadtimes_bnds) <- c(dim(Dates), bnds = 2)
+        } else {
+          # assuming they have sdate and ftime
+          time_bnds <- lapply(time_bounds, function(x) {
+            x <- Reorder(x, c(ftime_dim, sdate_dim))
+            return(x)
+          })
+          time_bnds <- c(time_bounds[[1]], time_bounds[[2]])
+          dim(time_bnds) <- c(dim(Dates), bnds = 2)
+          differ_bnds <- array(dim = c(dim(time_bnds)))
+          for (i in 1:length(sdates)) {
+            differ_bnds[, i, ] <- as.numeric(difftime(time_bnds[, i, ], Dates[1, i], 
+                                            units = "hours"))
+          }
+          # NOTE (TODO): Add a warning when they are not equally spaced?
+          leadtimes_bnds <- Subset(differ_bnds, along = sdate_dim, 1, drop = 'selected')
+        }
+        # Add time_bnds
+        leadtimes_bnds <- Reorder(leadtimes_bnds, c('bnds', ftime_dim))
+        leadtimes_bnds <- list(leadtimes_bnds)
+        names(leadtimes_bnds) <- 'time_bnds'
+        out_coords <- c(leadtimes_bnds, out_coords)
+        attrs <- list(units = paste('hours since', paste(sdates, collapse = ', ')),
+                      calendar = 'proleptic_gregorian',
+                      long_name = 'time bounds', unlim = FALSE)
+        attr(out_coords[['time_bnds']], 'variables')$time_bnds <- attrs
+      }
+      # Add ftime var
+      dim(leadtimes_vals) <- dim(data)[ftime_dim]
+      leadtimes_vals <- list(leadtimes_vals)
+      names(leadtimes_vals) <- ftime_dim
+      out_coords <- c(leadtimes_vals, out_coords)
+      attrs <- list(units = units, calendar = 'proleptic_gregorian',
+                    longname = ftime_dim, 
+                    dim = list(list(name = ftime_dim, unlim = TRUE)))
+      if (!is.null(time_bounds)) {
+        attrs$bounds = 'time_bnds'
+      }
+      attr(out_coords[[ftime_dim]], 'variables')[[ftime_dim]] <- attrs
+      for (j in 1:n_vars) {
+        remove_metadata_dim <- FALSE
+        metadata[[varname[j]]]$dim <- list(list(name = ftime_dim, unlim = TRUE))
+      }
+      # Reorder ftime_dim to last
+      if (length(dim(data)) != which(names(dim(data)) == ftime_dim)) {
+        order <- c(names(dim(data))[which(!names(dim(data)) %in% c(ftime_dim))], ftime_dim)
+        data <- Reorder(data, order)
       }
     }
-
     # var definition
-    defined_vars <- list()
     extra_info_var <- NULL
     for (j in 1:n_vars) {
-      var_info <- list()
-      i_var_info <- metadata[[varname[j]]][!sapply(metadata[[varname[j]]], inherits, 'list')]
-      ## Define metadata
-      # name
-      var_info[['name']] <- varname[j]
-      # units
-      if ('units' %in% names(i_var_info)) {
-        var_info[['units']] <- i_var_info[['units']]
-        i_var_info[['units']] <- NULL
+      varname_j <- varname[j]
+      metadata_j <- metadata[[varname_j]]
+      if (is.null(var_dim)) {
+        out_coords[[varname_j]] <- data
       } else {
-        var_info[['units']] <- ''
+        out_coords[[varname_j]] <- Subset(data, var_dim, j, drop = 'selected')
       }
-      # dim
-      var_info[['dim']] <- defined_dims
-      # missval
-      if ('missval' %in% names(i_var_info)) {
-        var_info[['missval']] <- i_var_info[['missval']]
-        i_var_info[['missval']] <- NULL
-      } else {
-        var_info[['missval']] <- NULL
+      if (!is.null(metadata_j)) {
+        if (remove_metadata_dim) metadata_j$dim <- NULL
+        attr(out_coords[[varname_j]], 'variables') <- list(metadata_j)
+        names(attributes(out_coords[[varname_j]])$variables) <- varname_j
       }
-      # longname
-      if (any(c('longname', 'long_name') %in% names(i_var_info))) {
-        longname <- names(i_var_info)[which(names(i_var_info) %in% c('longname', 'long_name'))]
-        var_info[['longname']] <- i_var_info[[longname]]
-        i_var_info[[longname]] <- NULL
-      } else {
-        var_info[['longname']] <- varname[j]
+      # Add global attributes
+      if (!is.null(global_attrs)) {
+        attributes(out_coords[[varname_j]])$global_attrs <- global_attrs
       }
-      # prec
-      if ('prec' %in% names(i_var_info)) {
-        var_info[['prec']] <- i_var_info[['prec']]
-        i_var_info[['prec']] <- NULL
-      } else {
-        prec <- typeof(data)
-        if (prec == 'character') {
-          var_info[['prec']] <- 'char'
-        }
-        if (any(prec %in% c('short', 'float', 'double', 'integer', 'char', 'byte'))) {
-          var_info[['prec']] <- prec
-        } else {
-          var_info[['prec']] <- 'double'
-        }
-      }
-      # extra information
-      if (!is.null(names(i_var_info))) {
-        extra_info_var[[varname[j]]] <- i_var_info
-      }
-      new_var <- list(ncvar_def(name = var_info[['name']],
-                                units = var_info[['units']],
-                                dim = var_info[['dim']], 
-                                missval = var_info[['missval']],
-                                longname = var_info[['longname']], 
-                                prec = var_info[['prec']]))
-
-      names(new_var) <- varname[j]
-      defined_vars <- c(defined_vars, new_var)
     }
     if (is.null(extra_string)) {
+      first_sdate <- startdates[1]
+      last_sdate <- startdates[length(startdates)]
       gsub("-", "", first_sdate)
       file_name <- paste0(paste(c(varname, 
                                   gsub("-", "", first_sdate), 
                                   gsub("-", "", last_sdate)), 
                                   collapse = '_'), ".nc")
     } else {
-      file_name <- paste0(paste(c(varname, extra_string, 
-                                  gsub("-", "", first_sdate), 
-                                  gsub("-", "", last_sdate)), 
-                                  collapse = '_'), ".nc")
+      nc <- substr(extra_string, nchar(extra_string)-2, nchar(extra_string))
+      if (nc == ".nc") {
+        file_name <- extra_string
+      } else {
+        file_name <- paste0(extra_string, ".nc")
+      }
     }
     full_filename <- file.path(destination, file_name)
-    file_nc <- nc_create(full_filename, defined_vars)
-    if (is.null(var_dim)) {
-      ncvar_put(file_nc, varname, vals = data)
-    } else {
-      for (j in 1:n_vars) {
-        ncvar_put(file_nc, defined_vars[[j]]$name, 
-                  vals = Subset(data, var_dim, j, drop = 'selected'))
-      }
-    }
-    # Additional dimension attributes
-    for (dim in names(defined_dims)) {
-      if (dim %in% names(extra_info_dim)) {
-        for (info_dim in names(extra_info_dim[[dim]])) {
-          add_info_dim <- paste0(extra_info_dim[[dim]][[info_dim]], collapse = ', ')
-          ncatt_put(file_nc, dim, info_dim, add_info_dim)
-        }
-      }
-    }
-    # Additional dimension attributes
-    for (var in names(defined_vars)) {
-      if (var %in% names(extra_info_var)) {
-        for (info_var in names(extra_info_var[[var]])) {
-          add_info_var <- paste0(extra_info_var[[var]][[info_var]], collapse = ', ')
-          ncatt_put(file_nc, var, info_var, add_info_var)
-        }
-      }
-    }
-    nc_close(file_nc)
+    ArrayToNc(out_coords, full_filename)
   }
 }
 
-.saveExp <- function(data, startdates = NULL, dates = NULL, destination = "./", 
-                     defined_dims, ftime_dim = 'time',  varname = 'var', 
-                     metadata_var = NULL, extra_info_dim = NULL, 
-                     extra_string = NULL) {
-  # ftime_dim
+.saveexp <- function(data, coords, destination = "./",
+                     startdates = NULL, dates = NULL, 
+                     time_bnds1 = NULL, time_bnds2 = NULL, 
+                     ftime_dim = 'time', varname = 'var', 
+                     metadata_var = NULL, extra_string = NULL,
+                     global_attrs = NULL) {
+  remove_metadata_dim <- TRUE
   if (!is.null(dates)) {
-    differ <- as.numeric((dates - dates[1])/3600)
-    dim_time <- list(ncdim_def(name = ftime_dim, units = paste('hours since', dates[1]),
-                               vals = differ, calendar = 'proleptic_gregorian',
-                               longname = ftime_dim, unlim = TRUE))
-    names(dim_time) <- ftime_dim
-    defined_dims <- c(defined_dims, dim_time)
-  }
-
-  ## Define var metadata
-  var_info <- NULL
-  extra_info_var <- NULL
-  i_var_info <- metadata_var[!sapply(metadata_var, inherits, 'list')]
-
-  # name
-  var_info[['name']] <- varname
-  # units
-  if ('units' %in% names(i_var_info)) {
-    var_info[['units']] <- i_var_info[['units']]
-    i_var_info[['units']] <- NULL
-  } else {
-    var_info[['units']] <- ''
-  }
-  # dim
-  var_info[['dim']] <- defined_dims
-  # missval
-  if ('missval' %in% names(i_var_info)) {
-    var_info[['missval']] <- i_var_info[['missval']]
-    i_var_info[['missval']] <- NULL
-  } else {
-    var_info[['missval']] <- NULL
-  }
-  # longname
-  if (any(c('longname', 'long_name') %in% names(i_var_info))) {
-    longname <- names(i_var_info)[which(names(i_var_info) %in% c('longname', 'long_name'))]
-    var_info[['longname']] <- i_var_info[[longname]]
-    i_var_info[[longname]] <- NULL
-  } else {
-    var_info[['longname']] <- varname
-  }
-  # prec
-  if ('prec' %in% names(i_var_info)) {
-    var_info[['prec']] <- i_var_info[['prec']]
-    i_var_info[['prec']] <- NULL
-  } else {
-    prec <- typeof(data)
-    if (prec == 'character') {
-      var_info[['prec']] <- 'char'
+    if (!any(is.null(time_bnds1), is.null(time_bnds2))) {
+      time_bnds <- c(time_bnds1, time_bnds2)
+      time_bnds <- as.numeric(difftime(time_bnds, dates[1], units = "hours"))
+      dim(time_bnds) <- c(dim(data)[ftime_dim], bnds = 2)
+      time_bnds <- Reorder(time_bnds, c('bnds', ftime_dim))
+      time_bnds <- list(time_bnds)
+      names(time_bnds) <- 'time_bnds'
+      coords <- c(time_bnds, coords)
+      attrs <- list(units = paste('hours since', dates[1]),
+                    calendar = 'proleptic_gregorian',
+                    longname = 'time bounds')
+      attr(coords[['time_bnds']], 'variables')$time_bnds <- attrs
     }
-    if (any(prec %in% c('short', 'float', 'double', 'integer', 'char', 'byte'))) {
-      var_info[['prec']] <- prec
-    } else {
-      var_info[['prec']] <- 'double'
+    # Add ftime_dim
+    differ <- as.numeric(difftime(dates, dates[1], units = "hours"))
+    dim(differ) <- dim(data)[ftime_dim]
+    differ <- list(differ)
+    names(differ) <- ftime_dim
+    coords <- c(differ, coords)
+    attrs <- list(units = paste('hours since', dates[1]),
+                  calendar = 'proleptic_gregorian',
+                  longname = ftime_dim,
+                  dim = list(list(name = ftime_dim, unlim = TRUE)))
+    if (!is.null(time_bnds1)) {
+      attrs$bounds = 'time_bnds'
     }
+    attr(coords[[ftime_dim]], 'variables')[[ftime_dim]] <- attrs
+    metadata_var$dim <- list(list(name = ftime_dim, unlim = TRUE))
+    remove_metadata_dim <- FALSE
   }
-  # extra information
-  if (!is.null(names(i_var_info))) {
-    extra_info_var <- i_var_info
+  # Add data
+  coords[[varname]] <- data
+  if (!is.null(metadata_var)) {
+    if (remove_metadata_dim) metadata_var$dim <- NULL
+    attr(coords[[varname]], 'variables') <- list(metadata_var)
+    names(attributes(coords[[varname]])$variables) <- varname
   }
-
-  datanc <- ncvar_def(name = var_info[['name']],
-                      units = var_info[['units']],
-                      dim = var_info[['dim']], 
-                      missval = var_info[['missval']],
-                      longname = var_info[['longname']], 
-                      prec = var_info[['prec']])
+  # Add global attributes
+  if (!is.null(global_attrs)) {
+    attributes(coords[[varname]])$global_attrs <- global_attrs
+  }
 
   if (is.null(extra_string)) {
     file_name <- paste0(varname, "_", startdates, ".nc")
@@ -938,25 +915,5 @@ SaveExp <- function(data, destination = "./", Dates = NULL, coords = NULL,
     file_name <- paste0(varname, "_", extra_string, "_", startdates, ".nc")
   }
   full_filename <- file.path(destination, file_name)
-  file_nc <- nc_create(full_filename, datanc)
-  ncvar_put(file_nc, datanc, data)
-
-  # Additional attributes
-  for (dim in names(defined_dims)) {
-    if (dim %in% names(extra_info_dim)) {
-      for (info_dim in names(extra_info_dim[[dim]])) {
-        add_info_dim <- paste0(extra_info_dim[[dim]][[info_dim]], collapse = ', ')
-        ncatt_put(file_nc, dim, info_dim, add_info_dim)
-      }
-    }
-  }
-  # Additional dimension attributes
-  if (!is.null(extra_info_var)) {
-    for (info_var in names(extra_info_var)) {
-      add_info_var <- paste0(extra_info_var[[info_var]], collapse = ', ')
-      ncatt_put(file_nc, varname, info_var, add_info_var)
-    }
-  }
-
-  nc_close(file_nc)
+  ArrayToNc(coords, full_filename)
 }
