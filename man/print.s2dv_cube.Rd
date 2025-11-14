@@ -11,6 +11,10 @@
 
 \item{...}{Additional arguments of print function.}
 }
+\value{
+No return value, called for side effects. It prints a  summary 
+of an 's2dv_cube' object to the console.
+}
 \description{
 This is an S3 method of the generic 'print' for the class 's2dv_cube'. When 
 you will call 'print' on an 's2dv_cube' object, this method will display the 

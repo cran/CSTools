@@ -39,9 +39,10 @@
 #'  can be either \code{bias}, \code{evmos}, \code{mse_min}, \code{crps_min} or 
 #'  \code{rpc-based}. Default value is \code{mse_min}.
 #'@param eval.method A character string indicating the sampling method used, it 
-#'  can be either \code{in-sample} or \code{leave-one-out}. Default value is the 
-#'  \code{leave-one-out} cross validation. In case the forecast is provided, any 
-#'  chosen eval.method is over-ruled and a third option is used.
+#'  can be either \code{in-sample}, \code{leave-k-out}, \code{retrospective} or 
+#'  \code{hindcast-vs-forecast}. Default value is the \code{leave-k-out} cross validation. 
+#'  In case the forecast is provided, any chosen eval.method is over-ruled 
+#'  and a third option is used.
 #'@param multi.model A boolean that is used only for the \code{mse_min} 
 #'  method. If multi-model ensembles or ensembles of different sizes are used, 
 #'  it must be set to \code{TRUE}. By default it is \code{FALSE}. Differences 
@@ -73,6 +74,13 @@
 #'  The default value is NULL.
 #'@param ncores An integer that indicates the number of cores for parallel 
 #'  computations using multiApply function. The default value is one.
+#'@param k Positive integer. Default = 1.
+#'  In method \code{leave-k-out}, \code{k} is expected to be odd integer, indicating the number of points to leave out.
+#'  In method \code{retrospective}, \code{k} can be any positive integer, indicating when to start. 
+#'@param tail.out Boolean for 'leave-k-out' method; TRUE to remove both extremes 
+#'  keeping the same sample size for all k-folds (e.g. sample.length=50, k=3, 
+#'  eval.dexes = 1, train.dexes = (3,49)). FALSE to remove only the corresponding tail (e.g..
+#'  sample.length=50, k=3, eval.dexes = 1, train.dexes = (3,50))
 #' 
 #'@return An object of class \code{s2dv_cube} containing the calibrated 
 #'forecasts in the element \code{data} with the dimensions nexp, nobs and same 
@@ -146,10 +154,10 @@
 #'@importFrom ClimProjDiags Subset
 #'@export
 CST_Calibration <- function(exp, obs, exp_cor = NULL, cal.method = "mse_min", 
-                            eval.method = "leave-one-out", multi.model = FALSE, 
+                            eval.method = "leave-k-out", multi.model = FALSE, 
                             na.fill = TRUE, na.rm = TRUE, apply_to = NULL, 
                             alpha = NULL, memb_dim = 'member', sdate_dim = 'sdate', 
-                            dat_dim = NULL, ncores = NULL) {
+                            dat_dim = NULL, ncores = NULL, k = 1, tail.out = TRUE) {
   # Check 's2dv_cube'
   if (!inherits(exp, "s2dv_cube") || !inherits(obs, "s2dv_cube")) {
         stop("Parameter 'exp' and 'obs' must be of the class 's2dv_cube'.")
@@ -165,7 +173,7 @@ CST_Calibration <- function(exp, obs, exp_cor = NULL, cal.method = "mse_min",
                              multi.model =  multi.model, na.fill = na.fill, 
                              na.rm = na.rm, apply_to = apply_to, alpha = alpha, 
                              memb_dim = memb_dim, sdate_dim = sdate_dim, 
-                             dat_dim = dat_dim, ncores = ncores)
+                             dat_dim = dat_dim, ncores = ncores, k = k, tail.out = tail.out)
 
   if (is.null(exp_cor)) {
     exp$data <- Calibration
@@ -200,7 +208,7 @@ CST_Calibration <- function(exp, obs, exp_cor = NULL, cal.method = "mse_min",
 #'minimizes the Continuous Ranked Probability Score (CRPS). The 
 #'\code{"rpc-based"} method adjusts the forecast variance ensuring that the 
 #'ratio of predictable components (RPC) is equal to one, as in Eade et al. 
-#'(2014). Both in-sample or our out-of-sample (leave-one-out cross 
+#'(2014). Both in-sample or our out-of-sample (leave-k-out cross 
 #'validation) calibration are possible.
 #'
 #'@param exp A multidimensional array with named dimensions (at least 'sdate' 
@@ -219,11 +227,11 @@ CST_Calibration <- function(exp, obs, exp_cor = NULL, cal.method = "mse_min",
 #'@param cal.method A character string indicating the calibration method used, 
 #'  can be either \code{bias}, \code{evmos}, \code{mse_min}, \code{crps_min} 
 #'  or \code{rpc-based}. Default value is \code{mse_min}.
-#'@param eval.method A character string indicating the sampling method used, 
-#'  can be either \code{in-sample} or \code{leave-one-out}. Default value is 
-#'  the \code{leave-one-out} cross validation. In case the forecast is 
-#'  provided, any chosen eval.method is over-ruled and a third option is 
-#'  used.
+#'@param eval.method A character string indicating the sampling method used, it 
+#'  can be either \code{in-sample}, \code{leave-k-out}, \code{retrospective} or 
+#'  \code{hindcast-vs-forecast}. Default value is the \code{leave-k-out} cross validation. 
+#'  In case the forecast is provided, any chosen eval.method is over-ruled 
+#'  and a third option is used.
 #'@param multi.model A boolean that is used only for the \code{mse_min} 
 #'  method. If multi-model ensembles or ensembles of different sizes are used, 
 #'  it must be set to \code{TRUE}. By default it is \code{FALSE}. Differences 
@@ -254,6 +262,13 @@ CST_Calibration <- function(exp, obs, exp_cor = NULL, cal.method = "mse_min",
 #'  The default value is NULL.
 #'@param ncores An integer that indicates the number of cores for parallel 
 #'  computation using multiApply function. The default value is NULL (one core).
+#'@param k  k Positive integer. Default = 1.
+#'  In method \code{leave-k-out}, \code{k} is expected to be odd integer, indicating the number of points to leave out.
+#'  In method \code{retrospective}, \code{k} can be any positive integer, indicating when to start.
+#'@param tail.out Boolean for 'leave-k-out' method; TRUE to remove both extremes 
+#'  keeping the same sample size for all k-folds (e.g. sample.length = 50, k = 3, 
+#'  eval.dexes = 1, train.dexes = (3,49)). FALSE to remove only the corresponding tail (e.g..
+#'  sample.length=50, k=3, eval.dexes=1, train.dexes= (3,50))
 #' 
 #'@return An array containing the calibrated forecasts with the dimensions 
 #'nexp, nobs and same dimensions as in the 'exp' array. nexp is the number of 
@@ -301,11 +316,11 @@ CST_Calibration <- function(exp, obs, exp_cor = NULL, cal.method = "mse_min",
 #'@importFrom ClimProjDiags Subset
 #'@export
 Calibration <- function(exp, obs, exp_cor = NULL, 
-                        cal.method = "mse_min", eval.method = "leave-one-out",  
+                        cal.method = "mse_min", eval.method = "leave-k-out",  
                         multi.model = FALSE, na.fill = TRUE, 
                         na.rm = TRUE, apply_to = NULL, alpha = NULL,
                         memb_dim = 'member', sdate_dim = 'sdate', dat_dim = NULL, 
-                        ncores = NULL) {
+                        ncores = NULL, k = 1, tail.out = TRUE) {
 
   # Check inputs
   ## exp, obs
@@ -334,7 +349,7 @@ Calibration <- function(exp, obs, exp_cor = NULL,
     # if exp_cor is provided, it will be calibrated: "calibrate forecast instead of hindcast"
     # if exp_cor is provided, eval.method is overruled (because if exp_cor is provided, the 
     # train data will be all data of "exp" and the evalutaion data will be all data of "exp_cor"; 
-    # no need for "leave-one-out" or "in-sample")
+    # no need for "leave-k-out" or "in-sample")
     eval.method <- "hindcast-vs-forecast"
     expcordims <- names(dim(exp_cor))
     if (is.null(expcordims)) {
@@ -463,7 +478,7 @@ Calibration <- function(exp, obs, exp_cor = NULL,
       apply_to <- 'sign'
       warning("Parameter 'apply_to' cannot be NULL for 'rpc-based' method so it ", 
               "has been set to 'sign', as in Eade et al. (2014).")
-    } else if (!apply_to %in% c('all','sign')) {
+    } else if (!apply_to %in% c('all', 'sign')) {
       stop("Parameter 'apply_to' must be either 'all' or 'sign' when 'rpc-based' ", 
            "method is used.")
     }
@@ -478,10 +493,17 @@ Calibration <- function(exp, obs, exp_cor = NULL,
     }
   }
   ## eval.method
-  if (!any(eval.method %in% c('in-sample', 'leave-one-out', 'hindcast-vs-forecast'))) {
+  if (eval.method == 'leave-one-out') {
+    warning("Sampling method 'leave-one-out' is a deprecated option. ",
+            "Parameter 'eval.method' will be set to 'leave-k-out', and parameter ",
+            "'k' will be set to 1.")
+    eval.method <- "leave-k-out"
+    k <- 1
+  }
+  if (!any(eval.method %in% c('in-sample', 'leave-k-out', 'hindcast-vs-forecast', 'retrospective'))) {  
     stop(paste0("Parameter 'eval.method' must be a character string indicating ", 
-                "the sampling method used ('in-sample', 'leave-one-out' or ", 
-                "'hindcast-vs-forecast')."))
+                "the sampling method used ('in-sample', 'leave-k-out', 'hindcast-vs-forecast' or ", 
+                "'retrospective')."))
   }
   ## multi.model
   if (!inherits(multi.model, "logical")) {
@@ -513,7 +535,7 @@ Calibration <- function(exp, obs, exp_cor = NULL,
                         cal.method = cal.method, eval.method = eval.method, multi.model = multi.model,
                         na.fill = na.fill, na.rm = na.rm, apply_to = apply_to, alpha = alpha,
                         target_dims = list(exp = target_dims_exp, obs = target_dims_obs),
-                        ncores = ncores, fun = .cal)$output1
+                        ncores = ncores, k = k, tail.out = tail.out, fun = .cal)$output1
   } else {
     calibrated <- Apply(data = list(exp = exp, obs = obs, exp_cor = exp_cor),
                         dat_dim = dat_dim, cal.method = cal.method, eval.method = eval.method,
@@ -521,7 +543,7 @@ Calibration <- function(exp, obs, exp_cor = NULL,
                         apply_to = apply_to, alpha = alpha,
                         target_dims = list(exp = target_dims_exp, obs = target_dims_obs, 
                                            exp_cor = target_dims_cor),
-                        ncores = ncores, fun = .cal)$output1
+                        ncores = ncores, k = k, tail.out = tail.out, fun = .cal)$output1
   }
 
   if (!is.null(dat_dim)) {
@@ -567,25 +589,9 @@ Calibration <- function(exp, obs, exp_cor = NULL,
   }
 }
 
-.make.eval.train.dexes <- function(eval.method, amt.points, amt.points_cor) { 
-  if (eval.method == "leave-one-out") {
-    dexes.lst <- lapply(seq(1, amt.points), function(x) return(list(eval.dexes = x,
-                        train.dexes = seq(1, amt.points)[-x])))
-  } else if (eval.method == "in-sample") {
-    dexes.lst <- list(list(eval.dexes = seq(1, amt.points), 
-                           train.dexes = seq(1, amt.points)))
-  } else if (eval.method == "hindcast-vs-forecast") {
-    dexes.lst <- list(list(eval.dexes = seq(1,amt.points_cor),
-                           train.dexes = seq(1, amt.points)))
-  } else {
-    stop(paste0("unknown sampling method: ", eval.method))
-  }
-  return(dexes.lst)
-}
-
 .cal <- function(exp, obs, exp_cor = NULL, dat_dim = NULL, cal.method = "mse_min", 
-                 eval.method = "leave-one-out", multi.model = FALSE, na.fill = TRUE, 
-                 na.rm = TRUE, apply_to = NULL, alpha = NULL) {
+                 eval.method = "leave-k-out", multi.model = FALSE, na.fill = TRUE, 
+                 na.rm = TRUE, apply_to = NULL, alpha = NULL, k = 1, tail.out = TRUE) {
 
   # exp: [memb, sdate, (dat)]
   # obs: [sdate (dat)]
@@ -619,8 +625,11 @@ Calibration <- function(exp, obs, exp_cor = NULL,
   sdate <- expdims[2] # sdate
   sdate_cor <- expdims_cor[2]
 
-  var.cor.fc <- array(dim = c(dim(exp_cor)[1:2], nexp = nexp, nobs = nobs))
-  
+  if (eval.method == 'retrospective') { 
+    var.cor.fc <- array(dim = c(expdims_cor[1], expdims_cor[2] - k, nexp = nexp, nobs = nobs))
+  } else {
+    var.cor.fc <- array(dim = c(dim(exp_cor)[1:2], nexp = nexp, nobs = nobs))
+  }
   for (i in 1:nexp) {
     for (j in 1:nobs) {
       exp_data <- exp[, , i]
@@ -640,19 +649,24 @@ Calibration <- function(exp, obs, exp_cor = NULL,
           expcor_data <- exp_cor
         }
 
-        eval.train.dexeses <- .make.eval.train.dexes(eval.method = eval.method, 
-                                                     amt.points = sdate, 
-                                                     amt.points_cor = sdate_cor)
+        eval.train.dexeses <- EvalTrainIndices(eval.method = eval.method, 
+                                                     sample.length = sdate, 
+                                                     sample.length_cor = sdate_cor, 
+                                                     k = k, tail.out = tail.out)
         amt.resamples <- length(eval.train.dexeses)
         for (i.sample in seq(1, amt.resamples)) {
           # defining training (tr) and evaluation (ev) subsets
           # fc.ev is used to evaluate (not train; train should be done with exp (hindcast))
-          eval.dexes <- eval.train.dexeses[[i.sample]]$eval.dexes
+          eval.dexes <- eval.train.dexeses[[i.sample]]$eval.dexes 
           train.dexes <- eval.train.dexeses[[i.sample]]$train.dexes
           fc.ev <- expcor_data[, eval.dexes, drop = FALSE]
           fc.tr <- exp_data[, train.dexes]
           obs.tr <- obs_data[train.dexes, drop = FALSE] 
-          
+          if(eval.method == 'retrospective'){ 
+            eval.dexes  =  eval.dexes - k
+          }else{
+            eval.dexes = eval.dexes
+          }
           if (cal.method == "bias") {
             var.cor.fc[, eval.dexes, i, j] <- fc.ev + mean(obs.tr, na.rm = na.rm) - mean(fc.tr, na.rm = na.rm)
             # forecast correction implemented
@@ -663,11 +677,11 @@ Calibration <- function(exp, obs, exp_cor = NULL,
             # calculate value for regression parameters
             init.par <- c(.calc.evmos.par(quant.obs.fc.tr, na.rm = na.rm))
             # correct evaluation subset
-            var.cor.fc[, eval.dexes, i, j] <- .correct.evmos.fc(fc.ev , init.par, na.rm = na.rm)
+            var.cor.fc[, eval.dexes, i, j] <- .correct.evmos.fc(fc.ev, init.par, na.rm = na.rm)
           } else if (cal.method == "mse_min") {
             quant.obs.fc.tr <- .calc.obs.fc.quant(obs = obs.tr, fc = fc.tr, na.rm = na.rm)
             init.par <- .calc.mse.min.par(quant.obs.fc.tr, multi.model, na.rm = na.rm)
-            var.cor.fc[, eval.dexes, i, j] <- .correct.mse.min.fc(fc.ev , init.par, na.rm = na.rm)      
+            var.cor.fc[, eval.dexes, i, j] <- .correct.mse.min.fc(fc.ev, init.par, na.rm = na.rm) 
           } else if (cal.method == "crps_min") {
             quant.obs.fc.tr <- .calc.obs.fc.quant.ext(obs = obs.tr, fc = fc.tr, na.rm = na.rm)
             init.par <- c(.calc.mse.min.par(quant.obs.fc.tr, na.rm = na.rm), 0.001)
@@ -676,7 +690,7 @@ Calibration <- function(exp, obs, exp_cor = NULL,
             optim.tmp <- optim(par = init.par, fn = .calc.crps.opt, gr = .calc.crps.grad.opt, 
                                quant.obs.fc = quant.obs.fc.tr, na.rm = na.rm, method = "BFGS")
             mbm.par <- optim.tmp$par
-            var.cor.fc[, eval.dexes, i, j] <- .correct.crps.min.fc(fc.ev , mbm.par, na.rm = na.rm)
+            var.cor.fc[, eval.dexes, i, j] <- .correct.crps.min.fc(fc.ev, mbm.par, na.rm = na.rm)
           } else if (cal.method == 'rpc-based') {
             # Ensemble mean
             ens_mean.ev <- Apply(data = fc.ev, target_dims = names(memb), fun = mean, na.rm = na.rm)$output1
@@ -713,7 +727,11 @@ Calibration <- function(exp, obs, exp_cor = NULL,
   }
 
   if (is.null(dat_dim)) {
+    if (eval.method == 'retrospective') { 
+    dim(var.cor.fc) <- c(expdims_cor[1], (expdims_cor[2]-k))
+    } else {
     dim(var.cor.fc) <- dim(exp_cor)[1:2]
+    }
   }
   return(var.cor.fc)
 }
@@ -808,7 +826,7 @@ Calibration <- function(exp, obs, exp_cor = NULL,
 }
 
 # Below are the core or elementary functions to calculate the regression parameters for the different methods
-.calc.mse.min.par <- function(quant.obs.fc, multi.model = F, na.rm) {
+.calc.mse.min.par <- function(quant.obs.fc, multi.model = FALSE, na.rm) {
   par.out <- rep(NA, 3)
   if (multi.model) {
     par.out[3] <- with(quant.obs.fc, obs.sd * sqrt(1. - cor.obs.fc^2) / fc.ens.var.av.sqrt)
@@ -829,7 +847,7 @@ Calibration <- function(exp, obs, exp_cor = NULL,
 }
 
 # Below are the core or elementary functions to calculate the functions necessary for the minimization of crps
-.calc.crps.opt <- function(par, quant.obs.fc, na.rm){
+.calc.crps.opt <- function(par, quant.obs.fc, na.rm) {
   return( 
     with(quant.obs.fc, 
       mean(abs(obs.per.ens - (par[1] + par[2] * fc.ens.av.per.ens +
@@ -840,7 +858,7 @@ Calibration <- function(exp, obs, exp_cor = NULL,
 }
 
 .calc.crps.grad.opt <- function(par, quant.obs.fc, na.rm) {
-  sgn1 <- with(quant.obs.fc,sign(obs.per.ens - (par[1] + par[2] * fc.ens.av.per.ens +
+  sgn1 <- with(quant.obs.fc, sign(obs.per.ens - (par[1] + par[2] * fc.ens.av.per.ens +
                ((par[3])^2 + par[4] / spr.abs.per.ens) * fc.dev)))
   sgn2 <- with(quant.obs.fc, sign((par[3])^2 + par[4] / spr.abs.per.ens))
   sgn3 <- with(quant.obs.fc,sign((par[3])^2 * spr.abs + par[4]))

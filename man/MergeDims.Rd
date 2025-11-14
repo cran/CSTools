@@ -23,6 +23,9 @@ dimension. If left at NULL, the first dimension name provided in parameter
 
 \item{na.rm}{A logical indicating if the NA values should be removed or not.}
 }
+\value{
+An array with the two selected dimensions merged into a single dimension.
+}
 \description{
 This function merges two dimensions of an array into one. The 
 user can select the dimensions to merge and provide the final name of the 

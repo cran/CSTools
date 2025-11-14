@@ -8,18 +8,20 @@
 #'@author Nuria Perez-Zanon, \email{nuria.perez@bsc.es}
 #'@param exp An object of class \code{s2dv_cube}.
 #'@param obs An object of class \code{s2dv_cube}.
-#'@param exp_cor An object of class \code{s2dv_cube} in which the quantile 
-#'  mapping correction should be applied. If it is not specified, the correction
-#'  is applied in object 'exp'.
+#'@param exp_cor A multidimensional array with named dimensions in which the
+#'  quantile mapping correction should be applied. If it is not specified, the
+#'  correction is applied to object 'exp' using leave-one-out cross-validation.
+#'  This is useful to correct a forecast when the hindcast is provided in parameter 'exp'.
 #'@param sdate_dim A character string indicating the dimension name in which 
 #'  cross-validation would be applied when exp_cor is not provided. 'sdate' by 
 #'  default.
 #'@param memb_dim A character string indicating the dimension name where
 #'  ensemble members are stored in the experimental arrays. It can be NULL if 
 #'  there is no ensemble member dimension. It is set as 'member' by default.
-#'@param window_dim A character string indicating the dimension name where 
-#'  samples have been stored. It can be NULL (default) in case all samples are 
-#'  used. 
+#'@param window_dim  A character string indicating the dimension name in which extra
+#'  samples are stored. This dimension is joined to the 'member' dimension.
+#'  This is useful to correct daily data, for which robust statistics can be obtained
+#'  by creating a window of dates around the target date.
 #'@param method A character string indicating the method to be used:'PTF', 
 #'  'DIST', 'RQUANT', 'QUANT', 'SSPLIN'. By default, the empirical quantile 
 #'  mapping 'QUANT' is used.
@@ -29,6 +31,14 @@
 #'  computation using multiApply function. The default value is NULL (1). 
 #'@param ... Additional parameters to be used by the method choosen. See qmap 
 #'  package for details.
+#'@param eval.method A character string indicating the evaluation method for cross-validaton.
+#'the default method is 'leave-k-out', other available methods are 
+#''retrospective', 'in-sample', 'hindcast-vs-forecast'.
+#'@param k Positive integer. Default = 1.
+#' In method \code{leave-k-out}, \code{k} is expected to be odd integer, 
+#' indicating the number of points to leave out.
+#' In method \code{retrospective}, \code{k} can be any positive integer greater than 1, 
+#' indicating when to start.
 #'
 #'@return An object of class \code{s2dv_cube} containing the experimental data
 #'after applying the quantile mapping correction.
@@ -55,6 +65,7 @@
 CST_QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
                                 memb_dim = 'member', window_dim = NULL, 
                                 method = 'QUANT', na.rm = FALSE, 
+                                eval.method = "leave-k-out", k = 1, 
                                 ncores = NULL, ...) {
   # Check 's2dv_cube'
   if (!inherits(exp, 's2dv_cube') || !inherits(obs, 's2dv_cube')) {
@@ -70,6 +81,7 @@ CST_QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
                              exp_cor = exp_cor$data,
                              sdate_dim = sdate_dim, memb_dim = memb_dim,
                              window_dim = window_dim, method = method,
+                             eval.method = eval.method, k = k,
                              na.rm = na.rm, ncores = ncores, ...)
   if (is.null(exp_cor)) {
     exp$data <- QMapped
@@ -99,17 +111,19 @@ CST_QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
 #'@param obs A multidimensional array with named dimensions containing the 
 #'  reference dataset.
 #'@param exp_cor A multidimensional array with named dimensions in which the
-#'  quantile mapping correction should be applied. If it is not specified, the 
-#'  correction is applied on object 'exp'.
+#'  quantile mapping correction should be applied. If it is not specified, the
+#'  correction is applied to object 'exp' using leave-one-out cross-validation.
+#'  This is useful to correct a forecast when the hindcast is provided in parameter 'exp'.
 #'@param sdate_dim A character string indicating the dimension name in which
 #'  cross-validation would be applied when exp_cor is not provided. 'sdate' by
 #'  default.
 #'@param memb_dim A character string indicating the dimension name where
 #'  ensemble members are stored in the experimental arrays. It can be NULL if 
 #'  there is no ensemble member dimension. It is set as 'member' by default.
-#'@param window_dim A character string indicating the dimension name where 
-#'  samples have been stored. It can be NULL (default) in case all samples are
-#'  used. 
+#'@param window_dim A character string indicating the dimension name in which extra
+#'  samples are stored. This dimension is joined to the 'member' dimension.
+#'  This is useful to correct daily data, for which robust statistics can be obtained
+#'  by creating a window of dates around the target date.
 #'@param method A character string indicating the method to be used: 'PTF',
 #'  'DIST', 'RQUANT', 'QUANT', 'SSPLIN'. By default, the empirical quantile 
 #'  mapping 'QUANT' is used. 
@@ -119,6 +133,14 @@ CST_QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
 #'  computation using multiApply function. The default value is NULL (1). 
 #'@param ... Additional parameters to be used by the method choosen. See qmap 
 #'  package for details.
+#'@param eval.method A character string indicating the evaluation method for cross-validaton.
+#'the default method is 'leave-k-out', other available methods are 
+#''retrospective', 'in-sample', 'hindcast-vs-forecast'.
+#'@param k Positive integer. Default = 1.
+#' In method 'leave-k-out', 'k' is expected to be odd integer, 
+#' indicating the number of points to leave out.
+#' In method 'retrospective', 'k' can be any positive integer greater than 1, 
+#' indicating when to start.
 #'
 #'@return An array containing the experimental data after applying the quantile
 #'mapping correction.
@@ -126,14 +148,15 @@ CST_QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
 #'@seealso \code{\link[qmap]{fitQmap}} and \code{\link[qmap]{doQmap}} 
 #'@examples
 #'# Use synthetic data
-#'exp <- 1 : c(1 * 3 * 5 * 4 * 3 * 2)
-#'dim(exp) <- c(dataset = 1, member = 3, sdate = 5, ftime = 4, 
-#'              lat = 3, lon = 2)
-#'obs <- 101 : c(100 + 1 * 1 * 5 * 4 * 3 * 2)
-#'dim(obs) <- c(dataset = 1, member = 1, sdate = 5, ftime = 4,
-#'              lat = 3, lon = 2)
-#'res <- QuantileMapping(exp, obs)
-#'
+#'set.seed(123)
+#'exp <- as.numeric(1:prod(6,10,15))
+#'dim(exp) <- c(member = 6, syear = 10, window = 15)
+#'obs <- as.numeric(rnorm(prod(1,10,15), 50))
+#'dim(obs) <- c(member = 1, syear = 10, window = 15)
+#'fcst <- 100*(1:prod(8,1,1))
+#'dim(fcst) <- c(member = 8, syear = 1, swindow = 1)
+#'res <- QuantileMapping(exp = exp, obs = obs, exp_cor = fcst, 
+#'                       memb_dim = 'member', sdate_dim = 'syear', window_dim = 'window')
 #'@import qmap 
 #'@import multiApply 
 #'@import s2dv
@@ -141,6 +164,7 @@ CST_QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
 QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
                             memb_dim = 'member', window_dim = NULL, 
                             method = 'QUANT', na.rm = FALSE, 
+                            eval.method = "leave-k-out", k = 1, 
                             ncores = NULL, ...) {
   # exp and obs
   obsdims <- names(dim(obs))
@@ -248,70 +272,111 @@ QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
   return(qmaped)
 }
 
+# Example
+# exp <- as.numeric(1:prod(6,10,15))
+# dim(exp) <- c(member = 6, syear = 10, window = 15)
+# obs <- as.numeric(rnorm(prod(1,10,15), 50))
+# dim(obs) <- c(member = 1, syear = 10, window = 15)
+# fcst <- 100*(1:prod(8,1,1))
+# dim(fcst) <- c(member = 8, syear = 1, swindow = 1)
+# 
+# 
+# res_sample <- QuantileMapping(exp = exp, obs = obs, exp_cor = NULL, 
+#                               memb_dim = 'member', sdate_dim = 'syear', 
+#                               window_dim = 'window', eval.method = "in-sample")  
+# 
+# res_leave <- QuantileMapping(exp = exp, obs = obs, exp_cor = NULL, 
+#                              memb_dim = 'member', sdate_dim = 'syear', 
+#                              window_dim = 'window', eval.method = "leave-k-out", k = 1)  
+# 
+# res_retro <- QuantileMapping(exp = exp, obs = obs, exp_cor = NULL, 
+#                              memb_dim = 'member', sdate_dim = 'syear', 
+#                              window_dim = 'window', eval.method = "retrospective", 
+#                              k = 3) 
+# 
+# res_hind <- QuantileMapping(exp = exp, obs = obs, exp_cor = fcst, 
+#                             memb_dim = 'member', sdate_dim = 'syear', 
+#                             window_dim = 'window', eval.method = "hindcast-vs-forecast") 
+#' 
+
 .qmapcor <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate', 
+                     eval.method = 'leave-k-out', k = 1,
                      method = 'QUANT', na.rm = FALSE, ...) {
-
-  # exp: [memb (+ window), sdate]
-  # obs: [memb (+ window), sdate] 
-  # exp_cor: NULL or [memb, sdate]
-
-  if (is.null(exp_cor)) {
-    applied <- exp * NA
-    for (sd in 1:dim(exp)[sdate_dim]) {
-      if (na.rm) {
-        # select start date for cross-val
-        nas_pos <- which(!is.na(exp[, sd]))
-        obs2 <- as.vector(obs[, -sd])
-        exp2 <- as.vector(exp[, -sd])
-        exp_cor2 <- as.vector(exp[, sd])
-        # remove NAs
-        obs2 <- obs2[!is.na(obs2)]
-        exp2 <- exp2[!is.na(exp2)]   
-        exp_cor2 <- exp_cor2[!is.na(exp_cor2)]
-        tryCatch({
-          adjust <- fitQmap(obs2, exp2, method = method, ...)
-          applied[nas_pos, sd] <- doQmap(exp_cor2, adjust, ...)
-          },
-          error = function(error_message) {
-            return(applied[, sd])
-          })
-      } else {
-        # na.rm = FALSE shouldn't fail, just return NA
-        if (anyNA(obs[, -sd]) | anyNA(exp[, -sd])) {
-          applied[, sd] <- NA
-        } else {
-          adjust <- fitQmap(as.vector(obs[, -sd]), as.vector(exp[, -sd]),
-                            method = method, ...)
-          exp2 <- exp[, sd]
-          if (sum(is.na(exp2)) >= 1) {
-            app <- rep(NA, length(exp2))
-            nas_pos <- which(is.na(exp2))
-            exp2 <- exp2[!is.na(exp2)]
-            app[-nas_pos] <- doQmap(as.vector(exp2), adjust, ...)
-          } else {
-            app <- doQmap(as.vector(exp2), adjust, ...)
+  
+  
+  if(!is.null(exp_cor) & eval.method != "hindcast-vs-forcast"){
+    eval.method = 'hindcast-vs-forecast'
+   # warning("Defaulting to 'hindcast-vs-forcast' as exp_cor is not 'NULL'")
+  }
+  
+  if(eval.method == "retrospective" & k == 1){
+    stop("k = 1 not expected, trainindex need at least two non-NA values to interpolate ")
+  } #can replace with tryCatch for smooth fail
+  
+  
+  index <- EvalTrainIndices(eval.method = eval.method, sample.length = dim(exp)[sdate_dim], k = k,
+                            sample.length_cor = dim(exp_cor)[sdate_dim])
+  applied <- exp * NA
+  
+  for(x in index){
+  
+    
+    nas_pos <- which(!is.na(exp[, x$eval.dexes]))
+    obs2 <- as.vector(obs[, x$train.dexes]) 
+    exp2 <- as.vector(exp[, x$train.dexes])
+    exp_cor2 <- as.vector(exp[, x$eval.dexes])
+    # remove NAs
+    obs2 <- obs2[!is.na(obs2)]
+    exp2 <- exp2[!is.na(exp2)]   
+    exp_cor2 <- exp_cor2[!is.na(exp_cor2)]
+    
+    adjust <- fitQmap(obs2, exp2, method = 'QUANT', ...)
+    if(is.null(exp_cor)){
+      if(na.rm){
+        if(eval.method == "in-sample"){
+          applied[nas_pos] <- doQmap(exp_cor2, adjust, ...) 
+        }else{
+          applied[nas_pos, x$eval.dexes] <- doQmap(exp_cor2, adjust, ...)
+        }
+      }else{
+        
+        if (anyNA(obs[, x$train.dexes]) | anyNA(exp[, x$train.dexes])) { 
+          applied[, x$eval.dexes] <- NA
+        }else{
+          if(eval.method == "in-sample"){
+            applied[nas_pos] <- doQmap(exp_cor2, adjust, ...)
+          }else{
+            applied[nas_pos, x$eval.dexes] <- doQmap(exp_cor2, adjust, ...)
           }
-          applied[, sd] <- app
         }
       }
-    }
-  } else {
-    applied <- exp_cor * NA
-    if (na.rm) {
-      tryCatch({
-        adjust <- fitQmap(obs[!is.na(obs)], exp[!is.na(exp)],
-                          method = method, ...)
-        applied[!is.na(exp_cor)] <- doQmap(exp_cor[!is.na(exp_cor)],
-                                           adjust, ...)
+    }else{
+      applied <- exp_cor * NA
+      # add check if method is hindcast else give warning that since exp_cor is not null hindcast is selected
+      #hindcast vs forecast
+      if (na.rm) {
+        tryCatch({
+          
+          adjust <- fitQmap(obs2, exp2,
+                            method = method, ...)
+          
+          applied[!is.na(exp_cor)] <- doQmap(exp_cor[!is.na(exp_cor)],
+                                             adjust, ...)
+         
         },
         error = function(error_message) {
-          return(applied)
+         return(applied)
         })
-    } else {
-      adjust <- fitQmap(as.vector(obs), as.vector(exp), method = method, ...)
-      applied <- doQmap(as.vector(exp_cor), adjust, ...)
+      } else { 
+        adjust <- fitQmap(as.vector(obs), as.vector(exp), method = method, ...)
+        applied <- doQmap(as.vector(exp_cor), adjust, ...)
+      }
+      dim(applied) <- dim(exp_cor)
     }
-    dim(applied) <- dim(exp_cor)
   }
-  return(applied)
+  applied
 }
+
+
+
+

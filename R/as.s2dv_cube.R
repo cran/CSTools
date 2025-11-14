@@ -327,13 +327,13 @@ as.s2dv_cube <- function(object, remove_attrs_coords = FALSE,
         if (!remove_attrs_coords) attr(result$coords[[dat_dim]], 'indices') <- FALSE
       }
       for (i in 2:length(names(FileSelector))) {
-        if (!is.null(lon_name_dat)) {
+        if (!(length(lon_name_dat) == 0L)) {
           if (any(result$coords[[lon_name_dat]] != as.vector(attributes(object)$Variables[[names(FileSelector)[i]]][[lon_name_dat]]))) {
             warning("'lon' values are different for different datasets. ", 
                     "Only values from the first will be used.")
           }
         }
-        if (!is.null(lat_name_dat)) {
+        if (!(length(lat_name_dat) == 0L)) {
           if (any(result$coords[[lat_name_dat]] != as.vector(attributes(object)$Variables[[names(FileSelector)[i]]][[lat_name_dat]]))) {
             warning("'lat' values are different for different datasets. ", 
                     "Only values from the first will be used.")
@@ -350,6 +350,11 @@ as.s2dv_cube <- function(object, remove_attrs_coords = FALSE,
     ## load_parameters
     result$attrs$load_parameters <- attributes(object)$FileSelectors
     class(result) <- 's2dv_cube'
+  } else if (inherits(object, 'startR_cube')) {
+    stop("Unsupported object class: 'startR_cube'. ",
+         "When using startR::Start() or CSTools::CST_Start(), set ",
+         "'retrieve = TRUE' to ensure the data is retrieved into ",
+         "memory and can be converted into a 's2dv_cube' object.")
   } else {
     stop("The class of parameter 'object' is not implemented",
          " to be converted into 's2dv_cube' class yet.")

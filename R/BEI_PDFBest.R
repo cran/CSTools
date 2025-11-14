@@ -915,7 +915,7 @@ LMEV <- function(exp, obs, dim_exp,
                         fun = sd, na.rm = na.rm)$output1
   } else {
     if(na.rm & any(is.na(exp))){
-      print("Some value are NA")
+      message("Some value are NA")
     }
     pos <- match(c(time_dim_name,'statistic'), names(dim(exp)))
     exp <- aperm(exp,pos)

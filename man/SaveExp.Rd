@@ -6,7 +6,7 @@
 \usage{
 SaveExp(
   data,
-  destination = "./",
+  destination = tempdir(),
   coords = NULL,
   Dates = NULL,
   time_bounds = NULL,
@@ -151,7 +151,7 @@ from StartR package. If the original 's2dv_cube' object has been created from
 \code{CST_Load()}, then it can be reloaded with \code{Load()}.
 }
 \examples{
-\dontrun{
+\donttest{
 data <- lonlat_temp_st$exp$data
 lon <- lonlat_temp_st$exp$coords$lon
 lat <- lonlat_temp_st$exp$coords$lat
@@ -163,6 +163,7 @@ metadata <- lonlat_temp_st$exp$attrs$Variable$metadata
 SaveExp(data = data, coords = coords, Datasets = Datasets, varname = varname, 
        Dates = Dates, metadata = metadata, single_file = TRUE, 
        ftime_dim = 'ftime', var_dim = 'var', dat_dim = 'dataset')
+       
 }
 
 }

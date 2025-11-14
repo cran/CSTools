@@ -14,7 +14,8 @@
 #'  dimension. If left at NULL, the first dimension name provided in parameter 
 #'  \code{merge_dims} will be used.
 #'@param na.rm A logical indicating if the NA values should be removed or not.
-#'
+#'@return An object of class \code{'s2dv_cube'} with the specified dimensions merged 
+#' into a single dimension.
 #'@examples
 #'data <- 1 : c(2 * 3 * 4 * 5 * 6 * 7)
 #'dim(data) <- c(time = 7, lat = 2, lon = 3, monthly = 4, member = 6,
@@ -53,7 +54,14 @@ CST_MergeDims <- function(data, merge_dims = c('ftime', 'monthly'),
 
   # attrs
   if (all(merge_dims %in% names(dim(data$attrs$Dates)))) {
-    dim(data$attrs$Dates) <- dim(data$data)[rename_dim]
+    original_timezone <- attr(data$attrs$Dates[1], "tzone")
+    data$attrs$Dates <- MergeDims(data$attrs$Dates, merge_dims = merge_dims,
+                                  rename_dim = rename_dim, na.rm = na.rm)
+    # Transform dates back to POSIXct
+    data$attrs$Dates <- as.POSIXct(data$attrs$Dates,
+                                   origin = "1970-01-01",
+                                   tz = original_timezone)
+
   } else if (any(merge_dims %in% names(dim(data$attrs$Dates)))) {
     warning("The dimensions of 'Dates' array will be different from ",
             "the temporal dimensions in 'data'. Parameter 'merge_dims' ",
@@ -76,7 +84,7 @@ CST_MergeDims <- function(data, merge_dims = c('ftime', 'monthly'),
 #'  dimension. If left at NULL, the first dimension name provided in parameter 
 #'  \code{merge_dims} will be used.
 #'@param na.rm A logical indicating if the NA values should be removed or not.
-#'
+#'@return An array with the two selected dimensions merged into a single dimension. 
 #'@examples
 #'data <- 1 : 20
 #'dim(data) <- c(time = 10, lat = 2)

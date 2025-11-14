@@ -27,7 +27,9 @@
 #'  dimension. It is set as 'sdate' by default. 
 #'@param return_indices A logical value that if it is TRUE, the indices 
 #'  used in splitting the dimension will be returned. It is FALSE by default.
-#'
+#'@return  An object of class \code{'s2dv_cube'} with the specified dimension split 
+#'  into a new dimension, preserving all other original dimensions, coordinates, 
+#'  and attributes (including \code{Dates}).
 #'@details Parameter 'insert_ftime' has been included for the case of using 
 #'daily data, requiring split the temporal dimensions by months (or similar) and 
 #'the first lead time doesn't correspondt to the 1st day of the month. In this 
@@ -124,13 +126,16 @@ CST_SplitDim <- function(data, split_dim = 'time', indices = NULL,
       }
     }
   }
+  old_dim_name <- names(dim(data$data))
   # Call the function
   res <- SplitDim(data = data$data, split_dim = split_dim, 
                   indices = indices, freq = freq, 
                   new_dim_name = new_dim_name, 
                   dates = data$attrs$Dates, 
                   return_indices = return_indices)
-  if (inherits(res, 'list')) {
+
+  
+    if (inherits(res, 'list')) {
     data$data <- res$data
     # Split dim on Dates
     if (!is.null(res$dates)) {
@@ -139,10 +144,16 @@ CST_SplitDim <- function(data, split_dim = 'time', indices = NULL,
   } else {
     data$data <- res
   }
+  
   data$dims <- dim(data$data)
-
+  new_dim_name <- names(data$dims)[!names(data$dims) %in% (old_dim_name)]
+  
   # Coordinates
-  # TO DO: Subset splitted coordinate and add the new dimension coordinate.
+  data$coords[[split_dim]] <- 1:dim(data$data)[[split_dim]]
+  attr(data$coords[[split_dim]], 'indices') <- TRUE
+  data$coords[[new_dim_name]] <- 1:dim(data$data)[[new_dim_name]] 
+  attr(data$coords[[new_dim_name]], 'indices') <- TRUE
+  
   if (return_indices) {
     return(list(data = data, indices = res$indices))
   } else {
@@ -164,7 +175,7 @@ CST_SplitDim <- function(data, split_dim = 'time', indices = NULL,
 #'@param indices A vector of numeric indices or dates.
 #'@param freq A character string indicating the frequency: by 'day', 'month' and 
 #'  'year' or 'monthly' (by default). 'month' identifies months between 1 and 12 
-#'  independetly of the year they belong to, while 'monthly' differenciates 
+#'  independently of the year they belong to, while 'monthly' differentiates 
 #'  months from different years. Parameter 'freq' can also be numeric indicating 
 #'  the length in which to subset the dimension.
 #'@param new_dim_name A character string indicating the name of the new 
@@ -174,6 +185,8 @@ CST_SplitDim <- function(data, split_dim = 'time', indices = NULL,
 #'  by default.
 #'@param return_indices A logical value that if it is TRUE, the indices 
 #'  used in splitting the dimension will be returned. It is FALSE by default.
+#'@return An n-dimensional array with the specified dimension split into a new 
+#'  dimension, preserving all other original dimensions and their names, 
 #'@examples
 #'data <- 1 : 20
 #'dim(data) <- c(time = 10, lat = 2)
@@ -190,7 +203,7 @@ CST_SplitDim <- function(data, split_dim = 'time', indices = NULL,
 #'@importFrom ClimProjDiags Subset
 #'@export
 SplitDim <- function(data, split_dim = 'time', indices, freq = 'monthly',
-                     new_dim_name = NULL, dates = NULL, 
+                     new_dim_name = NULL, dates = NULL,
                      return_indices = FALSE) {
   # check data
   if (is.null(data)) {
@@ -325,7 +338,7 @@ SplitDim <- function(data, split_dim = 'time', indices, freq = 'monthly',
     }
     dates_exist <- TRUE
   }
-
+  
   # Return objects
   if (all(dates_exist, return_indices)) {
     return(list(data = data, dates = dates, indices = indices))
@@ -334,7 +347,7 @@ SplitDim <- function(data, split_dim = 'time', indices, freq = 'monthly',
   } else if (all(!dates_exist, return_indices)) {
     return(list(data = data, indices = indices))
   } else {
-    return(data)
+    return(data = data)
   }
 }
 

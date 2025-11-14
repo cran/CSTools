@@ -425,7 +425,7 @@ MultiEOF <- function(data, lon, lat, dates, time = NULL,
   }
 
   # area weighting, based on the root of cosine
-  ww <- .area.weight(lon, lat, root = T)
+  ww <- .area.weight(lon, lat, root = TRUE)
 
   # create a mask
   mask_arr <- array(dim = c(n_lon, n_lat, n_field))
@@ -437,7 +437,7 @@ MultiEOF <- function(data, lon, lat, dates, time = NULL,
     # The grid point should have all NAs or no NA along time dim.
     if (anyNA(field_orig)) {
       field_latlon <- array(field_orig, dim = c(n_lon*n_lat, nt))  # [lon*lat, time]
-      na_ind <- which(is.na(field_latlon), arr.ind = T)
+      na_ind <- which(is.na(field_latlon), arr.ind = TRUE)
       if (dim(na_ind)[1] != nt * length(unique(na_ind[,1]))) {
         stop("Detected certain grid points have NAs but not consistent across time ",
              "dimension. If the grid point is NA, it should have NA at all time step.")
@@ -558,7 +558,7 @@ MultiEOF <- function(data, lon, lat, dates, time = NULL,
 
   for (t in unique(condition)) {
     if (sum(t == condition) == 1) {
-      print(paste0("Cannot compute a mean with only one value: ",
+      message(paste0("Cannot compute a mean with only one value: ",
                    "using climatological mean"))
       anom[, , which(t == condition)] <- rowMeans(field, dims = 2)
     } else {

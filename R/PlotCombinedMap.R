@@ -114,6 +114,15 @@
 #'  convenient for users to adjust the color bars manually. The default is 
 #'  FALSE, the color bars will be plotted directly.
 #'@param ... Additional parameters to be passed on to \code{PlotEquiMap}.
+#'
+#'@return If \code{return_leg = FALSE} (default), the function plots a combined map 
+#' to the current graphical device (or saves it to file if \code{fileout} is 
+#' specified) and returns \code{NULL}.  
+#' 
+#' If \code{return_leg = TRUE}, no map is plotted. Instead, a list is returned 
+#' containing the arguments required to plot the color bars manually using 
+#' \code{s2dv::GradientCatsColorBar} or \code{s2dv::ColorBar}. This allows 
+#' users to customize the color bars independently.
 #' 
 #'@examples
 #'# Simple example
@@ -123,14 +132,14 @@
 #'c <- 1 - (a + b)
 #'lons <- seq(0, 359.5, length = 20)
 #'lats <- seq(-89.5, 89.5, length = 10)
-#'\dontrun{
 #'PlotCombinedMap(list(a, b, c), lons, lats, 
 #'                toptitle = 'Maximum map',
 #'                map_select_fun = max,
 #'                display_range = c(0, 1),
 #'                bar_titles = paste('% of belonging to', c('a', 'b', 'c')), 
-#'                brks = 20, width = 12, height = 10)
-#'}
+#'                brks = 20, width = 12, height = 10, 
+#'                fileout = file.path(tempdir(), "example1.pdf"))
+#'unlink(file.path(tempdir(), "example1.pdf"))
 #'
 #'Lon <- c(0:40, 350:359)
 #'Lat <- 51:26
@@ -138,11 +147,11 @@
 #'dim(data) <- c(map = 3, lon = 51, lat = 26)
 #'mask <-  sample(c(0,1), replace = TRUE, size = 51 * 26)
 #'dim(mask) <- c(lat = 26, lon = 51)
-#'\dontrun{
 #'PlotCombinedMap(data, lon = Lon, lat = Lat, map_select_fun = max,
 #'                display_range = range(data), mask = mask,
-#'                width = 14, height = 10) 
-#'}
+#'                width = 14, height = 10,
+#'                fileout = file.path(tempdir(), "example2.pdf")) 
+#'unlink(file.path(tempdir(), "example2.pdf")) 
 #'
 #'@seealso \code{PlotCombinedMap} and \code{PlotEquiMap}
 #' 
@@ -156,7 +165,8 @@ PlotCombinedMap <- function(maps, lon, lat,
                             map_select_fun, display_range, 
                             map_dim = 'map',
                             brks = NULL, cols = NULL,  
-                            bar_limits = NULL, triangle_ends = c(F, F), col_inf = NULL, col_sup = NULL,
+                            bar_limits = NULL, triangle_ends = c(FALSE, FALSE), 
+                            col_inf = NULL, col_sup = NULL,
                             col_unknown_map = 'white',
                             mask = NULL, col_mask = 'grey',
                             dots = NULL,
@@ -164,7 +174,7 @@ PlotCombinedMap <- function(maps, lon, lat,
                             cex_bar_titles = 1.5,
                             plot_margin = NULL, bar_extra_margin = c(2, 0, 2, 0),
                             fileout = NULL, width = 8, height = 5, 
-                            size_units = 'in', res = 100, drawleg = T, return_leg = FALSE,
+                            size_units = 'in', res = 100, drawleg = TRUE, return_leg = FALSE,
                             ...) {
   args <- list(...)
 
@@ -450,6 +460,9 @@ PlotCombinedMap <- function(maps, lon, lat,
   #NOTE: I think plot.new() is not necessary in any case.
 #  plot.new()
   #TODO: Don't hardcoded. Let users decide.
+  oldpar <- par('font.main', no.readonly = TRUE)
+  on.exit(par(oldpar)) 
+  
   par(font.main = 1)
   # If colorbars need to be plotted, re-define layout.
   if (drawleg) {
@@ -521,7 +534,9 @@ PlotCombinedMap <- function(maps, lon, lat,
     if ('title_scale' %in% names(args)) {
       size_title <- args[['title_scale']]
     }
-    old_mar <- par('mar')
+    old_mar <- par('mar', no.readonly = TRUE)
+    on.exit(par(old_mar))
+    
     old_mar[3] <- old_mar[3] - (2 * size_title + 1)
     par(mar = old_mar)
   }

@@ -45,6 +45,11 @@ dimension. It is set as 'sdate' by default.}
 \item{return_indices}{A logical value that if it is TRUE, the indices 
 used in splitting the dimension will be returned. It is FALSE by default.}
 }
+\value{
+An object of class \code{'s2dv_cube'} with the specified dimension split 
+ into a new dimension, preserving all other original dimensions, coordinates, 
+ and attributes (including \code{Dates}).
+}
 \description{
 This function split a dimension in two. The user can select the 
 dimension to split and provide indices indicating how to split that dimension 

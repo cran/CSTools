@@ -80,7 +80,7 @@ CSTools main objective is to share state-of-the-arts post-processing methods wit
 
 CSTools also has the function `CST_Start` from [startR](https://CRAN.R-project.org/package=startR) that is more flexible than `CST_Load`. We recommend to use `CST_Start` since it's more efficient and flexible.
 
-If you plan to use `CST_Load` or `CST_Start`, we have developed guidelines to download and formatting the data. See [CDS_Seasonal_Downloader](https://earth.bsc.es/gitlab/es/cds-seasonal-downloader).
+If you plan to use `CST_Load` or `CST_Start`, we have developed guidelines to download and formatting the data. See [CDS_Seasonal_Downloader](https://gitlab.earth.bsc.es/es/cds-seasonal-downloader).
 
 There are alternatives to these functions, for instance, the user can:
 1) use another tool to read the data from files (e.g.: ncdf4, easyNDCF, startR packages) and then convert it to the class 's2dv_cube' with `s2dv.cube()` function or

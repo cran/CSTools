@@ -10,12 +10,19 @@
 #'
 #'It receives any number of parameters (`...`) that are automatically forwarded 
 #'to the `startR::Start` function. See details in `?startR::Start`. The 
-#'auxiliary functions used to define dimensions need to be called within the 
-#'startR namespace (e.g. startR::indices(), startR::values(), startR::Sort(), 
-#'startR::CircularSort(), startR::CDORemapper(), ...).
+#'auxiliary startR functions (e.g. indices(), values(), Sort(), CircularSort(), 
+#'CDORemapper(), ...) can be used to define dimensions.
 #' 
+#'CST_Start() uses as.s2dv_cube() to transform the output into an s2dv_cube
+#'object. The as.s2dv_cube() function is designed to be used with data that 
+#'has been retrieved into memory. To avoid errors, please ensure that 
+#'CST_Start(..., retrieve = TRUE) is specified. 
+#'
 #'@param ... Parameters that are automatically forwarded to the `startR::Start` 
 #'  function. See details in `?startR::Start`.
+#'@return An object of class \code{'s2dv_cube'} containing the subsetted and aggregated 
+#'  data retrieved from the NetCDF files using \code{startR}. The data structure 
+#'  is compatible with CSTools functions.
 #'@examples 
 #'\dontrun{
 #'  sdates <- c('20101101', '20111101', '20121101')
@@ -34,7 +41,7 @@
 #'                                    latitude = c('lat', 'latitude')),
 #'                    return_vars = list(time = 'sdate',
 #'                                       longitude = NULL, latitude = NULL),
-#'                    retrieve = FALSE)
+#'                    retrieve = TRUE)
 #'} 
 #'\dontshow{
 #' exp <- CSTools::lonlat_temp_st$exp
@@ -44,7 +51,12 @@
 #'@import startR
 #'@export
 CST_Start <- function(...) {
-  res <- Start(...)
+  inputs <- as.list(substitute(list(...)))[-1]
+  for (i in 1:length(inputs)) {
+    inputs[[i]] <- eval(inputs[[i]])
+  }
+  res <- do.call(Start, inputs) 
   res <- as.s2dv_cube(res)
   return(res)
 }
+

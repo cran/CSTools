@@ -226,7 +226,7 @@ DynBiasCorrection<- function(exp, obs, method = 'QUANT',wetday=FALSE,
     if (dim(adjusted)['memberObs'] == 1) {
       adjusted <- Subset(adjusted, along = 'memberObs', indices=1, drop = 'selected')
     } else {
-      print('Dimension member in obs changed to memberObs')
+      message('Dimension member in obs changed to memberObs')
     }
   }
   
@@ -234,7 +234,7 @@ DynBiasCorrection<- function(exp, obs, method = 'QUANT',wetday=FALSE,
     if (dim(adjusted)['datasetObs'] == 1) {
       adjusted <- Subset(adjusted, along = 'datasetObs', indices = 1, drop = 'selected')
     } else {
-      print('Dimension dataset in obs changed to datasetObs')
+      message('Dimension dataset in obs changed to datasetObs')
     }
   }
   return(adjusted)

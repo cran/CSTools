@@ -26,7 +26,7 @@
 
 # normalize a time series
 .standardize <- function(timeseries) {
-  out <- (timeseries - mean(timeseries, na.rm = T)) / sd(timeseries, na.rm = T)
+  out <- (timeseries - mean(timeseries, na.rm = TRUE)) / sd(timeseries, na.rm = TRUE)
   return(out)
 }
 
@@ -61,15 +61,15 @@
 }
 
 # produce a 2d matrix of area weights
-.area.weight <- function(ics, ipsilon, root = T) {
+.area.weight <- function(ics, ipsilon, root = TRUE) {
   field <- array(NA, dim = c(length(ics), length(ipsilon)))
-  if (root == T) {
+  if (root == TRUE) {
     for (j in 1:length(ipsilon)) {
       field[, j] <- sqrt(cos(pi / 180 * ipsilon[j]))
     }
   }
 
-  if (root == F) {
+  if (root == FALSE) {
     for (j in 1:length(ipsilon)) {
       field[, j] <- cos(pi / 180 * ipsilon[j])
     }

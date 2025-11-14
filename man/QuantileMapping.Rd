@@ -13,6 +13,8 @@ QuantileMapping(
   window_dim = NULL,
   method = "QUANT",
   na.rm = FALSE,
+  eval.method = "leave-k-out",
+  k = 1,
   ncores = NULL,
   ...
 )
@@ -25,8 +27,9 @@ hindcast.}
 reference dataset.}
 
 \item{exp_cor}{A multidimensional array with named dimensions in which the
-quantile mapping correction should be applied. If it is not specified, the 
-correction is applied on object 'exp'.}
+quantile mapping correction should be applied. If it is not specified, the
+correction is applied to object 'exp' using leave-one-out cross-validation.
+This is useful to correct a forecast when the hindcast is provided in parameter 'exp'.}
 
 \item{sdate_dim}{A character string indicating the dimension name in which
 cross-validation would be applied when exp_cor is not provided. 'sdate' by
@@ -36,9 +39,10 @@ default.}
 ensemble members are stored in the experimental arrays. It can be NULL if 
 there is no ensemble member dimension. It is set as 'member' by default.}
 
-\item{window_dim}{A character string indicating the dimension name where 
-samples have been stored. It can be NULL (default) in case all samples are
-used.}
+\item{window_dim}{A character string indicating the dimension name in which extra
+samples are stored. This dimension is joined to the 'member' dimension.
+This is useful to correct daily data, for which robust statistics can be obtained
+by creating a window of dates around the target date.}
 
 \item{method}{A character string indicating the method to be used: 'PTF',
 'DIST', 'RQUANT', 'QUANT', 'SSPLIN'. By default, the empirical quantile 
@@ -46,6 +50,16 @@ mapping 'QUANT' is used.}
 
 \item{na.rm}{A logical value indicating if missing values should be removed
 (FALSE by default).}
+
+\item{eval.method}{A character string indicating the evaluation method for cross-validaton.
+the default method is 'leave-k-out', other available methods are 
+'retrospective', 'in-sample', 'hindcast-vs-forecast'.}
+
+\item{k}{Positive integer. Default = 1.
+In method 'leave-k-out', 'k' is expected to be odd integer, 
+indicating the number of points to leave out.
+In method 'retrospective', 'k' can be any positive integer greater than 1, 
+indicating when to start.}
 
 \item{ncores}{An integer indicating the number of cores for parallel 
 computation using multiApply function. The default value is NULL (1).}
@@ -65,14 +79,15 @@ applied to the experiment itself or to a provided forecast.
 }
 \examples{
 # Use synthetic data
-exp <- 1 : c(1 * 3 * 5 * 4 * 3 * 2)
-dim(exp) <- c(dataset = 1, member = 3, sdate = 5, ftime = 4, 
-             lat = 3, lon = 2)
-obs <- 101 : c(100 + 1 * 1 * 5 * 4 * 3 * 2)
-dim(obs) <- c(dataset = 1, member = 1, sdate = 5, ftime = 4,
-             lat = 3, lon = 2)
-res <- QuantileMapping(exp, obs)
-
+set.seed(123)
+exp <- as.numeric(1:prod(6,10,15))
+dim(exp) <- c(member = 6, syear = 10, window = 15)
+obs <- as.numeric(rnorm(prod(1,10,15), 50))
+dim(obs) <- c(member = 1, syear = 10, window = 15)
+fcst <- 100*(1:prod(8,1,1))
+dim(fcst) <- c(member = 8, syear = 1, swindow = 1)
+res <- QuantileMapping(exp = exp, obs = obs, exp_cor = fcst, 
+                      memb_dim = 'member', sdate_dim = 'syear', window_dim = 'window')
 }
 \seealso{
 \code{\link[qmap]{fitQmap}} and \code{\link[qmap]{doQmap}}

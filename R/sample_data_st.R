@@ -14,6 +14,7 @@
 #'the Earth Sciences Department of the Barcelona Supercomputing Center is shown
 #'next. Note that `CST_Start` internally calls `startR::Start` and then uses 
 #'`as.s2dv_cube` that converts the `startR_array` into `s2dv_cube`.
+#'@return sample s2dv_cube object
 #'\preformatted{
 #'  lonlat_temp_st <- NULL
 #'  repos_exp <- paste0('/esarchive/exp/ecmwf/system5c3s/monthly_mean/',
@@ -107,7 +108,7 @@ NULL
 #'The `CST_Start` call used to generate the data set in the infrastructure of 
 #'the Marconi machine at CINECA is shown next, working on files which were 
 #'extracted from forecast data available in the MEDSCOPE internal archive.
-#'
+#'@return sample s2dv_cube object
 #'\preformatted{
 #'  path <- paste0('/esarchive/exp/ecmwf/system5c3s/daily_mean/',
 #'                 '$var$_s0-24h/$var$_$sdate$.nc')

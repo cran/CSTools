@@ -15,7 +15,7 @@ CST_EnsClustering(
   time_dim = NULL,
   time_percentile = 90,
   cluster_dim = "member",
-  verbose = F
+  verbose = FALSE
 )
 }
 \arguments{

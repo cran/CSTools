@@ -14,7 +14,7 @@ PlotCombinedMap(
   brks = NULL,
   cols = NULL,
   bar_limits = NULL,
-  triangle_ends = c(F, F),
+  triangle_ends = c(FALSE, FALSE),
   col_inf = NULL,
   col_sup = NULL,
   col_unknown_map = "white",
@@ -31,7 +31,7 @@ PlotCombinedMap(
   height = 5,
   size_units = "in",
   res = 100,
-  drawleg = T,
+  drawleg = TRUE,
   return_leg = FALSE,
   ...
 )
@@ -173,6 +173,16 @@ FALSE, the color bars will be plotted directly.}
 
 \item{...}{Additional parameters to be passed on to \code{PlotEquiMap}.}
 }
+\value{
+If \code{return_leg = FALSE} (default), the function plots a combined map 
+to the current graphical device (or saves it to file if \code{fileout} is 
+specified) and returns \code{NULL}.  
+
+If \code{return_leg = TRUE}, no map is plotted. Instead, a list is returned 
+containing the arguments required to plot the color bars manually using 
+\code{s2dv::GradientCatsColorBar} or \code{s2dv::ColorBar}. This allows 
+users to customize the color bars independently.
+}
 \description{
 Plot a number a two dimensional matrices with (longitude, 
 latitude) dimensions on a single map with the cylindrical equidistant 
@@ -186,14 +196,14 @@ b <- (1 - x) * 0.6
 c <- 1 - (a + b)
 lons <- seq(0, 359.5, length = 20)
 lats <- seq(-89.5, 89.5, length = 10)
-\dontrun{
 PlotCombinedMap(list(a, b, c), lons, lats, 
                toptitle = 'Maximum map',
                map_select_fun = max,
                display_range = c(0, 1),
                bar_titles = paste('\% of belonging to', c('a', 'b', 'c')), 
-               brks = 20, width = 12, height = 10)
-}
+               brks = 20, width = 12, height = 10, 
+               fileout = file.path(tempdir(), "example1.pdf"))
+unlink(file.path(tempdir(), "example1.pdf"))
 
 Lon <- c(0:40, 350:359)
 Lat <- 51:26
@@ -201,11 +211,11 @@ data <- rnorm(51 * 26 * 3)
 dim(data) <- c(map = 3, lon = 51, lat = 26)
 mask <-  sample(c(0,1), replace = TRUE, size = 51 * 26)
 dim(mask) <- c(lat = 26, lon = 51)
-\dontrun{
 PlotCombinedMap(data, lon = Lon, lat = Lat, map_select_fun = max,
                display_range = range(data), mask = mask,
-               width = 14, height = 10) 
-}
+               width = 14, height = 10,
+               fileout = file.path(tempdir(), "example2.pdf")) 
+unlink(file.path(tempdir(), "example2.pdf")) 
 
 }
 \seealso{

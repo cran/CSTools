@@ -17,7 +17,7 @@ EnsClustering(
   time_percentile = 90,
   time_dim = NULL,
   cluster_dim = "member",
-  verbose = T
+  verbose = TRUE
 )
 }
 \arguments{

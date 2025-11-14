@@ -11,6 +11,7 @@
 #'360 by 181.
 #' 
 #' It is recommended to use the data set as follows:
+#'@return sample s2dv_cube object
 #'\preformatted{
 #' require(zeallot)
 #' c(exp, obs) %<-% CSTools::lonlat_temp
@@ -63,7 +64,7 @@ NULL
 #'The `CST_Load` call used to generate the data set in the infrastructure of 
 #'the Marconi machine at CINECA is shown next, working on files which were 
 #'extracted from forecast data available in the MEDSCOPE internal archive.
-#'
+#'@return sample s2dv_cube object
 #'\preformatted{
 #' library(CSTools)
 #' infile <- list(path = paste0('/esarchive/exp/ecmwf/system5c3s/daily_mean/',

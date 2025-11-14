@@ -6,7 +6,7 @@
 \usage{
 CST_SaveExp(
   data,
-  destination = "./",
+  destination = tempdir(),
   startdates = NULL,
   sdate_dim = "sdate",
   ftime_dim = "time",
@@ -122,11 +122,9 @@ This function allows to divide and save a object of class
 's2dv_cube' object that follows the NetCDF attributes conventions.
 }
 \examples{
-\dontrun{
 data <- lonlat_temp_st$exp
 CST_SaveExp(data = data, ftime_dim = 'ftime', var_dim = 'var', 
            dat_dim = 'dataset', sdate_dim = 'sdate')
-}
 
 }
 \seealso{

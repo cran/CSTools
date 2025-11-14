@@ -15,7 +15,9 @@
 #' 
 #'@param x An 's2dv_cube' object.
 #'@param ... Additional arguments of print function.
-#' 
+#'
+#'@return No return value, called for side effects. It prints a  summary 
+#'of an 's2dv_cube' object to the console.
 #'@export
 print.s2dv_cube <- function(x, ...) {
   if (is.atomic(x)) {

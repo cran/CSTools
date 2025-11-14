@@ -13,6 +13,8 @@ CST_QuantileMapping(
   window_dim = NULL,
   method = "QUANT",
   na.rm = FALSE,
+  eval.method = "leave-k-out",
+  k = 1,
   ncores = NULL,
   ...
 )
@@ -22,9 +24,10 @@ CST_QuantileMapping(
 
 \item{obs}{An object of class \code{s2dv_cube}.}
 
-\item{exp_cor}{An object of class \code{s2dv_cube} in which the quantile 
-mapping correction should be applied. If it is not specified, the correction
-is applied in object 'exp'.}
+\item{exp_cor}{A multidimensional array with named dimensions in which the
+quantile mapping correction should be applied. If it is not specified, the
+correction is applied to object 'exp' using leave-one-out cross-validation.
+This is useful to correct a forecast when the hindcast is provided in parameter 'exp'.}
 
 \item{sdate_dim}{A character string indicating the dimension name in which 
 cross-validation would be applied when exp_cor is not provided. 'sdate' by 
@@ -34,9 +37,10 @@ default.}
 ensemble members are stored in the experimental arrays. It can be NULL if 
 there is no ensemble member dimension. It is set as 'member' by default.}
 
-\item{window_dim}{A character string indicating the dimension name where 
-samples have been stored. It can be NULL (default) in case all samples are 
-used.}
+\item{window_dim}{A character string indicating the dimension name in which extra
+samples are stored. This dimension is joined to the 'member' dimension.
+This is useful to correct daily data, for which robust statistics can be obtained
+by creating a window of dates around the target date.}
 
 \item{method}{A character string indicating the method to be used:'PTF', 
 'DIST', 'RQUANT', 'QUANT', 'SSPLIN'. By default, the empirical quantile 
@@ -44,6 +48,16 @@ mapping 'QUANT' is used.}
 
 \item{na.rm}{A logical value indicating if missing values should be removed
 (FALSE by default).}
+
+\item{eval.method}{A character string indicating the evaluation method for cross-validaton.
+the default method is 'leave-k-out', other available methods are 
+'retrospective', 'in-sample', 'hindcast-vs-forecast'.}
+
+\item{k}{Positive integer. Default = 1.
+In method \code{leave-k-out}, \code{k} is expected to be odd integer, 
+indicating the number of points to leave out.
+In method \code{retrospective}, \code{k} can be any positive integer greater than 1, 
+indicating when to start.}
 
 \item{ncores}{An integer indicating the number of cores for parallel 
 computation using multiApply function. The default value is NULL (1).}

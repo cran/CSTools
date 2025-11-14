@@ -4,22 +4,8 @@
 \name{lonlat_temp_st}
 \alias{lonlat_temp_st}
 \title{Sample Of Experimental And Observational Climate Data In Function Of Longitudes And Latitudes with Start}
-\description{
-This sample data set contains gridded seasonal forecast and corresponding 
-observational data from the Copernicus Climate Change ECMWF-System 5 forecast
-system, and from the Copernicus Climate Change ERA-5 reconstruction. 
-Specifically, for the 'tas' (2-meter temperature) variable, for the 15 first 
-forecast ensemble members, monthly averaged, for the 3 first forecast time 
-steps (lead months 1 to 4) of the November start dates of 2000 to 2005, for 
-the Mediterranean region (27N-48N, 12W-40E). The data was generated on (or 
-interpolated onto, for the reconstruction) a rectangular regular grid of size
-360 by 181.
-}
-\details{
-The `CST_Start` call used to generate the data set in the infrastructure of 
-the Earth Sciences Department of the Barcelona Supercomputing Center is shown
-next. Note that `CST_Start` internally calls `startR::Start` and then uses 
-`as.s2dv_cube` that converts the `startR_array` into `s2dv_cube`.
+\value{
+sample s2dv_cube object
 \preformatted{
  lonlat_temp_st <- NULL
  repos_exp <- paste0('/esarchive/exp/ecmwf/system5c3s/monthly_mean/',
@@ -92,6 +78,23 @@ next. Note that `CST_Start` internally calls `startR::Start` and then uses
  dim(lonlat_temp_st$obs$attrs$Dates) <- dim(dates_obs)
 
 }
+}
+\description{
+This sample data set contains gridded seasonal forecast and corresponding 
+observational data from the Copernicus Climate Change ECMWF-System 5 forecast
+system, and from the Copernicus Climate Change ERA-5 reconstruction. 
+Specifically, for the 'tas' (2-meter temperature) variable, for the 15 first 
+forecast ensemble members, monthly averaged, for the 3 first forecast time 
+steps (lead months 1 to 4) of the November start dates of 2000 to 2005, for 
+the Mediterranean region (27N-48N, 12W-40E). The data was generated on (or 
+interpolated onto, for the reconstruction) a rectangular regular grid of size
+360 by 181.
+}
+\details{
+The `CST_Start` call used to generate the data set in the infrastructure of 
+the Earth Sciences Department of the Barcelona Supercomputing Center is shown
+next. Note that `CST_Start` internally calls `startR::Start` and then uses 
+`as.s2dv_cube` that converts the `startR_array` into `s2dv_cube`.
 }
 \author{
 Nicolau Manubens \email{nicolau.manubens@bsc.es}

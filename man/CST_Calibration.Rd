@@ -9,7 +9,7 @@ CST_Calibration(
   obs,
   exp_cor = NULL,
   cal.method = "mse_min",
-  eval.method = "leave-one-out",
+  eval.method = "leave-k-out",
   multi.model = FALSE,
   na.fill = TRUE,
   na.rm = TRUE,
@@ -18,7 +18,9 @@ CST_Calibration(
   memb_dim = "member",
   sdate_dim = "sdate",
   dat_dim = NULL,
-  ncores = NULL
+  ncores = NULL,
+  k = 1,
+  tail.out = TRUE
 )
 }
 \arguments{
@@ -47,9 +49,10 @@ can be either \code{bias}, \code{evmos}, \code{mse_min}, \code{crps_min} or
 \code{rpc-based}. Default value is \code{mse_min}.}
 
 \item{eval.method}{A character string indicating the sampling method used, it 
-can be either \code{in-sample} or \code{leave-one-out}. Default value is the 
-\code{leave-one-out} cross validation. In case the forecast is provided, any 
-chosen eval.method is over-ruled and a third option is used.}
+can be either \code{in-sample}, \code{leave-k-out}, \code{retrospective} or 
+\code{hindcast-vs-forecast}. Default value is the \code{leave-k-out} cross validation. 
+In case the forecast is provided, any chosen eval.method is over-ruled 
+and a third option is used.}
 
 \item{multi.model}{A boolean that is used only for the \code{mse_min} 
 method. If multi-model ensembles or ensembles of different sizes are used, 
@@ -90,6 +93,15 @@ The default value is NULL.}
 
 \item{ncores}{An integer that indicates the number of cores for parallel 
 computations using multiApply function. The default value is one.}
+
+\item{k}{Positive integer. Default = 1.
+In method \code{leave-k-out}, \code{k} is expected to be odd integer, indicating the number of points to leave out.
+In method \code{retrospective}, \code{k} can be any positive integer, indicating when to start.}
+
+\item{tail.out}{Boolean for 'leave-k-out' method; TRUE to remove both extremes 
+keeping the same sample size for all k-folds (e.g. sample.length=50, k=3, 
+eval.dexes = 1, train.dexes = (3,49)). FALSE to remove only the corresponding tail (e.g..
+sample.length=50, k=3, eval.dexes = 1, train.dexes = (3,50))}
 }
 \value{
 An object of class \code{s2dv_cube} containing the calibrated 

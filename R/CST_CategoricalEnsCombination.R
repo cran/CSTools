@@ -57,8 +57,15 @@
 #'  Vannitsem (2019). Finally, the \code{obs} method classifies the observations 
 #'  into the different categories and therefore contains only 0 and 1 values. 
 #'@param eval.method Is the sampling method used, can be either 
-#'  \code{"in-sample"} or \code{"leave-one-out"}. Default value is the 
-#'  \code{"leave-one-out"} cross validation. 
+#'  \code{"in-sample"} or \code{"leave-k-out"}. Default value is the 
+#'  \code{"leave-k-out"} cross validation. 
+#'@param k  k Positive integer. Default = 1.
+#'  In method \code{leave-k-out}, \code{k} is expected to be odd integer, indicating the number of points to leave out.
+#'  In method \code{retrospective}, \code{k} can be any positive integer, indicating when to start.
+#'@param tail.out Boolean for 'leave-k-out' method; TRUE to remove both extremes 
+#'  keeping the same sample size for all k-folds (e.g. sample.length = 50, k = 3, 
+#'  eval.dexes = 1, train.dexes = (3,49)). FALSE to remove only the corresponding tail (e.g..
+#'  sample.length = 50, k = 3, eval.dexes = 1, train.dexes = (3,50))  
 #'@param ... other parameters to be passed on to the calibration procedure.
 #'
 #'@return An object of class \code{s2dv_cube} containing the categorical 
@@ -96,8 +103,8 @@
 #'@import abind
 #'@export
 CST_CategoricalEnsCombination <- function(exp, obs, cat.method = "pool", 
-                                          eval.method = "leave-one-out", 
-                                          amt.cat = 3, 
+                                          eval.method = "leave-k-out", 
+                                          amt.cat = 3, k = 1, tail.out = TRUE,
                                           ...) {
   # Check 's2dv_cube'
   if (!inherits(exp, "s2dv_cube") || !inherits(exp, "s2dv_cube")) {
@@ -113,7 +120,8 @@ CST_CategoricalEnsCombination <- function(exp, obs, cat.method = "pool",
   exp$data <- CategoricalEnsCombination(fc = exp$data, obs = obs$data, 
                                         cat.method = cat.method,
                                         eval.method = eval.method, 
-                                        amt.cat = amt.cat, ...)
+                                        amt.cat = amt.cat, k = k, 
+                                        tail.out = tail.out, ...)
 
   names.dim.tmp[which(names.dim.tmp == "member")] <- "category"
   names(dim(exp$data)) <- names.dim.tmp
@@ -154,8 +162,15 @@ CST_CategoricalEnsCombination <- function(exp, obs, cat.method = "pool",
 #'  Vannitsem (2019). Finally, the \code{obs} method classifies the observations
 #'  into the different categories and therefore contains only 0 and 1 values. 
 #'@param eval.method Is the sampling method used, can be either 
-#'  \code{"in-sample"} or \code{"leave-one-out"}. Default value is the 
-#'  \code{"leave-one-out"} cross validation.
+#'  \code{"in-sample"} or \code{"leave-k-out"}. Default value is the 
+#'  \code{"leave-k-out"} cross validation. 
+#'@param k  k Positive integer. Default = 1.
+#'  In method \code{leave-k-out}, \code{k} is expected to be odd integer, indicating the number of points to leave out.
+#'  In method \code{retrospective}, \code{k} can be any positive integer, indicating when to start.
+#'@param tail.out Boolean for 'leave-k-out' method; TRUE to remove both extremes 
+#'  keeping the same sample size for all k-folds (e.g. sample.length = 50, k = 3, 
+#'  eval.dexes = 1, train.dexes = (3,49)). FALSE to remove only the corresponding tail (e.g..
+#'  sample.length = 50, k = 3, eval.dexes = 1, train.dexes = (3,50))  
 #'@param ... Other parameters to be passed on to the calibration procedure.
 #'
 #'@return An array containing the categorical forecasts in the element called 
@@ -175,7 +190,7 @@ CST_CategoricalEnsCombination <- function(exp, obs, cat.method = "pool",
 #'@importFrom s2dv InsertDim
 #'@import abind
 #'@export
-CategoricalEnsCombination <- function (fc, obs, cat.method, eval.method, amt.cat, ...) {
+CategoricalEnsCombination <- function (fc, obs, cat.method, eval.method, amt.cat, k, tail.out, ...) {
   
   if (!all(c("member", "sdate") %in% names(dim(fc)))) {
     stop("Parameter 'exp' must have the dimensions 'member' and 'sdate'.")
@@ -205,6 +220,8 @@ CategoricalEnsCombination <- function (fc, obs, cat.method, eval.method, amt.cat
     cat.method = cat.method,
     eval.method = eval.method,
     amt.cat = amt.cat,
+    k = k,
+    tail.out = tail.out,
     ...)
   return(cat_fc_out)
 }
@@ -243,7 +260,7 @@ comb.dims <- function(arr.in, dims.to.combine){
 	return(arr.out)
 }
 
-.apply.obs.fc <- function(obs, fc, target.dims, FUN, return.feat, cat.method, eval.method, amt.cat, ...){
+.apply.obs.fc <- function(obs, fc, target.dims, FUN, return.feat, cat.method, eval.method, amt.cat, k, tail.out,  ...){
   dimnames.tmp <- dimnames(fc)
   fc.dims.tmp <- dim(fc)
   dims.out.tmp <- return.feat$dim
@@ -260,6 +277,8 @@ comb.dims <- function(arr.in, dims.to.combine){
     cat.method = cat.method,
     eval.method = eval.method,
     amt.cat = amt.cat,
+    k = k,
+    tail.out = tail.out,
     ...)
   dims.tmp <- dim(arr.out)
   names.dims.tmp <- names(dim(arr.out))
@@ -280,7 +299,7 @@ comb.dims <- function(arr.in, dims.to.combine){
 }
 
 
-.cat_fc <- function(obs.fc, amt.cat, cat.method, eval.method) {
+.cat_fc <- function(obs.fc, amt.cat, cat.method, eval.method, k, tail.out) {
 	
   dims.tmp=dim(obs.fc)
   amt.mbr <- dims.tmp["member"][]-1
@@ -299,7 +318,7 @@ comb.dims <- function(arr.in, dims.to.combine){
   amt.coeff <- amt.mdl + 1
   var.cat.fc <- array(NA, c(amt.cat, amt.sdate))
   
-  eval.train.dexeses <- .make.eval.train.dexes(eval.method = eval.method, amt.points = amt.sdate)
+  eval.train.dexeses <- EvalTrainIndices(eval.method = eval.method, sample.length = amt.sdate, k = k, tail.out = tail.out)
   amt.resamples <- length(eval.train.dexeses)	
   
   for (i.sample in seq(1, amt.resamples)) {
@@ -374,7 +393,7 @@ comb.dims <- function(arr.in, dims.to.combine){
 .calc.quantiles <- function(data, amt.cat){
   perc.to.use <- .calc.percentiles(data, amt.cat)
   
-  quant.out <- quantile(data, perc.to.use, na.rm = T)
+  quant.out <- quantile(data, perc.to.use, na.rm = TRUE)
   if(any(duplicated(quant.out))){
 	stop(paste0("The ",amt.cat," ( = amt.cat) different quantile categories are", 
 	  " determined based on the observation data. However, ", length(data),
@@ -398,10 +417,10 @@ comb.dims <- function(arr.in, dims.to.combine){
   amt.mbr <- length(mdl.names)
   mdl.diff.names <- unique(mdl.names)
   amt.mdl <- length(mdl.diff.names)
-  mdl.msk <- array(F,c(amt.mdl, amt.mbr))
+  mdl.msk <- array(FALSE,c(amt.mdl, amt.mbr))
   amt.mbr.per.mdl <- array(0, c(amt.mdl))
   if(amt.mdl == 1 & amt.mbr == 1) {
-    mdl.msk = array(T, c(1, 1))
+    mdl.msk = array(TRUE, c(1, 1))
     amt.mbr.per.mdl <- array(1, c(1, 1))
   } else {
     mdl.msk <- t(sapply(mdl.diff.names, function(x){mdl.names == x}))
@@ -457,7 +476,7 @@ comb.dims <- function(arr.in, dims.to.combine){
   amt.sdate <- dim(cat.fc)[2]
   if(is.null(mdl.feat)){
     amt.mdl <- 1
-    mdl.msk.tmp <- array(T, c(1, amt.mbr))
+    mdl.msk.tmp <- array(TRUE, c(1, amt.mbr))
   } else {
     amt.mdl <- mdl.feat$amt.mdl
     mdl.msk.tmp <- mdl.feat$mdl.msk
@@ -467,7 +486,7 @@ comb.dims <- function(arr.in, dims.to.combine){
   for (i.mdl in seq(1, amt.mdl)){
     ens.mdl.msk <- mdl.msk.tmp[i.mdl, , drop = FALSE]
     for (i.cat in seq(1, amt.cat)){
-      freq.per.mdl[i.mdl, i.cat, ] <- apply(i.cat==cat.fc[ens.mdl.msk, , drop = F],
+      freq.per.mdl[i.mdl, i.cat, ] <- apply(i.cat==cat.fc[ens.mdl.msk, , drop = FALSE],
         c(2), mean, na.rm = TRUE)
     }
   }

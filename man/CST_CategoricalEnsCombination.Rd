@@ -9,8 +9,10 @@ CST_CategoricalEnsCombination(
   exp,
   obs,
   cat.method = "pool",
-  eval.method = "leave-one-out",
+  eval.method = "leave-k-out",
   amt.cat = 3,
+  k = 1,
+  tail.out = TRUE,
   ...
 )
 }
@@ -36,11 +38,20 @@ Vannitsem (2019). Finally, the \code{obs} method classifies the observations
 into the different categories and therefore contains only 0 and 1 values.}
 
 \item{eval.method}{Is the sampling method used, can be either 
-\code{"in-sample"} or \code{"leave-one-out"}. Default value is the 
-\code{"leave-one-out"} cross validation.}
+\code{"in-sample"} or \code{"leave-k-out"}. Default value is the 
+\code{"leave-k-out"} cross validation.}
 
 \item{amt.cat}{Is the amount of categories. Equally-sized quantiles will be 
 calculated based on the amount of categories.}
+
+\item{k}{k Positive integer. Default = 1.
+In method \code{leave-k-out}, \code{k} is expected to be odd integer, indicating the number of points to leave out.
+In method \code{retrospective}, \code{k} can be any positive integer, indicating when to start.}
+
+\item{tail.out}{Boolean for 'leave-k-out' method; TRUE to remove both extremes 
+keeping the same sample size for all k-folds (e.g. sample.length = 50, k = 3, 
+eval.dexes = 1, train.dexes = (3,49)). FALSE to remove only the corresponding tail (e.g..
+sample.length = 50, k = 3, eval.dexes = 1, train.dexes = (3,50))}
 
 \item{...}{other parameters to be passed on to the calibration procedure.}
 }

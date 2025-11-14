@@ -4,19 +4,8 @@
 \name{lonlat_temp}
 \alias{lonlat_temp}
 \title{Sample Of Experimental And Observational Climate Data In Function Of Longitudes And Latitudes}
-\description{
-This sample data set contains gridded seasonal forecast and corresponding 
-observational data from the Copernicus Climate Change ECMWF-System 5 forecast
-system, and from the Copernicus Climate Change ERA-5 reconstruction. 
-Specifically, for the 'tas' (2-meter temperature) variable, for the 15 first 
-forecast ensemble members, monthly averaged, for the 3 first forecast time 
-steps (lead months 1 to 4) of the November start dates of 2000 to 2005, for 
-the Mediterranean region (27N-48N, 12W-40E). The data was generated on (or 
-interpolated onto, for the reconstruction) a rectangular regular grid of size
-360 by 181.
-}
-\details{
-It is recommended to use the data set as follows:
+\value{
+sample s2dv_cube object
 \preformatted{
 require(zeallot)
 c(exp, obs) %<-% CSTools::lonlat_temp
@@ -48,6 +37,20 @@ lonlat_temp <-
     nprocs = 1
   )
 }
+}
+\description{
+This sample data set contains gridded seasonal forecast and corresponding 
+observational data from the Copernicus Climate Change ECMWF-System 5 forecast
+system, and from the Copernicus Climate Change ERA-5 reconstruction. 
+Specifically, for the 'tas' (2-meter temperature) variable, for the 15 first 
+forecast ensemble members, monthly averaged, for the 3 first forecast time 
+steps (lead months 1 to 4) of the November start dates of 2000 to 2005, for 
+the Mediterranean region (27N-48N, 12W-40E). The data was generated on (or 
+interpolated onto, for the reconstruction) a rectangular regular grid of size
+360 by 181.
+}
+\details{
+It is recommended to use the data set as follows:
 }
 \author{
 Nicolau Manubens \email{nicolau.manubens@bsc.es}

@@ -18,8 +18,8 @@ A part from this GitLab project, that allows you to monitor CSTools progress, to
 
 - The CRAN repository [https://CRAN.R-project.org/package=CSTools](https://CRAN.R-project.org/package=CSTools) which includes the user manual and vignettes.
 - Video tutorials [https://www.medscope-project.eu/products/tool-box/cstools-video-tutorials/](https://www.medscope-project.eu/products/tool-box/cstools-video-tutorials/).
-- Other resources are under-development such [training material](https://earth.bsc.es/gitlab/external/cstools/-/tree/MEDCOF2022/inst/doc/MEDCOF2022) and a [full reproducible use case for forecast calibration](https://earth.bsc.es/gitlab/external/cstools/-/tree/develop-CalibrationVignette/FOCUS_7_2).
-- See and run package [**use cases**](inst/doc/usecase.md)
+- Other resources are under-development such [training material](https://gitlab.earth.bsc.es/external/cstools/-/tree/MEDCOF2022/inst/doc/MEDCOF2022) and a [full reproducible use case for forecast calibration](https://gitlab.earth.bsc.es/external/cstools/-/tree/develop-CalibrationVignette/FOCUS_7_2).
+- See and run package [**use cases**](https://gitlab.earth.bsc.es/external/cstools/-/blob/master/inst/doc/usecase.md)
 
 Installation
 ------------
@@ -91,14 +91,14 @@ Attributes
        ( dat1 )  : dataset = dat1, var = tas, sdate = 20001101 ... 
 ```
 
-This package is designed to be compatible with other R packages such as [s2dv](https://CRAN.R-project.org/package=s2dv), [startR](https://CRAN.R-project.org/package=startR), [CSIndicators](https://CRAN.R-project.org/package=CSIndicators), [CSDownscale](https://earth.bsc.es/gitlab/es/csdownscale). 
+This package is designed to be compatible with other R packages such as [s2dv](https://CRAN.R-project.org/package=s2dv), [startR](https://CRAN.R-project.org/package=startR), [CSIndicators](https://CRAN.R-project.org/package=CSIndicators), [CSDownscale](https://gitlab.earth.bsc.es/es/csdownscale). 
 
-> **Note:** The current `s2dv_cube` object (CSTools version > 5.0.0) differs from the original object used in the previous versions of the packages. If you have doubts on this change you can follow some of the issues: [New s2dv_cube object discussion](https://earth.bsc.es/gitlab/external/cstools/-/issues/94), [How to deal with the compatibility break](https://earth.bsc.es/gitlab/external/cstools/-/issues/112) and [Testing issue and specifications](https://earth.bsc.es/gitlab/external/cstools/-/issues/110). More information can be found in this document: [About the new ‘s2dv_cube’](https://docs.google.com/document/d/1ko37JFl_h6mOjDKM5QSQGikfLBKZq1naL11RkJIwtMM/edit?usp=sharing).
+> **Note:** The current `s2dv_cube` object (CSTools version > 5.0.0) differs from the original object used in the previous versions of the packages. If you have doubts on this change you can follow some of the issues: [New s2dv_cube object discussion](https://gitlab.earth.bsc.es/external/cstools/-/issues/94), [How to deal with the compatibility break](https://gitlab.earth.bsc.es/external/cstools/-/issues/112) and [Testing issue and specifications](https://gitlab.earth.bsc.es/external/cstools/-/issues/110). More information can be found in this document: [About the new ‘s2dv_cube’](https://docs.google.com/document/d/1ko37JFl_h6mOjDKM5QSQGikfLBKZq1naL11RkJIwtMM/edit?usp=sharing).
 
 Contribute
 ----------
 
-Before adding a development, we suggest to contact the package mantainer. Details on the procedure and development guidelines can be found in [this issue](https://earth.bsc.es/gitlab/external/cstools/-/issues/3).
+Before adding a development, we suggest to contact the package mantainer. Details on the procedure and development guidelines can be found in [this issue](https://gitlab.earth.bsc.es/external/cstools/-/issues/3).
 
 If you plan on contributing, you should rather clone the project on your workstation and modify it using the basic Git commands (clone, branch, add, commit, push, merge, ...).
 

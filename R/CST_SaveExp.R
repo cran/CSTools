@@ -92,14 +92,12 @@
 #'\code{\link{s2dv_cube}}
 #'
 #'@examples
-#'\dontrun{
 #'data <- lonlat_temp_st$exp
 #'CST_SaveExp(data = data, ftime_dim = 'ftime', var_dim = 'var', 
 #'            dat_dim = 'dataset', sdate_dim = 'sdate')
-#'}
 #'
 #'@export
-CST_SaveExp <- function(data, destination = "./", startdates = NULL, 
+CST_SaveExp <- function(data, destination = tempdir(), startdates = NULL, 
                         sdate_dim = 'sdate', ftime_dim = 'time', 
                         memb_dim = 'member', dat_dim = 'dataset', 
                         var_dim = 'var', drop_dims = NULL, 
@@ -268,7 +266,7 @@ CST_SaveExp <- function(data, destination = "./", startdates = NULL,
 #'}
 #' 
 #'@examples
-#'\dontrun{
+#'\donttest{
 #'data <- lonlat_temp_st$exp$data
 #'lon <- lonlat_temp_st$exp$coords$lon
 #'lat <- lonlat_temp_st$exp$coords$lat
@@ -280,6 +278,7 @@ CST_SaveExp <- function(data, destination = "./", startdates = NULL,
 #'SaveExp(data = data, coords = coords, Datasets = Datasets, varname = varname, 
 #'        Dates = Dates, metadata = metadata, single_file = TRUE, 
 #'        ftime_dim = 'ftime', var_dim = 'var', dat_dim = 'dataset')
+#'        
 #'}
 #' 
 #'@import easyNCDF
@@ -287,7 +286,7 @@ CST_SaveExp <- function(data, destination = "./", startdates = NULL,
 #'@import multiApply
 #'@importFrom ClimProjDiags Subset
 #'@export
-SaveExp <- function(data, destination = "./", coords = NULL, 
+SaveExp <- function(data, destination = tempdir(), coords = NULL, 
                     Dates = NULL, time_bounds = NULL, startdates = NULL, 
                     varname = NULL, metadata = NULL, Datasets = NULL, 
                     sdate_dim = 'sdate', ftime_dim = 'time', 
@@ -629,7 +628,8 @@ SaveExp <- function(data, destination = "./", coords = NULL,
         warning(paste0("Coordinate '", i_coord, "' has different lenght as ",
                        "its dimension and it will not be used."))
         out_coords[[i_coord]] <- 1:dim(data)[i_coord]
-      } else if (is.numeric(coords[[i_coord]])) {
+      } else if (is.numeric(coords[[i_coord]]) || 
+                 is.character(coords[[i_coord]])) {
         out_coords[[i_coord]] <- as.vector(coords[[i_coord]])
       } else {
         out_coords[[i_coord]] <- 1:dim(data)[i_coord]
@@ -859,7 +859,7 @@ SaveExp <- function(data, destination = "./", coords = NULL,
   }
 }
 
-.saveexp <- function(data, coords, destination = "./",
+.saveexp <- function(data, coords, destination = tempdir(),
                      startdates = NULL, dates = NULL, 
                      time_bnds1 = NULL, time_bnds2 = NULL, 
                      ftime_dim = 'time', varname = 'var', 

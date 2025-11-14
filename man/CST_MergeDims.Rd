@@ -23,6 +23,10 @@ dimension. If left at NULL, the first dimension name provided in parameter
 
 \item{na.rm}{A logical indicating if the NA values should be removed or not.}
 }
+\value{
+An object of class \code{'s2dv_cube'} with the specified dimensions merged 
+into a single dimension.
+}
 \description{
 This function merges two dimensions of the array \code{data} in a 
 's2dv_cube' object into one. The user can select the dimensions to merge and 

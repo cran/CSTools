@@ -1117,7 +1117,7 @@ BestAnalog <- function(position, nAnalogs = nAnalogs, AnalogsInfo = FALSE,
       stop("no best analogs matching Large_dist, Local_dist and Local_cor 
             criterias, please increase nAnalogs") 
     }
-    pos <- pos[order(best, decreasing = F)]
+    pos <- pos[order(best, decreasing = FALSE)]
     pos <- pos[which(!is.na(pos))]
     if (AnalogsInfo == FALSE) { 
       pos <- pos[1]

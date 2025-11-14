@@ -1,3 +1,24 @@
+# CSTools 5.3.0 (Release date: 14-11-2025) 
+
+### Development
+- New function CST_Summary() 
+- New function CST_BindDim() 
+- added Contributing.md 
+- .make.eval.train.dexes accepts more methods and made visible to user as EvalTrainIndices() 
+- New function AreaWeighted() 
+
+### Fixes
+- Improved CST_SplitDim regarding 's2dv_cube' elements and metadata.
+- CST_Start avoids using explicitly startR namespace.
+- Corrected lat and lon dim checks in as.s2dv_cube() when there are multiple FileSelectors.
+- Documentation fix in CST_Start: Set example to retrieve = TRUE.
+- as.s2dv_cube: Gives clearer error message when input object is a startR_cube.
+- CST_MergeDims(): merges time dimensions in Dates and return them as POSIXct objects.
+- Improved CST_QuantileMapping documentation.
+- CST_SaveExp(): modified to save coordinate values when they are of type character.
+- Implemented EvalTrainIndices in QuantileMapping.
+- CST_Subset : added checks for variable name in metadata.
+
 # CSTools 5.2.0 (Release date: 25-01-2024) 
 
 ### Development

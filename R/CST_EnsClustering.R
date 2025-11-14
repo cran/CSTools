@@ -100,7 +100,7 @@ CST_EnsClustering <- function(exp, time_moment = "mean", numclus = NULL,
                               lon_lim = NULL, lat_lim = NULL,
                               variance_explained = 80, numpcs = NULL, 
                               time_dim = NULL, time_percentile = 90, 
-                              cluster_dim = "member", verbose = F) {
+                              cluster_dim = "member", verbose = FALSE) {
 
   # Check 's2dv_cube'
   if (!inherits(exp, "s2dv_cube")) {
@@ -195,7 +195,7 @@ CST_EnsClustering <- function(exp, time_moment = "mean", numclus = NULL,
 EnsClustering <- function(data, lat, lon, time_moment = "mean", numclus = NULL,
                           lon_lim = NULL, lat_lim = NULL, variance_explained = 80,
                           numpcs = NULL, time_percentile = 90, time_dim = NULL,
-                          cluster_dim = "member", verbose = T) {
+                          cluster_dim = "member", verbose = TRUE) {
 
   # Know spatial coordinates names
   if (!any(names(dim(data)) %in% .KnownLonNames()) | 
@@ -272,7 +272,7 @@ EnsClustering <- function(data, lat, lon, time_moment = "mean", numclus = NULL,
 # Atomic ensclus function
 .ensclus <- function(var_ens, lat, lon, numclus = NULL, lon_lim = NULL,
                      lat_lim = NULL, variance_explained = 80, numpcs = NULL,
-                     verbose = T) {
+                     verbose = TRUE) {
   # Check if more than one dimension has been passed for clustering
   sampledims <- NULL
   if (length(dim(var_ens)) > 3) {
@@ -362,8 +362,8 @@ EnsClustering <- function(data, lat, lon, time_moment = "mean", numclus = NULL,
 }
 
 .eofs <- function(lon, lat, field, neof = 4, xlim = NULL, ylim = NULL,
-                  method = "SVD", do_standardize = F, do_regression = F,
-                  verbose = T) {
+                  method = "SVD", do_standardize = FALSE, do_regression = FALSE,
+                  verbose = TRUE) {
   # R tool for computing EOFs based on
   # Singular Value Decomposition ("SVD", default)
   # or with the eigenvectors of the covariance matrix ("covariance", slower)
@@ -380,7 +380,7 @@ EnsClustering <- function(data, lat, lon, time_moment = "mean", numclus = NULL,
 
   # area weighting, based on the root of cosine
   .printv("Area Weighting...", verbose)
-  ww <- .area.weight(lon, lat, root = T)
+  ww <- .area.weight(lon, lat, root = TRUE)
   wwfield <- sweep(field, c(1, 2), ww, "*")
 
   idx <- .selbox(lon, lat, xlim, ylim)
@@ -448,7 +448,7 @@ EnsClustering <- function(data, lat, lon, time_moment = "mean", numclus = NULL,
 
 .regimes <- function(lon, lat, field, ncluster = 4, ntime = 1000, neof = 10,
                      xlim, ylim, alg = "Hartigan-Wong",
-                     perc = NULL, max_eofs = 50, verbose = T) {
+                     perc = NULL, max_eofs = 50, verbose = TRUE) {
   # R tool to compute cluster analysis based on k-means.
   # Requires "personal" function eofs
   # Take as input a 3D anomaly field
@@ -458,15 +458,15 @@ EnsClustering <- function(data, lat, lon, time_moment = "mean", numclus = NULL,
   t0 <- proc.time()
   if (is.null(neof)) {
     reducedspace <- .eofs(lon, lat, field, neof = max_eofs, xlim = xlim,
-                          ylim = ylim, method = "SVD", do_regression = F,
-                          do_standardize = F, verbose = verbose)
+                          ylim = ylim, method = "SVD", do_regression = FALSE,
+                          do_standardize = FALSE, verbose = verbose)
     neof <- which(cumsum(reducedspace$variance) > perc / 100.)[1]
     .printv(paste("Number of EOFs needed for var:", neof), verbose)
     PC <- reducedspace$coeff[,1:neof]
   } else {
     reducedspace <- .eofs(lon, lat, field, neof = neof, xlim = xlim,
-                          ylim = ylim, method = "SVD", do_regression = F,
-                          do_standardize = F, verbose = verbose)
+                          ylim = ylim, method = "SVD", do_regression = FALSE,
+                          do_standardize = FALSE, verbose = verbose)
     PC <- reducedspace$coeff
   }
   t1 <- proc.time() - t0
@@ -482,13 +482,13 @@ EnsClustering <- function(data, lat, lon, time_moment = "mean", numclus = NULL,
   cluster <- regimes$cluster
   frequencies <- regimes$size / dim(field)[3] * 100
   .printv("Cluster frequencies:", verbose)
-  .printv(frequencies[order(frequencies, decreasing = T)], verbose)
+  .printv(frequencies[order(frequencies, decreasing = TRUE)], verbose)
 
   .printv("Creating Composites...", verbose)
   compose <- apply(field, c(1, 2), by, cluster, mean)
 
   # sorting from the more frequent to the less frequent
-  kk <- order(frequencies, decreasing = T)
+  kk <- order(frequencies, decreasing = TRUE)
   cluster <- cluster + 100
   for (ss in 1:ncluster) {
     cluster[cluster == (ss + 100)] <- which(kk == ss)

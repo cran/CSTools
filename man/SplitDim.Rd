@@ -24,7 +24,7 @@ split.}
 
 \item{freq}{A character string indicating the frequency: by 'day', 'month' and 
 'year' or 'monthly' (by default). 'month' identifies months between 1 and 12 
-independetly of the year they belong to, while 'monthly' differenciates 
+independently of the year they belong to, while 'monthly' differentiates 
 months from different years. Parameter 'freq' can also be numeric indicating 
 the length in which to subset the dimension.}
 
@@ -37,6 +37,10 @@ by default.}
 
 \item{return_indices}{A logical value that if it is TRUE, the indices 
 used in splitting the dimension will be returned. It is FALSE by default.}
+}
+\value{
+An n-dimensional array with the specified dimension split into a new 
+ dimension, preserving all other original dimensions and their names,
 }
 \description{
 This function split a dimension in two. The user can select the 

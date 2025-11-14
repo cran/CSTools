@@ -202,9 +202,9 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     #------------------------
     melt.df <- reshape2::melt(fcst.df, variable.name = "init", id.vars = NULL)
     plot <- ggplot(melt.df, aes(x = value)) + 
-            geom_density(alpha = 1, na.rm = T) + 
+            geom_density(alpha = 1, na.rm = TRUE) + 
             coord_flip() + facet_wrap(~init, strip.position = "top", nrow = 1) +
-            xlim(range(c(obs, density(melt.df$value, na.rm = T)$x)))
+            xlim(range(c(obs, density(melt.df$value, na.rm = TRUE)$x)))
     ggp <- ggplot_build(plot)
     #------------------------
     # Gather the coordinates of the plots together with init and corresponding
@@ -270,10 +270,10 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     #------------------------
     if (add.ensmemb != "no") {
         jitter.df <- reshape2::melt(data.frame(dlply(melt.df, .(init), function(x) {
-            .jitter.ensmemb(sort(x$value, na.last = T), pan.width / 100)
-        }), check.names = F), value.name = "yjitter", variable.name = "init", id.vars = NULL)
+            .jitter.ensmemb(sort(x$value, na.last = TRUE), pan.width / 100)
+        }), check.names = FALSE), value.name = "yjitter", variable.name = "init", id.vars = NULL)
         jitter.df$x <- reshape2::melt(data.frame(dlply(melt.df, .(init), function(x) {
-            sort(x$value, na.last = T)
+            sort(x$value, na.last = TRUE)
         })), value.name = "x", id.vars = NULL)$x
     }
     #------------------------
@@ -362,7 +362,7 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     pct <- merge(pct, CJ(init = factor(levels(pct$init), levels = levels(pct$init)), 
                          tercile = factor(c("Below normal", "Normal", "Above normal"), 
                          levels = c("Above normal", "Normal", "Below normal"))),
-                 by = c("init", "tercile"), all.y = T)
+                 by = c("init", "tercile"), all.y = TRUE)
     pct[is.na(pct),"pct"] <- 0
     tot <- pct[, .(tot = sum(pct)), by = init]
     pct <- merge(pct, tot, by = "init")
@@ -380,14 +380,14 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
         pct2 <- merge(pct2, CJ(init = factor(levels(pct2$init), levels = levels(pct2$init)), 
                                extremes = factor(c("Below P10", "Normal", "Above P90"),
                                levels = c("Above P90", "Normal", "Below P10"))),
-                      by = c("init", "extremes"), all.y=T)
+                      by = c("init", "extremes"), all.y = TRUE)
         pct2[is.na(pct),"pct"] <- 0
         tot2 <- pct2[, .(tot = sum(pct)), by = init]
         pct2 <- merge(pct2, tot2, by = "init")
         pct2$pct <- round(100 * pct2$pct / pct2$tot, 0)
         pct2 <- pct2[order(init, extremes)]
         pct2$lab.pos <-  as.vector(apply(extreme.limits, 1, function(x) {c(x[2], NA, x[1])}))
-        pct2 <- merge(pct2, max.df, by = c("init", "extremes"), all.x = T)
+        pct2 <- merge(pct2, max.df, by = c("init", "extremes"), all.x = TRUE)
     }
     #------------------------
     # Add probability labels for terciles
@@ -404,7 +404,7 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
                   aes(x = lab.pos, y = labpos, label = paste0(pct, "%"),
                       hjust = as.integer(tercile) * -1.5 + 3.5), 
                   vjust = vjust, angle = -90, size = 3.2) + 
-        geom_text(data = pct[MLT == T, ],
+        geom_text(data = pct[MLT == TRUE, ],
                   aes(x = lab.pos, y = labpos, label = "*",
                       hjust = as.integer(tercile) * -3.5 + 9),
                   vjust = 0.1, angle = -90, size = 7, color = "black")
@@ -425,7 +425,7 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     plot <- plot + 
         theme_minimal() + 
         scale_fill_manual(name = "Probability of\nterciles", 
-                          values = colorFill, drop = F) + 
+                          values = colorFill, drop = FALSE) + 
         scale_color_manual(name = "Probability of\nextremes", 
                            values = colorHatch) + 
         scale_shape_manual(name = "Ensemble\nmembers", 
@@ -446,8 +446,8 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
               plot.background = element_rect(fill = "white", color = NA)) + 
         guides(fill = guide_legend(order = 1), 
                color = guide_legend(order = 2), 
-               shape = guide_legend(order = 3, label = F),
-               size = guide_legend(order = 4, label = F))
+               shape = guide_legend(order = 3, label = FALSE),
+               size = guide_legend(order = 4, label = FALSE))
     #------------------------
     # Save to plotfile if needed, and return plot
     #------------------------
@@ -461,7 +461,7 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     # the level is more than a threshold, include the point to the level.  Otherwise
     # keep the point for another round.  Do one round in each direction to avoid
     # uggly patterns.
-    if (is.unsorted(x, na.rm = T)) {
+    if (is.unsorted(x, na.rm = TRUE)) {
         stop("Provide a sorted array!")
     }
     lev <- x * 0
@@ -494,7 +494,7 @@ PlotForecastPDF <- function(fcst, tercile.limits, extreme.limits = NULL, obs = N
     lev[lev == -1] <- NA
     return(lev * thr * sqrt(3)/2)
 }
-.polygon.onehatch <- function(x, y, x0, y0, xd, yd, fillOddEven = F) {
+.polygon.onehatch <- function(x, y, x0, y0, xd, yd, fillOddEven = FALSE) {
     halfplane <- as.integer(xd * (y - y0) - yd * (x - x0) <= 0)
     cross <- halfplane[-1L] - halfplane[-length(halfplane)]
     does.cross <- cross != 0

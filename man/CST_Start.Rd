@@ -10,6 +10,11 @@ CST_Start(...)
 \item{...}{Parameters that are automatically forwarded to the `startR::Start` 
 function. See details in `?startR::Start`.}
 }
+\value{
+An object of class \code{'s2dv_cube'} containing the subsetted and aggregated 
+ data retrieved from the NetCDF files using \code{startR}. The data structure 
+ is compatible with CSTools functions.
+}
 \description{
 This function aggregates, subsets and retrieves sub-seasonal, seasonal, 
 decadal or climate projection data from NetCDF files in a local file system 
@@ -22,9 +27,13 @@ multidimensional distributed data sets. Then, the output is transformed into
 \details{
 It receives any number of parameters (`...`) that are automatically forwarded 
 to the `startR::Start` function. See details in `?startR::Start`. The 
-auxiliary functions used to define dimensions need to be called within the 
-startR namespace (e.g. startR::indices(), startR::values(), startR::Sort(), 
-startR::CircularSort(), startR::CDORemapper(), ...).
+auxiliary startR functions (e.g. indices(), values(), Sort(), CircularSort(), 
+CDORemapper(), ...) can be used to define dimensions.
+
+CST_Start() uses as.s2dv_cube() to transform the output into an s2dv_cube
+object. The as.s2dv_cube() function is designed to be used with data that 
+has been retrieved into memory. To avoid errors, please ensure that 
+CST_Start(..., retrieve = TRUE) is specified.
 }
 \examples{
 \dontrun{
@@ -44,7 +53,7 @@ startR::CircularSort(), startR::CDORemapper(), ...).
                                    latitude = c('lat', 'latitude')),
                    return_vars = list(time = 'sdate',
                                       longitude = NULL, latitude = NULL),
-                   retrieve = FALSE)
+                   retrieve = TRUE)
 } 
 \dontshow{
 exp <- CSTools::lonlat_temp_st$exp

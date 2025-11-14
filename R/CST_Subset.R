@@ -120,6 +120,9 @@ CST_Subset <- function(x, along, indices, drop = FALSE, var_dim = NULL,
     }
   }
   # Remove metadata from variables that were dropped
+  if(sum(c(names(x$dims), x$attrs$Variable$varName) %in% names(x$attrs$Variable$metadata)) == 0){
+    stop("variable names not found in metadata")
+  }
   vars_to_keep <- na.omit(match(c(names(x$dims), (x$attrs$Variable$varName)),
      		                  names(x$attrs$Variable$metadata)))
   x$attrs$Variable$metadata <- x$attrs$Variable$metadata[vars_to_keep]

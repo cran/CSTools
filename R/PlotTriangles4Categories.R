@@ -170,7 +170,7 @@ PlotTriangles4Categories <- function(data, brks = NULL, cols = NULL,
     }
   }  
   if (is.null(brks)) {
-    brks <- seq(min(data, na.rm = T), max(data, na.rm = T), length.out = 9)
+    brks <- seq(min(data, na.rm = TRUE), max(data, na.rm = TRUE), length.out = 9)
   }
   if (is.null(cols)) {
     cols <- rev(brewer.pal(length(brks) - 1, 'RdBu'))
@@ -184,8 +184,12 @@ PlotTriangles4Categories <- function(data, brks = NULL, cols = NULL,
   }
   
   if(legend){
-    layout(matrix(c(1, 2, 1, 3), 2, 2, byrow = T),
+    layout(matrix(c(1, 2, 1, 3), 2, 2, byrow = TRUE),
            widths = c(10, 3.4), heights = c(10, 3.5))
+    
+    oldpar <- par('oma', 'mar', no.readonly = TRUE)
+    on.exit(par(oldpar))
+    
     par(oma = c(1, 1, 1, 1), mar = mar)
     if(is.null(lab_legend)) {
       lab_legend = 1:ncat
@@ -193,7 +197,7 @@ PlotTriangles4Categories <- function(data, brks = NULL, cols = NULL,
   }
   
   plot(ncol, nrow, xlim = c(0, ncol), ylim=c(0, nrow), xaxs = "i", yaxs = 'i', type = "n", 
-       xaxt = "n", yaxt = "n", ann = F, axes = F)
+       xaxt = "n", yaxt = "n", ann = FALSE, axes = FALSE)
   
   box(col = 'black',lwd = 1)
   
@@ -254,17 +258,20 @@ PlotTriangles4Categories <- function(data, brks = NULL, cols = NULL,
   }
   
   # legend
-  
+
   if(legend){
     # Colorbar
+    oldpar <- par('mar', no.readonly = TRUE)
+    on.exit(par(oldpar))
+    
     par(mar=c(0,0,0,0))
-    ColorBar(brks = brks, cols = cols, vertical = T, draw_ticks = T, draw_separators = T,
+    ColorBar(brks = brks, cols = cols, vertical = TRUE, draw_ticks = TRUE, draw_separators = TRUE,
              #             extra_margin = c(0,0,2.5,0),label_scale = 1.5,...)
              extra_margin = c( 0, 0, 0, 0), label_scale = 1.5, ...)
     
     par(mar = c(0.5, 2.5, 0.5, 2.5))
     plot(1, 1, xlim = c(0, 1), ylim =c(0, 1), xaxs = "i", yaxs = 'i', type = "n", 
-         xaxt = "n", yaxt = "n", ann = F, axes = F)
+         xaxt = "n", yaxt = "n", ann = FALSE, axes = FALSE)
     
     box(col = col_leg)
     p = l = 1

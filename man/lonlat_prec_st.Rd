@@ -4,21 +4,8 @@
 \name{lonlat_prec_st}
 \alias{lonlat_prec_st}
 \title{Sample Of Experimental Precipitation Data In Function Of Longitudes And Latitudes with Start}
-\description{
-This sample data set contains a small cutout of gridded seasonal precipitation
-forecast data from the Copernicus Climate Change ECMWF-System 5 forecast 
-system, to be used to demonstrate downscaling. Specifically, for the 'pr' 
-(precipitation) variable, for the first 6 forecast ensemble members, daily
-values, for all 31 days in March following the forecast starting dates in 
-November of years 2010 to 2012, for a small 4x4 pixel cutout in a region in
-the North-Western Italian Alps (44N-47N, 6E-9E). The data resolution is 1 
-degree.
-}
-\details{
-The `CST_Start` call used to generate the data set in the infrastructure of 
-the Marconi machine at CINECA is shown next, working on files which were 
-extracted from forecast data available in the MEDSCOPE internal archive.
-
+\value{
+sample s2dv_cube object
 \preformatted{
  path <- paste0('/esarchive/exp/ecmwf/system5c3s/daily_mean/',
                 '$var$_s0-24h/$var$_$sdate$.nc')
@@ -45,6 +32,21 @@ extracted from forecast data available in the MEDSCOPE internal archive.
                                                  lon = NULL, lat = NULL),
                               retrieve = TRUE)
 }
+}
+\description{
+This sample data set contains a small cutout of gridded seasonal precipitation
+forecast data from the Copernicus Climate Change ECMWF-System 5 forecast 
+system, to be used to demonstrate downscaling. Specifically, for the 'pr' 
+(precipitation) variable, for the first 6 forecast ensemble members, daily
+values, for all 31 days in March following the forecast starting dates in 
+November of years 2010 to 2012, for a small 4x4 pixel cutout in a region in
+the North-Western Italian Alps (44N-47N, 6E-9E). The data resolution is 1 
+degree.
+}
+\details{
+The `CST_Start` call used to generate the data set in the infrastructure of 
+the Marconi machine at CINECA is shown next, working on files which were 
+extracted from forecast data available in the MEDSCOPE internal archive.
 }
 \author{
 Jost von Hardenberg \email{j.vonhardenberg@isac.cnr.it}

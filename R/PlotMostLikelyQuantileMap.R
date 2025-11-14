@@ -40,6 +40,8 @@
 #'  'left', 'l', 'L', 'west', 'w', 'W'
 #'@param ... Additional parameters to be sent to \code{PlotCombinedMap} and 
 #'  \code{PlotEquiMap}.
+#'@return Produces a map showing the most likely category or quantile for each 
+#'  grid cell, based on the input probability maps. 
 #'@seealso \code{PlotCombinedMap} and \code{PlotEquiMap}
 #'@examples
 #'# Simple example
@@ -49,12 +51,13 @@
 #'c <- 1 - (a + b)
 #'lons <- seq(0, 359.5, length = 20)
 #'lats <- seq(-89.5, 89.5, length = 10)
-#'\dontrun{
 #'PlotMostLikelyQuantileMap(list(a, b, c), lons, lats, 
 #'                          toptitle = 'Most likely tercile map',
 #'                          bar_titles = paste('% of belonging to', c('a', 'b', 'c')), 
-#'                          brks = 20, width = 10, height = 8)
-#'}
+#'                          brks = 20, width = 10, height = 8,
+#'                          bar_extra_margin = c(1, 1, 1, 1),
+#'                          fileout = file.path(tempdir(),"example1.pdf"))
+#'unlink(file.path(tempdir(),"example1.pdf"))
 #'
 #'# More complex example
 #'n_lons <- 40
@@ -121,20 +124,21 @@
 #'bins <- multiApply::Apply(sample_data, 'time', binning, thresholds)$output1
 #'
 #'# 3. Plotting most likely quantile/bin
-#'\dontrun{
 #'PlotMostLikelyQuantileMap(bins, lons, lats, 
 #'                          toptitle = 'Most likely quantile map',
 #'                          bar_titles = paste('% of belonging to', letters[1:n_bins]),
 #'                          mask = 1 - (w1 + w2 / max(c(w1, w2))), 
-#'                          brks = 20, width = 10, height = 8)
-#'}
+#'                          brks = 20, width = 10, height = 8,
+#'                          bar_extra_margin = c(1, 1, 1, 1),
+#'                          fileout = file.path(tempdir(),"example2.pdf"))
+#'unlink(file.path(tempdir(),"example2.pdf"))
 #'@importFrom maps map 
 #'@importFrom graphics box image layout mtext par plot.new
 #'@importFrom grDevices adjustcolor bmp colorRampPalette dev.cur dev.new dev.off hcl jpeg pdf png postscript svg tiff
 #'@export
 PlotMostLikelyQuantileMap <- function(probs, lon, lat, cat_dim = 'bin',
                                       bar_titles = NULL, 
-                                      col_unknown_cat = 'white', drawleg = T,
+                                      col_unknown_cat = 'white', drawleg = TRUE,
                                       ...) {
   # Check probs
   error <- FALSE
