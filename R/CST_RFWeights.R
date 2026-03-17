@@ -185,7 +185,7 @@ RF_Weights <- function(zclim, latin, lonin, nf, lat, lon, fsmooth = TRUE,
   res <- NULL
   res$data <- x
   res[[lonname]] <- grid$lon
-  res[[latname]] <- grid$lon
+  res[[latname]] <- grid$lat
   return(res)
 }
 

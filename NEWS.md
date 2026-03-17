@@ -1,3 +1,13 @@
+# CSTools 5.3.0 (Release date: 09-03-2026)
+
+### Development
+- New function CST_ReorderDims()
+
+### Fixes
+- CST_BindDim concatenates s2dv_cube objects if a time dimension is selected
+-￼CST_BindDim removes attributes #168 (closed)
+-￼RainFarm Weights error on latitude outputs #163 (closed)
+
 # CSTools 5.3.0 (Release date: 14-11-2025) 
 
 ### Development

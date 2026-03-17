@@ -4,7 +4,7 @@
 \alias{CST_BindDim}
 \title{Bind two objects of class s2dv_cube}
 \usage{
-CST_BindDim(x, along, var_dim = NULL, dat_dim = NULL)
+CST_BindDim(x, along, var_dim = NULL, dat_dim = NULL, sort_dates = FALSE)
 }
 \arguments{
 \item{x}{Two or more objects of class \code{s2dv_cube} to be bound together.}
@@ -17,6 +17,8 @@ dimension. The default value is NULL. Specifying this dimension ensures}
 \item{dat_dim}{A character string indicating the name of dataset dimension.
 The default value is NULL. Specifying this dimension ensures the dataset
 metadata is correctly preserved.}
+
+\item{sort_dates}{A logical indicating whether or not to sort the data}
 }
 \value{
 An object of class \code{s2dv_cube} with the combined data, 
@@ -48,7 +50,7 @@ are preserved. The \code{source_files} attribute is bound along the
  # Check new dimensions and coordinates
  res$dims
  names(res$coords)
-
+ 
 }
 \seealso{
 \link[abind]{abind}
