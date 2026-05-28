@@ -4,7 +4,15 @@
 \alias{CST_Subset}
 \title{Subset an object of class s2dv_cube}
 \usage{
-CST_Subset(x, along, indices, drop = FALSE, var_dim = NULL, dat_dim = NULL)
+CST_Subset(
+  x,
+  along,
+  indices,
+  drop = FALSE,
+  var_dim = NULL,
+  dat_dim = NULL,
+  keep_metadata = NULL
+)
 }
 \arguments{
 \item{x}{An object of class \code{s2dv_cube} to be sliced.}
@@ -21,11 +29,15 @@ array, none, only those that are specified in 'along', or only those that
 are not specified in 'along'. The possible values are: 'all' or TRUE, 'none'
 or FALSE, 'selected', and 'non-selected'. The default value is FALSE.}
 
-\item{var_dim}{A chatacter string indicating the name of the variable
+\item{var_dim}{A character string indicating the name of the variable
 dimension. The default value is NULL.}
 
 \item{dat_dim}{A character string indicating the name of dataset dimension.
 The default value is NULL.}
+
+\item{keep_metadata}{A vector of character strings indicating which variables
+or coordinates found in the s2dv_cube's \code{$attrs$Variable$metadata}
+list should be preserved, even if they are not among the final dimensions.}
 }
 \value{
 An object of class \code{s2dv_cube} with similar data, coordinates and 

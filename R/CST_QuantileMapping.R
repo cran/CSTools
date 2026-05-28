@@ -314,13 +314,12 @@ QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
   } #can replace with tryCatch for smooth fail
   
   
-  index <- EvalTrainIndices(eval.method = eval.method, sample.length = dim(exp)[sdate_dim], k = k,
-                            sample.length_cor = dim(exp_cor)[sdate_dim])
+  index <- CSTools::EvalTrainIndices(eval.method = eval.method, sample.length = dim(exp)[sdate_dim], k = k,
+                                     sample.length_cor = dim(exp_cor)[sdate_dim])
   applied <- exp * NA
   
-  for(x in index){
+  for(x in index) {
   
-    
     nas_pos <- which(!is.na(exp[, x$eval.dexes]))
     obs2 <- as.vector(obs[, x$train.dexes]) 
     exp2 <- as.vector(exp[, x$train.dexes])
@@ -329,54 +328,66 @@ QuantileMapping <- function(exp, obs, exp_cor = NULL, sdate_dim = 'sdate',
     obs2 <- obs2[!is.na(obs2)]
     exp2 <- exp2[!is.na(exp2)]   
     exp_cor2 <- exp_cor2[!is.na(exp_cor2)]
-    
-    adjust <- fitQmap(obs2, exp2, method = 'QUANT', ...)
-    if(is.null(exp_cor)){
-      if(na.rm){
-        if(eval.method == "in-sample"){
-          applied[nas_pos] <- doQmap(exp_cor2, adjust, ...) 
-        }else{
-          applied[nas_pos, x$eval.dexes] <- doQmap(exp_cor2, adjust, ...)
+
+    if (length(obs2) < 2 | length(exp2) < 2 | length(exp_cor2) < 2) {
+      if (is.null(exp_cor)) {
+        if (eval.method == "in-sample") {
+          applied[nas_pos] <- NA 
+        } else{
+          applied[nas_pos, x$eval.dexes] <- NA
         }
-      }else{
-        
-        if (anyNA(obs[, x$train.dexes]) | anyNA(exp[, x$train.dexes])) { 
-          applied[, x$eval.dexes] <- NA
-        }else{
-          if(eval.method == "in-sample"){
-            applied[nas_pos] <- doQmap(exp_cor2, adjust, ...)
-          }else{
-            applied[nas_pos, x$eval.dexes] <- doQmap(exp_cor2, adjust, ...)
+      } else {
+        applied <- exp_cor * NA
+      }
+    } else {
+      adjust <- qmap::fitQmap(obs2, exp2, method = method, ...)
+      qmap_method <- paste0("doQmap", gsub("fitQmap", "", class(adjust)))
+      qmap_fun <- get(qmap_method, asNamespace("qmap"))
+      if (is.null(exp_cor)) {
+        if (na.rm) {
+          if (eval.method == "in-sample") {
+            applied[nas_pos] <- do.call(qmap_fun,
+                                       args = list(exp_cor2, adjust, ...))
+          } else {
+            applied[nas_pos, x$eval.dexes] <- do.call(qmap_fun,
+                                                      args = list(exp_cor2, adjust, ...))
+          }
+        } else {
+          if (anyNA(obs[, x$train.dexes]) | anyNA(exp[, x$train.dexes])) { 
+            applied[, x$eval.dexes] <- NA
+          } else {
+            if (eval.method == "in-sample") {
+              applied[nas_pos] <- doQmap(exp_cor2, adjust, ...)
+            } else {
+              applied[nas_pos, x$eval.dexes] <- doQmap(exp_cor2, adjust, ...)
+            }
           }
         }
+      } else {
+        applied <- exp_cor * NA
+        # add check if method is hindcast else give warning that since exp_cor is not null hindcast is selected
+        #hindcast vs forecast
+        if (na.rm) {
+          tryCatch({
+            adjust <- qmap::fitQmap(obs2, exp2,
+                                  method = method, ...)
+            qmap_method <- paste0("doQmap", gsub("fitQmap", "", class(adjust)))
+            qmap_fun <- get(qmap_method, asNamespace("qmap"))
+            applied[!is.na(exp_cor)] <- do.call(qmap_fun,
+                                                args = list(exp_cor[!is.na(exp_cor)],
+                                                         adjust, ...))
+          },
+          error = function(error_message) {
+           return(applied)
+          })
+        } else { 
+          adjust <- fitQmap(as.vector(obs), as.vector(exp), method = method, ...)
+          applied <- doQmap(as.vector(exp_cor), adjust, ...)
+        }
+        dim(applied) <- dim(exp_cor)
       }
-    }else{
-      applied <- exp_cor * NA
-      # add check if method is hindcast else give warning that since exp_cor is not null hindcast is selected
-      #hindcast vs forecast
-      if (na.rm) {
-        tryCatch({
-          
-          adjust <- fitQmap(obs2, exp2,
-                            method = method, ...)
-          
-          applied[!is.na(exp_cor)] <- doQmap(exp_cor[!is.na(exp_cor)],
-                                             adjust, ...)
-         
-        },
-        error = function(error_message) {
-         return(applied)
-        })
-      } else { 
-        adjust <- fitQmap(as.vector(obs), as.vector(exp), method = method, ...)
-        applied <- doQmap(as.vector(exp_cor), adjust, ...)
-      }
-      dim(applied) <- dim(exp_cor)
     }
-  }
+  }  
   applied
 }
-
-
-
 

@@ -29,8 +29,11 @@
 #'  or FALSE, 'selected', and 'non-selected'. The default value is FALSE.
 #'@param dat_dim A character string indicating the name of dataset dimension.
 #'  The default value is NULL.
-#'@param var_dim A chatacter string indicating the name of the variable
+#'@param var_dim A character string indicating the name of the variable
 #'  dimension. The default value is NULL.
+#'@param keep_metadata A vector of character strings indicating which variables
+#'  or coordinates found in the s2dv_cube's \code{$attrs$Variable$metadata}
+#'  list should be preserved, even if they are not among the final dimensions.
 #'
 #'@return An object of class \code{s2dv_cube} with similar data, coordinates and 
 #'  attributes as the \code{x} input, but with trimmed or dropped dimensions.
@@ -54,7 +57,7 @@
 #'@importFrom ClimProjDiags Subset
 #'@export
 CST_Subset <- function(x, along, indices, drop = FALSE, var_dim = NULL,
-                       dat_dim = NULL) {
+                       dat_dim = NULL, keep_metadata = NULL) {
   # Check that x is s2dv_cube
   if (!inherits(x, 's2dv_cube')) {
     stop("Parameter 'x' must be of the class 's2dv_cube'.")
@@ -75,6 +78,13 @@ CST_Subset <- function(x, along, indices, drop = FALSE, var_dim = NULL,
   if (!is.list(indices)) {
     if (length(along) == 1) {
       indices <- list(indices)
+    }
+  }
+  # Check 'keep_metadata'
+  if (!is.null(keep_metadata)) {
+    if (!is.character(keep_metadata)) {
+      stop("Parameter 'keep_metadata' much be a character string or a vector ",
+           "of character strings.")
     }
   }
 
@@ -120,11 +130,13 @@ CST_Subset <- function(x, along, indices, drop = FALSE, var_dim = NULL,
     }
   }
   # Remove metadata from variables that were dropped
-  if(sum(c(names(x$dims), x$attrs$Variable$varName) %in% names(x$attrs$Variable$metadata)) == 0){
+  if (sum(c(names(x$dims), x$attrs$Variable$varName) %in% names(x$attrs$Variable$metadata)) == 0) {
     stop("variable names not found in metadata")
   }
-  vars_to_keep <- na.omit(match(c(names(x$dims), (x$attrs$Variable$varName)),
-     		                  names(x$attrs$Variable$metadata)))
+  vars_to_keep <- na.omit(match(c(names(x$dims),
+                                  x$attrs$Variable$varName,
+                                  keep_metadata),
+                                names(x$attrs$Variable$metadata)))
   x$attrs$Variable$metadata <- x$attrs$Variable$metadata[vars_to_keep]
   # Subset Dates
   time_along <- intersect(along, names(dim(x$attrs$Dates)))

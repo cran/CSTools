@@ -1,4 +1,13 @@
-# CSTools 5.3.0 (Release date: 09-03-2026)
+# CSTools 5.3.2 (Release date: 28-05-2026)
+
+### Development
+- CST_Subset(): New parameter 'keep_metadata'
+
+### Fixes
+- CST_QuantileMapping(): Improve calls to qmap functions to avoid problems in reverse dependencies
+- CST_QuantileMapping() no longer fails when a grid point has all-NA values
+
+# CSTools 5.3.1 (Release date: 09-03-2026)
 
 ### Development
 - New function CST_ReorderDims()
